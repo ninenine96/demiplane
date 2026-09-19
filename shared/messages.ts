@@ -33,6 +33,49 @@ export const FLAVOUR = {
     "Inscribed. Will reach the demiplane when the portal opens.",
   saveSynced: "Committed to the demiplane.",
 
+  // --- Editor / formatting ------------------------------------------------
+  formatToolbar: "Format the selection",
+  fmtBold: "Bind in bold",
+  fmtItalic: "Slant the text",
+  fmtStrike: "Strike the text through",
+  fmtHighlight: "Mark the text",
+  fmtCode: "Inscribe as code",
+  fmtLink: "Forge a link",
+  fmtHeading: "Raise to a heading",
+  fmtSubheading: "Lower to a subheading",
+  fmtQuote: "Set as a quotation",
+  fmtList: "Set as a list",
+  fmtTask: "Set as a task",
+
+  // --- Wikilinks / backlinks ---------------------------------------------
+  linkedMentions: "Linked mentions",
+  linkedMentionsShort: "linked",
+  wikilinkMissing:
+    "No page bears that name yet. Inscribe it, and the link will hold.",
+
+  // --- Stats --------------------------------------------------------------
+  statWords: "runes",
+  statRead: "min read",
+
+  // --- Command palette ----------------------------------------------------
+  paletteTitle: "Speak a working",
+  palettePlaceholder: "Speak a working...",
+  paletteWorkings: "Workings",
+  palettePages: "Pages",
+  paletteEmpty: "No working answers to that name.",
+
+  // --- Focus / typewriter -------------------------------------------------
+  focusMode: "Focus the page",
+  typewriterMode: "Centre the quill",
+
+  // --- Archive ------------------------------------------------------------
+  archiveToggle: "Summon or fold the archive",
+
+  // --- Enlarge / Reduce presets ------------------------------------------
+  scaleReduce: "Reduce",
+  scaleDefault: "True sight",
+  scaleEnlarge: "Enlarge",
+
   // --- Sync / connection --------------------------------------------------
   syncInProgress: "Opening a portal...",
   syncDone: "The demiplane is in accord.",

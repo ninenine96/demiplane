@@ -20,7 +20,7 @@ The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 | --- | --- |
 | Runtime | Cloudflare Workers + Static Assets (`run_worker_first: ["/api/*"]`) |
 | Build | `@cloudflare/vite-plugin` + Vite + TypeScript |
-| Frontend | React + Tailwind, `@uiw/react-md-editor`, `marked` + DOMPurify |
+| Frontend | React + Tailwind, CodeMirror 6, `marked` + DOMPurify |
 | Fonts | Inter everywhere; Cinzel reserved for the wordmark, via `@fontsource` |
 | Icons | `lucide-react` |
 | Local store | Dexie (IndexedDB) |
@@ -74,14 +74,20 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
 - CodeMirror editor, preview, satchel/sigil, search, Void (soft delete)
 - Attachments (Haversack) and zip export/import (grimoire)
 - 14-day remembered sessions with sliding renewal
-- Content-first UX: single-canvas editor (Inter, no toolbar), a nearly empty
-  top bar, metadata behind a page menu, and a summonable, **resizable** sidebar
-  — see [`docs/UX.md`](docs/UX.md). Shortcuts (`?` opens the Grimoire of keys,
-  registry in `frontend/lib/shortcuts.ts`): `Mod+B` fold archive, `Mod+K` find,
-  `Mod+E` preview, `Mod+N` new page, and `B`/`I`/`K` format while writing
+- Content-first UX: a single CodeMirror 6 canvas (Inter, no toolbar), a
+  centred inline title, a nearly empty top bar, metadata behind a page menu,
+  and a summonable, **resizable** sidebar — see [`docs/UX.md`](docs/UX.md).
+  Authoring aids live in `frontend/lib/editor/`: `/` opens a workings menu, `[[`
+  summons a page by name (wikilinks), `#` suggests existing sigils, and a
+  floating selection toolbar appears over any selection. Shortcuts (`?` opens
+  the Grimoire of keys, registry in `frontend/lib/shortcuts.ts`): `Mod+B` fold
+  archive, `Mod+K` find, `Mod+P` command palette, `Mod+E` preview, `Mod+N` new
+  page, `Mod+Shift+F` focus mode, and `B`/`I`/`K` format while writing
   (contextual, editor wins when focused). Right-click gives context menus for
-  pages and the canvas. UI scale is a slider (*Enlarge / Reduce*) in the
-  sidebar footer.
+  pages and the canvas. Wikilinks resolve in the preview with a **Linked
+  mentions** (backlinks) panel, `==highlight==` and `> [!note]` callouts render,
+  word count and reading time sit at the foot of the page, and UI scale
+  (*Enlarge / Reduce*) is tucked into a sidebar-footer popover.
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
@@ -149,6 +155,20 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Remember this location | Remember this location for a fortnight. |
 | Show preview | Reveal the page |
 | Hide preview | Veil the page |
+| Selection toolbar (label) | Format the selection |
+| Bold / italic / strike / highlight | Bind in bold · Slant the text · Strike the text through · Mark the text |
+| Code / link | Inscribe as code · Forge a link |
+| Heading / quote / list / task | Raise to a heading · Lower to a subheading · Set as a quotation · Set as a list · Set as a task |
+| Backlinks heading | Linked mentions |
+| Missing wikilink | No page bears that name yet. Inscribe it, and the link will hold. |
+| Word count / reading time | `N runes · M min read` (plain `aria` text: "N words, M minute read") |
+| Command palette | Speak a working |
+| Palette groups | Workings · Pages |
+| Palette empty | No working answers to that name. |
+| Focus mode | Focus the page |
+| Typewriter mode | Centre the quill |
+| Scale presets | Reduce · True sight · Enlarge |
+| Archive toggle command | Summon or fold the archive |
 | Back to list (mobile) | Back to the archives |
 | Session expired | The portal has forgotten you. Ask for a new sending stone. |
 | Invalid sending stone | That sending stone has crumbled to dust. Request another. |

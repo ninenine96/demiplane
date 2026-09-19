@@ -10,11 +10,15 @@ export const SHORTCUTS: Shortcut[] = [
   { group: "The archive", keys: "Mod+\\", label: "Summon or fold (alternate)" },
   { group: "The archive", keys: "Mod+N", label: "Inscribe a new page" },
   { group: "The archive", keys: "Mod+K", label: "Scry the archives (find)" },
+  { group: "The archive", keys: "Mod+P", label: "Speak a working (command palette)" },
   { group: "The archive", keys: "?", label: "Open this grimoire of keys" },
   { group: "The page", keys: "Mod+E", label: "Reveal or veil the page" },
   { group: "The page", keys: "Mod+B", label: "Bind the selection in bold" },
   { group: "The page", keys: "Mod+I", label: "Slant the selection (italic)" },
   { group: "The page", keys: "Mod+K", label: "Forge a link from the selection" },
+  { group: "The page", keys: "/", label: "Open the workings menu on a fresh line" },
+  { group: "The page", keys: "[[", label: "Summon a page by name (wikilink)" },
+  { group: "The page", keys: "Mod+Shift+F", label: "Focus the page" },
   { group: "The page", keys: "Esc", label: "Close a menu, or return to the archive" },
 ];
 

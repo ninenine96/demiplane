@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
   Keyboard,
@@ -71,9 +71,27 @@ export function Sidebar({
   const [query, setQuery] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [scaleOpen, setScaleOpen] = useState(false);
   const [folder, setFolder] = useState<string>("all");
   const importInput = useRef<HTMLInputElement | null>(null);
+  const scaleRef = useRef<HTMLElement | null>(null);
   const contextMenu = useContextMenu();
+
+  useEffect(() => {
+    if (!scaleOpen) return;
+    const onPointer = (event: globalThis.MouseEvent) => {
+      if (!scaleRef.current?.contains(event.target as Node)) setScaleOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setScaleOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [scaleOpen]);
 
   const folders = useMemo(() => {
     const set = new Set<string>();
@@ -337,50 +355,87 @@ export function Sidebar({
       </nav>
 
       <footer
-        className="gild-rule space-y-2 border-t border-[var(--color-void-700)] px-4 pt-2.5"
-        style={{ paddingBottom: "calc(0.625rem + var(--safe-bottom))" }}
+        ref={scaleRef}
+        className="gild-rule relative border-t border-[var(--color-void-700)] px-3 pt-1.5"
+        style={{ paddingBottom: "calc(0.5rem + var(--safe-bottom))" }}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
-            {FLAVOUR.enlarge}
+        <button
+          type="button"
+          onClick={() => setScaleOpen((value) => !value)}
+          aria-expanded={scaleOpen}
+          className={cx(
+            "flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
+            scaleOpen && "bg-white/[0.05] text-parchment-100",
+          )}
+        >
+          <span>{FLAVOUR.enlarge}</span>
+          <span className="tabular-nums tracking-normal">
+            {Math.round(scale * 100)}%
           </span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[0.6875rem] tabular-nums text-parchment-500">
-              {Math.round(scale * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={onZoomReset}
-              aria-label={FLAVOUR.trueSight}
-              title={FLAVOUR.trueSight}
-              className="grid h-6 w-6 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
-            >
-              <RotateCcw size={13} aria-hidden="true" />
-            </button>
+        </button>
+
+        {scaleOpen ? (
+          <div className="animate-pop-in absolute bottom-full left-3 right-3 z-50 mb-2 rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+            <div className="flex items-center gap-2">
+              <ZoomOut
+                size={14}
+                className="shrink-0 text-parchment-500"
+                aria-hidden="true"
+              />
+              <input
+                type="range"
+                min={85}
+                max={135}
+                step={5}
+                value={Math.round(scale * 100)}
+                onChange={(event) =>
+                  onScaleChange(Number(event.target.value) / 100)
+                }
+                aria-label={FLAVOUR.enlarge}
+                className="h-1 min-w-0 flex-1 cursor-pointer accent-[var(--color-gold-400)]"
+              />
+              <ZoomIn
+                size={14}
+                className="shrink-0 text-parchment-500"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-[0.6875rem] tabular-nums text-parchment-500">
+                {Math.round(scale * 100)}%
+              </span>
+              {scale !== 1 ? (
+                <button
+                  type="button"
+                  onClick={onZoomReset}
+                  className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.6875rem] text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+                >
+                  <RotateCcw size={12} aria-hidden="true" />
+                  {FLAVOUR.trueSight}
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-2 grid grid-cols-3 gap-1.5">
+              {(
+                [
+                  [0.9, FLAVOUR.scaleReduce],
+                  [1, FLAVOUR.scaleDefault],
+                  [1.15, FLAVOUR.scaleEnlarge],
+                ] as const
+              ).map(([value, label]) => (
+                <Chip
+                  key={label}
+                  active={Math.abs(scale - value) < 0.001}
+                  onClick={() => onScaleChange(value)}
+                >
+                  {label}
+                </Chip>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <ZoomOut
-            size={14}
-            className="shrink-0 text-parchment-500"
-            aria-hidden="true"
-          />
-          <input
-            type="range"
-            min={85}
-            max={135}
-            step={5}
-            value={Math.round(scale * 100)}
-            onChange={(event) => onScaleChange(Number(event.target.value) / 100)}
-            aria-label={FLAVOUR.enlarge}
-            className="h-1 min-w-0 flex-1 cursor-pointer accent-[var(--color-gold-400)]"
-          />
-          <ZoomIn
-            size={14}
-            className="shrink-0 text-parchment-500"
-            aria-hidden="true"
-          />
-        </div>
+        ) : null}
       </footer>
 
       <ContextMenu state={contextMenu.state} onClose={contextMenu.close} />

@@ -1,9 +1,20 @@
-import { useEffect, useRef, useState, type ClipboardEvent } from "react";
-import MDEditor from "@uiw/react-md-editor";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type MouseEvent,
+} from "react";
+import CodeMirror from "@uiw/react-codemirror";
+import { EditorView } from "@codemirror/view";
+import { EditorSelection } from "@codemirror/state";
 import {
   ArrowLeft,
   Eye,
   EyeOff,
+  Link2,
   MoreHorizontal,
   Plus,
   Trash2,
@@ -15,7 +26,11 @@ import type { LocalNote } from "../db/dexie";
 import type { SyncStatus } from "../sync/engine";
 import { api } from "../lib/api";
 import { renderMarkdown } from "../lib/markdown";
+import { backlinksFor, resolveWikiLink } from "../lib/wikilinks";
+import { countWords, readingMinutes } from "../lib/stats";
+import { buildEditorExtensions } from "../lib/editor/setup";
 import { ContextMenu, useContextMenu } from "./ContextMenu";
+import { SelectionToolbar } from "./SelectionToolbar";
 import { SyncDot } from "./SyncBadge";
 import {
   Button,
@@ -29,7 +44,10 @@ import {
 
 interface EditorPaneProps {
   note: LocalNote | undefined;
+  notes: LocalNote[];
   syncStatus: SyncStatus;
+  focusMode: boolean;
+  typewriterMode: boolean;
   onSave: (
     id: string,
     patch: Partial<Pick<LocalNote, "title" | "body" | "folder" | "tags" | "deleted">>,
@@ -39,17 +57,22 @@ interface EditorPaneProps {
   onSync: () => void;
   onBack: () => void;
   onNew: () => void;
+  onSelectNote: (id: string) => void;
 }
 
 export function EditorPane({
   note,
+  notes,
   syncStatus,
+  focusMode,
+  typewriterMode,
   onSave,
   onDelete,
   onUndelete,
   onSync,
   onBack,
   onNew,
+  onSelectNote,
 }: EditorPaneProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -59,6 +82,12 @@ export function EditorPane({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [showBacklinks, setShowBacklinks] = useState(false);
+  const [missingLink, setMissingLink] = useState<string | null>(null);
+  const [view, setView] = useState<EditorView | null>(null);
+
+  const viewRef = useRef<EditorView | null>(null);
+  const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const saveTimer = useRef<number | null>(null);
   const pendingSave = useRef<Partial<
     Pick<LocalNote, "title" | "body" | "folder" | "tags">
@@ -72,6 +101,14 @@ export function EditorPane({
     setFolder(note.folder ?? "");
     setTags(note.tags.join(", "));
   }, [note?.id]);
+
+  // Auto-grow the title so long names wrap instead of scrolling sideways.
+  useEffect(() => {
+    const element = titleRef.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.height = `${element.scrollHeight}px`;
+  }, [title, note?.id]);
 
   useEffect(() => {
     if (!note?.id) {
@@ -93,47 +130,28 @@ export function EditorPane({
   }, [note?.id]);
 
   useEffect(() => {
-    function applyWrap(before: string, after: string): boolean {
-      const textarea = document.querySelector<HTMLTextAreaElement>(
-        ".w-md-editor-text-input",
-      );
-      if (!textarea) return false;
-      const { selectionStart, selectionEnd, value } = textarea;
-      const start = selectionStart ?? value.length;
-      const end = selectionEnd ?? start;
-      const selected = value.slice(start, end);
-      const next =
-        value.slice(0, start) + before + selected + after + value.slice(end);
-      writeTextarea(textarea, next);
-      const caret = start + before.length + selected.length;
-      requestAnimationFrame(() => textarea.setSelectionRange(caret, caret));
-      return true;
-    }
+    if (!missingLink) return;
+    const timer = window.setTimeout(() => setMissingLink(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [missingLink]);
 
+  // The canvas unmounts while the page is veiled; drop the stale editor handle.
+  useEffect(() => {
+    if (!showPreview) return;
+    viewRef.current = null;
+    setView(null);
+  }, [showPreview]);
+
+  // Reveal / veil works even when the editor is not mounted (preview mode).
+  // The CodeMirror keymap claims it while writing, setting `defaultPrevented`.
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented) return;
       if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-      const key = event.key.toLowerCase();
-
-      if (key === "e") {
-        event.preventDefault();
-        setShowPreview((value) => !value);
-        return;
-      }
-
-      const map: Record<string, [string, string]> = {
-        b: ["**", "**"],
-        i: ["*", "*"],
-        k: ["[", "](url)"],
-      };
-      const wrap = map[key];
-      if (!wrap) return;
-      const active = document.activeElement;
-      if (!(active instanceof HTMLTextAreaElement)) return;
-      if (!active.classList.contains("w-md-editor-text-input")) return;
+      if (event.key.toLowerCase() !== "e") return;
       event.preventDefault();
-      applyWrap(wrap[0], wrap[1]);
+      setShowPreview((value) => !value);
     }
-
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
@@ -142,16 +160,7 @@ export function EditorPane({
   // just-typed word is never lost to the draft cleanup.
   useEffect(() => () => flushSave(), [note?.id]);
 
-  function writeTextarea(textarea: HTMLTextAreaElement, value: string) {
-    const setter = Object.getOwnPropertyDescriptor(
-      HTMLTextAreaElement.prototype,
-      "value",
-    )?.set;
-    setter?.call(textarea, value);
-    textarea.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-
-  function flushSave() {
+  const flushSave = useCallback(() => {
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
       saveTimer.current = null;
@@ -160,37 +169,78 @@ export function EditorPane({
     pendingSave.current = null;
     const id = note?.id;
     if (patch && id) void onSave(id, patch);
-  }
+  }, [note?.id, onSave]);
 
-  function scheduleSave(
-    patch: Partial<Pick<LocalNote, "title" | "body" | "folder" | "tags">>,
-  ) {
-    if (!note?.id) return;
-    pendingSave.current = { ...(pendingSave.current ?? {}), ...patch };
-    if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(flushSave, 600);
-  }
+  const scheduleSave = useCallback(
+    (
+      patch: Partial<Pick<LocalNote, "title" | "body" | "folder" | "tags">>,
+    ) => {
+      if (!note?.id) return;
+      pendingSave.current = { ...(pendingSave.current ?? {}), ...patch };
+      if (saveTimer.current) window.clearTimeout(saveTimer.current);
+      saveTimer.current = window.setTimeout(flushSave, 600);
+    },
+    [note?.id, flushSave],
+  );
+
+  const handleBodyChange = useCallback(
+    (value?: string) => {
+      const next = value ?? "";
+      setBody(next);
+      scheduleSave({ body: next });
+    },
+    [scheduleSave],
+  );
+
+  const completionData = useMemo(
+    () => ({
+      noteTitles: notes
+        .filter((item) => !item.deleted)
+        .map((item) => item.title || FLAVOUR.unnamedNote),
+      tags: [
+        ...new Set(notes.filter((item) => !item.deleted).flatMap((item) => item.tags)),
+      ].sort(),
+    }),
+    [notes],
+  );
+  const completionRef = useRef(completionData);
+  useEffect(() => {
+    completionRef.current = completionData;
+  }, [completionData]);
+  const getCompletionData = useCallback(() => completionRef.current, []);
+
+  const extensions = useMemo(
+    () =>
+      buildEditorExtensions({
+        getCompletionData,
+        onTogglePreview: () => setShowPreview((value) => !value),
+        focusMode,
+        typewriterMode,
+      }),
+    [getCompletionData, focusMode, typewriterMode],
+  );
+
+  const backlinks = useMemo(
+    () => (note ? backlinksFor(note, notes) : []),
+    [note, notes],
+  );
+  const words = useMemo(() => countWords(body), [body]);
+  const minutes = readingMinutes(words);
 
   function insertAtCursor(text: string) {
-    const textarea = document.querySelector<HTMLTextAreaElement>(
-      ".w-md-editor-text-input",
-    );
-    if (!textarea) {
+    const editor = viewRef.current;
+    if (!editor || showPreview) {
       const next = `${body}${text}`;
       setBody(next);
       scheduleSave({ body: next });
       return;
     }
-    const { selectionStart, selectionEnd, value } = textarea;
-    const start = selectionStart ?? value.length;
-    const end = selectionEnd ?? start;
-    const next = value.slice(0, start) + text + value.slice(end);
-    writeTextarea(textarea, next);
-    const caret = start + text.length;
-    requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(caret, caret);
+    const { from, to } = editor.state.selection.main;
+    editor.dispatch({
+      changes: { from, to, insert: text },
+      selection: EditorSelection.cursor(from + text.length),
     });
+    editor.focus();
   }
 
   async function uploadImages(files: File[]) {
@@ -236,6 +286,16 @@ export function EditorPane({
     } catch {
       // Nothing we can do locally; the item stays listed.
     }
+  }
+
+  function openWikilink(event: MouseEvent<HTMLDivElement>) {
+    const anchor = (event.target as HTMLElement).closest("[data-wikilink]");
+    if (!anchor) return;
+    event.preventDefault();
+    const target = anchor.getAttribute("data-wikilink") ?? "";
+    const resolved = resolveWikiLink(target, notes);
+    if (resolved) onSelectNote(resolved.id);
+    else setMissingLink(target);
   }
 
   if (!note) {
@@ -319,16 +379,7 @@ export function EditorPane({
         >
           <ArrowLeft size={20} aria-hidden="true" />
         </button>
-        <input
-          aria-label="Note title"
-          value={title}
-          onChange={(event) => {
-            setTitle(event.target.value);
-            scheduleSave({ title: event.target.value });
-          }}
-          placeholder={FLAVOUR.noteTitlePlaceholder}
-          className="min-w-0 flex-1 bg-transparent px-1 text-lg font-medium text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/60 sm:text-xl"
-        />
+        <span className="min-w-0 flex-1" />
         <button
           type="button"
           onClick={() => setShowPreview((value) => !value)}
@@ -483,47 +534,123 @@ export function EditorPane({
         </div>
       ) : null}
 
-      <div
-        key={note.id}
-        className="animate-page-in min-h-0 flex-1 overflow-hidden"
-      >
-        {showPreview ? (
-          <div className="animate-fade-in-up h-full overflow-y-auto">
-            <div className="mx-auto w-full max-w-[44rem] px-5 py-8 sm:px-6 sm:py-14">
-              <div
-                className="prose-arcane"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
-              />
-              {body.trim() === "" ? (
-                <p className="text-sm italic text-parchment-500">
-                  {PLAIN.idle} Nothing inscribed yet.
-                </p>
-              ) : null}
+      {missingLink ? (
+        <div className="px-5 pb-1 sm:px-6">
+          <StatusLine flavour={FLAVOUR.wikilinkMissing} />
+        </div>
+      ) : null}
+
+      <div key={note.id} className="animate-page-in flex min-h-0 flex-1 flex-col">
+        <div className="mx-auto w-full max-w-[44rem] px-3 pt-3 sm:px-6 sm:pt-6">
+          <textarea
+            ref={titleRef}
+            rows={1}
+            aria-label="Note title"
+            value={title}
+            onChange={(event) => {
+              setTitle(event.target.value);
+              scheduleSave({ title: event.target.value });
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                viewRef.current?.focus();
+              }
+            }}
+            placeholder={FLAVOUR.noteTitlePlaceholder}
+            spellCheck={false}
+            className="w-full resize-none overflow-hidden bg-transparent text-center text-2xl font-semibold leading-snug text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/60 sm:text-3xl"
+          />
+        </div>
+
+        <div className="mx-auto min-h-0 w-full max-w-[44rem] flex-1 px-2 sm:px-6">
+          {showPreview ? (
+            <div className="animate-fade-in-up h-full overflow-y-auto">
+              <div className="py-4 sm:py-8">
+                <div
+                  className="prose-arcane"
+                  onClick={openWikilink}
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
+                />
+                {body.trim() === "" ? (
+                  <p className="text-sm italic text-parchment-500">
+                    {PLAIN.idle} Nothing inscribed yet.
+                  </p>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="mx-auto h-full w-full max-w-[44rem] px-2 sm:px-6">
-            <MDEditor
+          ) : (
+            <CodeMirror
               value={body}
-              onChange={(value) => {
-                const next = value ?? "";
-                setBody(next);
-                scheduleSave({ body: next });
+              onChange={handleBodyChange}
+              onCreateEditor={(editor) => {
+                viewRef.current = editor;
+                setView(editor);
               }}
-              preview="edit"
-              hideToolbar
-              visibleDragbar={false}
+              extensions={extensions}
+              theme="none"
+              basicSetup={false}
+              indentWithTab={false}
               height="100%"
-              textareaProps={{
-                "aria-label": "Note body",
-                placeholder: FLAVOUR.editorPlaceholder,
-              }}
-              style={{ height: "100%", background: "transparent" }}
+              style={{ height: "100%" }}
             />
+          )}
+        </div>
+
+        <div className="mx-auto w-full max-w-[44rem] shrink-0 px-3 sm:px-6">
+          {showBacklinks && backlinks.length > 0 ? (
+            <div className="animate-fade-in-up max-h-[30dvh] overflow-y-auto border-t border-[var(--color-void-700)] py-3">
+              <p className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
+                {FLAVOUR.linkedMentions}
+              </p>
+              <ul className="mt-2 space-y-0.5">
+                {backlinks.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectNote(item.id)}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-parchment-300 transition-colors hover:bg-white/[0.05] hover:text-parchment-100"
+                    >
+                      <Link2
+                        size={13}
+                        aria-hidden="true"
+                        className="shrink-0 text-parchment-500"
+                      />
+                      <span className="truncate">
+                        {item.title || FLAVOUR.unnamedNote}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div
+            className="flex items-center justify-between gap-3 border-t border-[var(--color-void-700)] py-1.5 text-[0.6875rem] text-parchment-500"
+            style={{ paddingBottom: "calc(0.375rem + var(--safe-bottom))" }}
+          >
+            <span aria-hidden="true">
+              {words} {FLAVOUR.statWords} · {minutes} {FLAVOUR.statRead}
+            </span>
+            <span className="sr-only">
+              {words} words, {minutes} minute read.
+            </span>
+            {backlinks.length > 0 ? (
+              <button
+                type="button"
+                aria-expanded={showBacklinks}
+                onClick={() => setShowBacklinks((value) => !value)}
+                className="rounded-md px-1.5 py-0.5 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+              >
+                {backlinks.length} {FLAVOUR.linkedMentionsShort}
+              </button>
+            ) : null}
           </div>
-        )}
+        </div>
       </div>
 
+      <SelectionToolbar view={view} />
       <ContextMenu state={contextMenu.state} onClose={contextMenu.close} />
     </section>
   );

@@ -10,14 +10,17 @@ in.
 
 **Live:** https://demiplane.prohan.workers.dev
 
+![Demiplane: a page open in the single-canvas editor, the floating selection toolbar over a highlighted line, wikilinks in the body, and the word-count and reading-time line at the foot](docs/assets/demiplane-ui.png)
+
 ## Features
 
 - **Passwordless magic-link sign-in** — self-hosted on your own origin, so no
   third-party auth domain to get blocked. Scanner-safe confirm step, and a
   "remember this location for a fortnight" session that slides forward as you use
   it.
-- **Markdown editor with live preview** — `@uiw/react-md-editor` with a
-  formatting toolbar, sanitized preview via `marked` + DOMPurify.
+- **A CodeMirror 6 markdown canvas with live preview** — autocomplete (`/`,
+  `[[`, `#`), a floating selection toolbar, wikilinks with backlinks, callouts,
+  and a sanitized preview via `marked` + DOMPurify.
 - **A wizard's study, not a dashboard** — Cinzel/Inter/Spectral typography,
   Lucide icons, mobile-first master–detail layout. See
   [`docs/UX.md`](docs/UX.md).
@@ -37,7 +40,7 @@ in.
 | --- | --- |
 | Runtime | Cloudflare Workers + Static Assets (`run_worker_first: ["/api/*"]`) |
 | Build | `@cloudflare/vite-plugin` + Vite + TypeScript |
-| Frontend | React + Tailwind, `@uiw/react-md-editor`, `marked` + DOMPurify |
+| Frontend | React + Tailwind, CodeMirror 6, `marked` + DOMPurify |
 | Fonts | Cinzel (display), Inter (UI), Spectral (prose) via `@fontsource` |
 | Icons | `lucide-react` |
 | Local store | Dexie (IndexedDB) |

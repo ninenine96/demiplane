@@ -16,6 +16,9 @@ The result should look almost plain at first glance. Then the typography, the
 aged gold, the language, and the small details register: *this is a magical
 archive.*
 
+![The single-canvas editor with the selection toolbar open, wikilinks in the
+body, and the rune count at the foot](assets/demiplane-ui.png)
+
 ## Hierarchy of attention
 
 1. **The page** — title and body dominate every screen.
@@ -37,23 +40,37 @@ archive.*
   There is no file picker; the page menu's **Haversack** section lists what has
   been tucked away and lets you remove it. Drag-and-drop still works as a
   convenience.
-- **The formatting toolbar is removed.** `@uiw/react-md-editor` runs with
-  `hideToolbar`. Formatting is markdown syntax plus shortcuts:
-
-  | Shortcut | Action |
-  | --- | --- |
-  | `Cmd/Ctrl + E` | Reveal / veil the page (preview toggle) |
-  | `Cmd/Ctrl + B` | Bold the selection |
-  | `Cmd/Ctrl + I` | Italicise the selection |
-  | `Cmd/Ctrl + K` | Wrap the selection as a link |
-
-- **Preview is a mode, not a pane.** The same canvas renders the sanitized
-  `marked` + DOMPurify output; toggle back to edit. Never side-by-side.
+- **The editor is CodeMirror 6.** `frontend/lib/editor/` owns the theme, the
+  completions, the formatting commands and the focus modes. Syntax fades into
+  the manuscript; there is no IDE chrome (no gutters, no line numbers). Spell
+  check is the browser's, on.
+- **The title is inline.** A centred, auto-growing field sits at the top of the
+  canvas — no title in the top bar. `Enter` moves the caret into the body.
+- **Authoring aids appear as you write, then vanish:**
+  - `/` at the start of a line opens the **workings menu** (headings, lists,
+    tasks, quote, code, table, divider, image, callout).
+  - `[[` summons a page by name — a wikilink; `#` away from a line start
+    suggests existing sigils.
+  - Brackets, quotes and backticks pair; `[` is left alone so `[[` survives.
+    Lists, checkboxes and quotes continue on `Enter`; `Tab` indents.
+  - Pasting a URL over a selection turns it into a link.
+- **A floating selection toolbar** rises above any non-empty selection with the
+  formatting that matters: bold, italic, strike, `==highlight==`, code, link,
+  heading, quote, list, task. Keyboard selections summon it too.
+- **Formatting also has shortcut keys:** `Mod+B` bold, `Mod+I` italic,
+  `Mod+K` link, `Mod+Shift+X` strike, `Mod+Shift+H` highlight.
+- **Preview is a mode, not a pane.** `Mod+E` renders the sanitized `marked` +
+  DOMPurify output; toggle back to edit. Never side-by-side. Wikilinks resolve
+  and click through, `==highlight==` and `> [!note]` callouts render.
+- **The foot of the page** carries a quiet status line: word count and reading
+  time on the left, a **Linked mentions** (backlinks) toggle on the right when
+  anything points here.
 
 ## The top bar is nearly empty
 
-Permanently: the back affordance (mobile), the page title, a reveal/veil
-toggle, a tiny sync dot, and one overflow menu. Nothing else.
+Permanently: the back affordance (mobile), a reveal/veil toggle, a tiny sync
+dot, and one overflow menu. Nothing else — the title itself lives on the
+canvas.
 
 The **page menu** (the `⋯`) is the progressive-disclosure surface for everything
 occasional:
@@ -83,10 +100,12 @@ The default page shows only a title and its content.
 
 ## Enlarge / Reduce (UI scale)
 
-The whole interface scales from one control in the sidebar footer: a **slider**
-flanked by `ZoomOut` / `ZoomIn` glyphs, with the current percentage and an
-explicit **reset button** (*Return to true sight*) on the label row. The label
-is **Enlarge / Reduce**, the transmutation spell, not "scale".
+The sidebar footer keeps only a quiet **Enlarge / Reduce** row showing the
+current percentage. Once you set it, the control folds away: tapping the row
+opens a popover holding the **slider** (flanked by `ZoomOut` / `ZoomIn`), the
+current percentage, presets (**Reduce · True sight · Enlarge**), and — only when
+you have moved off 100% — a reset to *Return to true sight*. The label is
+**Enlarge / Reduce**, the transmutation spell, not "scale".
 
 It sets `--ui-scale` on the root, which feeds `html { font-size }`; every
 dimension is written in `rem`, so spacing, type and the editor scale together.
@@ -123,14 +142,13 @@ Keep motion to entrances, exits and state changes. Never animate the text being
 typed.
 
 
-## Editor alignment
+## Editor skin
 
-MDEditor layers an invisible `<textarea>` exactly over a highlighted `<pre>`.
-If the two have any different metric the caret drifts from the glyphs.
-`frontend/index.css` therefore forces the **same** family, size, line-height,
-letter-spacing, word-spacing, ligatures, kerning, tab-size, text-indent and
-padding on both layers, and sets `--md-editor-font-family` to Spectral. Keep
-these rules together when editing the editor theme.
+All editor chrome is defined once in `frontend/lib/editor/theme.ts`
+(`arcaneTheme`): transient background, the gilded caret and selection, the
+dimmed-line class used by focus mode, and the tooltip surface shared by
+completions. `frontend/index.css` no longer patches the editor — change the
+skin in the theme, not with global overrides.
 
 ## Context menus & keys
 
@@ -154,9 +172,14 @@ the **Grimoire of keys**, generated from a single registry in
 | `Cmd/Ctrl+\` | Summon or fold the archive (alternate) |
 | `Cmd/Ctrl+N` | Inscribe a new page |
 | `Cmd/Ctrl+K` | Scry the archives (find; forges a link while writing) |
+| `Cmd/Ctrl+P` | Speak a working (command palette) |
 | `Cmd/Ctrl+E` | Reveal or veil the page |
 | `Cmd/Ctrl+B` / `I` | Bold / italic the selection (while writing) |
 | `Cmd/Ctrl+K` | Forge a link from the selection (while writing) |
+| `Cmd/Ctrl+Shift+X` / `H` | Strike / highlight the selection (while writing) |
+| `Cmd/Ctrl+Shift+F` | Focus the page |
+| `/` | Open the workings menu on a fresh line |
+| `[[` | Summon a page by name (wikilink) |
 | `?` | Grimoire of keys |
 | `Esc` | Close a menu, or return to the archive (mobile) |
 
@@ -262,7 +285,10 @@ Self-hosted via `@fontsource` (offline, no CDN). Everything scales from
 1. Foundation ✅ tokens, fonts, Lucide, master–detail shell.
 2. Content-first rework ✅ single-canvas serif editor (no toolbar), nearly empty
    top bar, page menu for metadata, summonable sidebar, quiet empty states.
-3. Components ⏳ Radix Dialog/Sheet/Toast/Tooltip, replace `window.confirm`.
-4. Polish ⏳ command palette (`Cmd/Ctrl+K`), motion, focus mode, light theme.
+3. Authoring ✅ CodeMirror 6 canvas, inline title, autocomplete (`/`, `[[`,
+   `#`), selection toolbar, callouts, wikilinks + backlinks, command palette
+   (`Mod+P`), focus / typewriter modes, word count, tucked-away scale.
+4. Components ⏳ Radix Dialog/Sheet/Toast/Tooltip, replace `window.confirm`.
+5. Polish ⏳ motion, light theme.
 
 New strings always go into the lexicon in `AGENTS.md`.

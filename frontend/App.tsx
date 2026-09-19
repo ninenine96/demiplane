@@ -1,13 +1,30 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { ChevronsRight } from "lucide-react";
+import {
+  AlignCenter,
+  ChevronsRight,
+  Download,
+  Focus,
+  Keyboard,
+  LogOut,
+  PanelLeft,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+} from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
 import { AuthScreen } from "./components/AuthScreen";
+import {
+  CommandPalette,
+  type PaletteCommand,
+} from "./components/CommandPalette";
 import { EditorPane } from "./components/EditorPane";
 import { ShortcutsDialog } from "./components/ShortcutsDialog";
 import { Sidebar } from "./components/Sidebar";
@@ -21,7 +38,6 @@ function initialSidebarState(): boolean {
 
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.35;
-const SCALE_STEP = 0.05;
 
 const MIN_SIDEBAR = 220;
 const MAX_SIDEBAR = 460;
@@ -52,6 +68,9 @@ export function App() {
   const [sidebarWidth, setSidebarWidth] = useState(initialSidebarWidth);
   const [scale, setScale] = useState(initialScale);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [typewriterMode, setTypewriterMode] = useState(false);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -72,10 +91,15 @@ export function App() {
     window.localStorage.setItem("demiplane.scale", String(scale));
   }, [scale]);
 
+  const focusScry = useCallback(() => {
+    setSidebarOpen(true);
+    requestAnimationFrame(() => document.getElementById("scry")?.focus());
+  }, []);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented) return;
-      if (showShortcuts) return;
+      if (showShortcuts || showPalette) return;
 
       const mod = event.metaKey || event.ctrlKey;
       const target = event.target as HTMLElement | null;
@@ -87,6 +111,16 @@ export function App() {
 
       if (mod && key === "s") {
         event.preventDefault();
+        return;
+      }
+      if (mod && key === "p") {
+        event.preventDefault();
+        setShowPalette(true);
+        return;
+      }
+      if (mod && event.shiftKey && key === "f") {
+        event.preventDefault();
+        setFocusMode((value) => !value);
         return;
       }
       // VSCode-style: fold the archive. The editor overrides this to bold.
@@ -108,10 +142,7 @@ export function App() {
       // Find: the editor overrides this to forge a link.
       if (mod && key === "k") {
         event.preventDefault();
-        setSidebarOpen(true);
-        requestAnimationFrame(() =>
-          document.getElementById("scry")?.focus(),
-        );
+        focusScry();
         return;
       }
       if (event.key === "Escape" && store.activeId) {
@@ -127,7 +158,7 @@ export function App() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [store, showShortcuts]);
+  }, [store, showShortcuts, showPalette, focusScry]);
 
   const startResize = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -177,6 +208,82 @@ export function App() {
       }
     },
     [store],
+  );
+
+  const paletteCommands = useMemo<PaletteCommand[]>(
+    () => [
+      {
+        id: "new",
+        label: FLAVOUR.newNote,
+        group: FLAVOUR.paletteWorkings,
+        icon: <Plus size={15} />,
+        run: () => void store.createNote(),
+      },
+      {
+        id: "find",
+        label: FLAVOUR.searchPlaceholder,
+        group: FLAVOUR.paletteWorkings,
+        icon: <Search size={15} />,
+        run: focusScry,
+      },
+      {
+        id: "archive",
+        label: FLAVOUR.archiveToggle,
+        group: FLAVOUR.paletteWorkings,
+        icon: <PanelLeft size={15} />,
+        run: () => setSidebarOpen((value) => !value),
+      },
+      {
+        id: "focus",
+        label: FLAVOUR.focusMode,
+        group: FLAVOUR.paletteWorkings,
+        icon: <Focus size={15} />,
+        run: () => setFocusMode((value) => !value),
+      },
+      {
+        id: "typewriter",
+        label: FLAVOUR.typewriterMode,
+        group: FLAVOUR.paletteWorkings,
+        icon: <AlignCenter size={15} />,
+        run: () => setTypewriterMode((value) => !value),
+      },
+      {
+        id: "sync",
+        label: FLAVOUR.syncNow,
+        group: FLAVOUR.paletteWorkings,
+        icon: <RefreshCw size={15} />,
+        run: () => void store.refresh(),
+      },
+      {
+        id: "export",
+        label: FLAVOUR.export,
+        group: FLAVOUR.paletteWorkings,
+        icon: <Download size={15} />,
+        run: () => void handleExport(),
+      },
+      {
+        id: "scale-reset",
+        label: FLAVOUR.trueSight,
+        group: FLAVOUR.paletteWorkings,
+        icon: <RotateCcw size={15} />,
+        run: () => setScale(1),
+      },
+      {
+        id: "shortcuts",
+        label: FLAVOUR.shortcutsTitle,
+        group: FLAVOUR.paletteWorkings,
+        icon: <Keyboard size={15} />,
+        run: () => setShowShortcuts(true),
+      },
+      {
+        id: "logout",
+        label: FLAVOUR.logout,
+        group: FLAVOUR.paletteWorkings,
+        icon: <LogOut size={15} />,
+        run: () => void store.logout(),
+      },
+    ],
+    [store, focusScry, handleExport],
   );
 
   if (store.auth === "checking") {
@@ -256,18 +363,31 @@ export function App() {
       >
         <EditorPane
           note={active}
+          notes={store.notes}
           syncStatus={store.syncStatus}
+          focusMode={focusMode}
+          typewriterMode={typewriterMode}
           onSave={store.saveNote}
           onDelete={store.deleteNote}
           onUndelete={store.undeleteNote}
           onSync={() => void store.refresh()}
           onBack={store.goBack}
           onNew={() => void store.createNote()}
+          onSelectNote={store.selectNote}
         />
       </main>
 
       {showShortcuts ? (
         <ShortcutsDialog onClose={() => setShowShortcuts(false)} />
+      ) : null}
+
+      {showPalette ? (
+        <CommandPalette
+          commands={paletteCommands}
+          notes={store.notes}
+          onSelectNote={store.selectNote}
+          onClose={() => setShowPalette(false)}
+        />
       ) : null}
 
       <div

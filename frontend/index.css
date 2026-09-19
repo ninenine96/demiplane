@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "@uiw/react-md-editor/markdown-editor.css";
 
 @theme {
   /* Warm charcoal ground, aged gold, deep violet, warm ivory. */
@@ -231,86 +230,62 @@ body {
   background: rgba(195, 161, 92, 0.07);
   color: var(--color-gold-300);
 }
-
-/* Editor: one continuous page. Consistent Inter, no toolbar, no IDE chrome. */
-.w-md-editor {
-  --md-editor-font-family: var(--font-sans) !important;
-  background: transparent !important;
-  color: var(--color-parchment-100) !important;
-  box-shadow: none !important;
-  border: none !important;
+.prose-arcane mark {
+  background: rgba(195, 161, 92, 0.22);
+  color: var(--color-parchment-100);
+  padding: 0.05em 0.2em;
+  border-radius: 4px;
 }
-.w-md-editor-toolbar {
-  display: none !important;
+.prose-arcane a.wikilink {
+  color: var(--color-arcane-300);
+  text-decoration-color: rgba(163, 150, 201, 0.45);
+  cursor: pointer;
 }
-.w-md-editor-content,
-.w-md-editor-area {
-  background: transparent !important;
-  border: none !important;
+.prose-arcane a.wikilink:hover {
+  color: var(--color-gold-300);
+}
+.prose-arcane .callout {
+  margin: 1.4em 0;
+  border-left: 2px solid var(--color-gold-500);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  background: rgba(195, 161, 92, 0.05);
+  padding: 0.75em 1em;
+}
+.prose-arcane .callout-title {
+  margin: 0 0 0.35em;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-gold-300);
+}
+.prose-arcane .callout p {
+  margin: 0.4em 0;
+}
+.prose-arcane .callout-tip {
+  border-left-color: var(--color-sage-400);
+  background: rgba(134, 169, 140, 0.06);
+}
+.prose-arcane .callout-tip .callout-title {
+  color: var(--color-sage-400);
+}
+.prose-arcane .callout-warning {
+  border-left-color: var(--color-gold-400);
+}
+.prose-arcane .callout-danger {
+  border-left-color: var(--color-ember-400);
+  background: rgba(199, 111, 102, 0.06);
+}
+.prose-arcane .callout-danger .callout-title {
+  color: var(--color-ember-400);
+}
+.prose-arcane .callout-quote .callout-title {
+  color: var(--color-parchment-500);
 }
 
 /*
- * The whole canvas relies on the transparent textarea sitting exactly over the
- * highlight layer. Every metric that can shift the cursor must match on both.
+ * Editor: one continuous page. The CodeMirror surface is styled entirely from
+ * frontend/lib/editor/theme.ts, so there is no editor chrome to patch here.
  */
-.w-md-editor-text,
-.w-md-editor-text-pre,
-.w-md-editor-text-pre > code,
-.w-md-editor-text-input {
-  font-family: var(--font-sans) !important;
-  font-size: 1rem !important;
-  line-height: 1.8 !important;
-  letter-spacing: 0 !important;
-  word-spacing: 0 !important;
-  font-variant-ligatures: none !important;
-  font-kerning: none !important;
-  font-feature-settings: normal !important;
-  font-optical-sizing: none !important;
-  font-synthesis: none !important;
-  text-rendering: geometricPrecision !important;
-  tab-size: 4 !important;
-  text-indent: 0 !important;
-}
-.w-md-editor-text {
-  padding: 14px 12px !important;
-}
-.w-md-editor-text-pre > code {
-  color: var(--color-parchment-100) !important;
-}
-/* The textarea stays invisible over the highlighted layer. */
-.w-md-editor-text-input {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  caret-color: var(--color-gold-300) !important;
-  -webkit-font-smoothing: antialiased;
-}
-.w-md-editor-text-input::placeholder {
-  color: var(--color-parchment-500) !important;
-  -webkit-text-fill-color: var(--color-parchment-500) !important;
-}
-.w-md-editor-text-pre {
-  opacity: 1 !important;
-}
-/* Calm the syntax highlighter to a monochrome manuscript. */
-.w-md-editor-text-pre .token {
-  color: inherit !important;
-  background: none !important;
-  font-size: inherit !important;
-  font-weight: inherit !important;
-}
-.w-md-editor-text-pre .token.punctuation,
-.w-md-editor-text-pre .token.blockquote,
-.w-md-editor-text-pre .token.list {
-  color: var(--color-parchment-500) !important;
-}
-.w-md-editor-text-pre .token.title,
-.w-md-editor-text-pre .token.bold {
-  color: var(--color-gold-300) !important;
-}
-.wmde-markdown {
-  background: transparent !important;
-  color: var(--color-parchment-300) !important;
-}
 
 /* Slightly engraved icon strokes. */
 svg.lucide {

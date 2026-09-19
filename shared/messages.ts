@@ -83,6 +83,8 @@ export const FLAVOUR = {
   attachmentUpload: "Tucking it into the Haversack...",
   attachmentDone: "Safely in the Haversack.",
   attachmentFailed: "The Haversack resisted. Try again.",
+  haversackPasteHint:
+    "Paste an image into the page and it is tucked into the Haversack.",
   export: "Copy your grimoire.",
   exporting: "Copying your grimoire...",
   exportDone: "Your grimoire is copied. Keep it somewhere safe.",

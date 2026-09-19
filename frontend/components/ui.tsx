@@ -200,11 +200,13 @@ export function Menu({
   label,
   trigger,
   panelClassName,
+  sheet,
   children,
 }: {
   label: string;
   trigger: ReactNode;
   panelClassName?: string;
+  sheet?: boolean;
   children: (close: () => void) => ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -276,13 +278,23 @@ export function Menu({
       {mounted ? (
         <div
           className={cx(
-            "absolute right-0 z-50 mt-2 max-h-[70dvh] overflow-y-auto rounded-[var(--radius-card)]",
-            "border border-[var(--color-void-700)] bg-void-800 p-2",
-            "shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
+            "z-50 border border-[var(--color-void-700)] bg-void-800 shadow-[0_20px_50px_rgba(0,0,0,0.6)]",
+            sheet
+              ? "fixed inset-x-0 bottom-0 max-h-[80dvh] overflow-y-auto rounded-t-[var(--radius-card)] p-2 pb-[calc(0.75rem+var(--safe-bottom))]"
+              : "absolute right-0 mt-2 max-h-[70dvh] overflow-y-auto rounded-[var(--radius-card)] p-2",
+            sheet &&
+              "sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:mt-2 sm:max-h-[70dvh] sm:rounded-[var(--radius-card)] sm:pb-2",
             closing ? "animate-pop-out" : "animate-pop-in",
+            sheet && (closing ? "sheet-out" : "sheet-in"),
             panelClassName,
           )}
         >
+          {sheet ? (
+            <div
+              aria-hidden="true"
+              className="mx-auto mb-2 h-1 w-10 rounded-full bg-void-600 sm:hidden"
+            />
+          ) : null}
           {children(close)}
         </div>
       ) : null}

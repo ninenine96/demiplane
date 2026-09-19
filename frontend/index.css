@@ -558,6 +558,47 @@ svg.lucide {
   box-shadow: 0 0 26px rgba(95, 77, 146, 0.5);
 }
 
+/* Phone ergonomics: no tap flash, no double-tap zoom delay. */
+button,
+[role="button"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 639px) {
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes sheet-out {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+  .sheet-in {
+    animation: sheet-in 0.26s cubic-bezier(0.2, 0.7, 0.3, 1.05) both;
+  }
+  .sheet-out {
+    animation: sheet-out 0.18s ease-in both;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

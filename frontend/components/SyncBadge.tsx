@@ -37,7 +37,7 @@ export function SyncDot({
       onClick={onSync}
       title={info.flavour}
       aria-label={`${info.flavour} ${info.plain}`}
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-colors hover:bg-white/[0.06]"
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg transition-colors hover:bg-white/[0.06] sm:h-8 sm:w-8"
     >
       {syncing ? (
         <span

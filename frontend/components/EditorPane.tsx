@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ClipboardEvent } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import {
   ArrowLeft,
   Eye,
   EyeOff,
   MoreHorizontal,
-  Paperclip,
   Plus,
   Trash2,
   Undo2,
@@ -20,7 +19,6 @@ import { ContextMenu, useContextMenu } from "./ContextMenu";
 import { SyncDot } from "./SyncBadge";
 import {
   Button,
-  IconButton,
   Menu,
   MenuDivider,
   MenuItem,
@@ -65,7 +63,6 @@ export function EditorPane({
   const pendingSave = useRef<Partial<
     Pick<LocalNote, "title" | "body" | "folder" | "tags">
   > | null>(null);
-  const fileInput = useRef<HTMLInputElement | null>(null);
   const contextMenu = useContextMenu();
 
   useEffect(() => {
@@ -96,25 +93,21 @@ export function EditorPane({
   }, [note?.id]);
 
   useEffect(() => {
-    function applyWrap(before: string, after: string) {
+    function applyWrap(before: string, after: string): boolean {
       const textarea = document.querySelector<HTMLTextAreaElement>(
         ".w-md-editor-text-input",
       );
-      if (!textarea) return;
+      if (!textarea) return false;
       const { selectionStart, selectionEnd, value } = textarea;
       const start = selectionStart ?? value.length;
       const end = selectionEnd ?? start;
       const selected = value.slice(start, end);
       const next =
         value.slice(0, start) + before + selected + after + value.slice(end);
-      const setter = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        "value",
-      )?.set;
-      setter?.call(textarea, next);
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      writeTextarea(textarea, next);
       const caret = start + before.length + selected.length;
       requestAnimationFrame(() => textarea.setSelectionRange(caret, caret));
+      return true;
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -145,6 +138,19 @@ export function EditorPane({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Flush any pending save when switching pages or leaving the editor, so a
+  // just-typed word is never lost to the draft cleanup.
+  useEffect(() => () => flushSave(), [note?.id]);
+
+  function writeTextarea(textarea: HTMLTextAreaElement, value: string) {
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(textarea, value);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
   function flushSave() {
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
@@ -165,34 +171,62 @@ export function EditorPane({
     saveTimer.current = window.setTimeout(flushSave, 600);
   }
 
-  // Flush any pending save when switching pages or leaving the editor, so a
-  // just-typed word is never lost to the draft cleanup.
-  useEffect(() => () => flushSave(), [note?.id]);
+  function insertAtCursor(text: string) {
+    const textarea = document.querySelector<HTMLTextAreaElement>(
+      ".w-md-editor-text-input",
+    );
+    if (!textarea) {
+      const next = `${body}${text}`;
+      setBody(next);
+      scheduleSave({ body: next });
+      return;
+    }
+    const { selectionStart, selectionEnd, value } = textarea;
+    const start = selectionStart ?? value.length;
+    const end = selectionEnd ?? start;
+    const next = value.slice(0, start) + text + value.slice(end);
+    writeTextarea(textarea, next);
+    const caret = start + text.length;
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(caret, caret);
+    });
+  }
 
-  async function handleFiles(files: FileList | null) {
-    if (!note || !files || files.length === 0) return;
+  async function uploadImages(files: File[]) {
+    if (!note || files.length === 0) return;
     setUploading(true);
-    const uploaded: Attachment[] = [];
     let snippet = "";
-    for (const file of Array.from(files)) {
+    for (const file of files) {
       try {
         const attachment = await api.uploadAttachment(note.id, file);
-        uploaded.push(attachment);
+        setAttachments((current) => [...current, attachment]);
         const isImage = (attachment.contentType ?? "").startsWith("image/");
         snippet += isImage
           ? `\n![${attachment.filename}](${attachment.url})\n`
           : `\n[${attachment.filename}](${attachment.url})\n`;
       } catch {
-        // Individual failures are surfaced by the status line below.
+        // Individual failures are surfaced by the status line.
       }
     }
     setUploading(false);
-    if (uploaded.length > 0) {
-      setAttachments((current) => [...current, ...uploaded]);
-      const nextBody = `${body}${snippet}`;
-      setBody(nextBody);
-      scheduleSave({ body: nextBody });
+    if (snippet) insertAtCursor(snippet);
+  }
+
+  /** Pasting an image tucks it into the Haversack and inscribes it. */
+  function handlePaste(event: ClipboardEvent<HTMLElement>) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
     }
+    if (files.length === 0) return;
+    event.preventDefault();
+    void uploadImages(files);
   }
 
   async function removeAttachment(id: string) {
@@ -232,6 +266,7 @@ export function EditorPane({
         "relative flex h-full min-w-0 flex-col",
         dragging && "ring-2 ring-inset ring-gold-400/50",
       )}
+      onPaste={handlePaste}
       onDragOver={(event) => {
         event.preventDefault();
         setDragging(true);
@@ -240,7 +275,7 @@ export function EditorPane({
       onDrop={(event) => {
         event.preventDefault();
         setDragging(false);
-        void handleFiles(event.dataTransfer.files);
+        void uploadImages(Array.from(event.dataTransfer.files));
       }}
       onContextMenu={(event) =>
         contextMenu.open(event, [
@@ -248,11 +283,6 @@ export function EditorPane({
             label: showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow,
             icon: showPreview ? <EyeOff size={15} /> : <Eye size={15} />,
             onSelect: () => setShowPreview((value) => !value),
-          },
-          {
-            label: "Tuck into the Haversack",
-            icon: <Paperclip size={15} />,
-            onSelect: () => fileInput.current?.click(),
           },
           note.deleted
             ? {
@@ -281,14 +311,14 @@ export function EditorPane({
         className="flex items-center gap-1 px-3 py-2 sm:px-5"
         style={{ paddingTop: "calc(0.5rem + var(--safe-top))" }}
       >
-        <IconButton
-          label={FLAVOUR.backToArchives}
-          size="sm"
+        <button
+          type="button"
           onClick={onBack}
-          className="lg:hidden"
+          aria-label={FLAVOUR.backToArchives}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 lg:hidden"
         >
-          <ArrowLeft size={18} />
-        </IconButton>
+          <ArrowLeft size={20} aria-hidden="true" />
+        </button>
         <input
           aria-label="Note title"
           value={title}
@@ -305,29 +335,20 @@ export function EditorPane({
           aria-label={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
           title={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
           aria-pressed={showPreview}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300 sm:h-8 sm:w-8"
         >
           {showPreview ? (
-            <EyeOff size={17} aria-hidden="true" />
+            <EyeOff size={18} aria-hidden="true" />
           ) : (
-            <Eye size={17} aria-hidden="true" />
+            <Eye size={18} aria-hidden="true" />
           )}
         </button>
         <SyncDot status={syncStatus} onSync={onSync} />
-        <input
-          ref={fileInput}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={(event) => {
-            void handleFiles(event.target.files);
-            event.target.value = "";
-          }}
-        />
         <Menu
           label="Page"
-          trigger={<MoreHorizontal size={17} />}
-          panelClassName="w-[min(20rem,calc(100vw-1.5rem))]"
+          trigger={<MoreHorizontal size={18} />}
+          sheet
+          panelClassName="sm:w-[min(20rem,calc(100vw-1.5rem))]"
         >
           {(close) => (
             <>
@@ -352,7 +373,7 @@ export function EditorPane({
                   }}
                   placeholder={FLAVOUR.folderNew}
                   aria-label="Satchel"
-                  className="h-9 w-full rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none focus:border-gold-500/50"
+                  className="h-11 w-full rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-3 text-base text-parchment-100 outline-none focus:border-gold-500/50 sm:h-9 sm:text-sm"
                 />
               </div>
 
@@ -371,7 +392,7 @@ export function EditorPane({
                   }}
                   placeholder={FLAVOUR.tagNew}
                   aria-label="Sigils"
-                  className="h-9 w-full rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none focus:border-gold-500/50"
+                  className="h-11 w-full rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-3 text-base text-parchment-100 outline-none focus:border-gold-500/50 sm:h-9 sm:text-sm"
                 />
               </div>
 
@@ -396,7 +417,7 @@ export function EditorPane({
                           type="button"
                           aria-label={`Remove ${attachment.filename}`}
                           onClick={() => void removeAttachment(attachment.id)}
-                          className="grid h-5 w-5 place-items-center rounded text-parchment-500 hover:text-ember-400"
+                          className="grid h-6 w-6 place-items-center rounded text-parchment-500 hover:text-ember-400"
                         >
                           <Trash2 size={12} aria-hidden="true" />
                         </button>
@@ -404,17 +425,11 @@ export function EditorPane({
                     ))}
                   </ul>
                 </>
-              ) : null}
-
-              <MenuItem
-                icon={<Paperclip size={15} />}
-                onClick={() => {
-                  fileInput.current?.click();
-                  close();
-                }}
-              >
-                Tuck into the Haversack
-              </MenuItem>
+              ) : (
+                <p className="px-3 pb-2 pt-1 text-xs text-parchment-500">
+                  {FLAVOUR.haversackPasteHint}
+                </p>
+              )}
 
               <MenuDivider />
               {note.deleted ? (
@@ -468,10 +483,13 @@ export function EditorPane({
         </div>
       ) : null}
 
-      <div key={note.id} className="animate-page-in min-h-0 flex-1 overflow-hidden">
+      <div
+        key={note.id}
+        className="animate-page-in min-h-0 flex-1 overflow-hidden"
+      >
         {showPreview ? (
           <div className="animate-fade-in-up h-full overflow-y-auto">
-            <div className="mx-auto w-full max-w-[44rem] px-6 py-10 sm:py-14">
+            <div className="mx-auto w-full max-w-[44rem] px-5 py-8 sm:px-6 sm:py-14">
               <div
                 className="prose-arcane"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}

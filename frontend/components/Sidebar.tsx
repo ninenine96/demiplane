@@ -207,14 +207,14 @@ export function Sidebar({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={FLAVOUR.searchPlaceholder}
             aria-label={FLAVOUR.searchPlaceholder}
-            className="h-8 min-w-0 flex-1 border-b border-[var(--color-void-700)] bg-transparent px-0.5 text-sm text-parchment-100 outline-none transition-colors placeholder:text-parchment-500/70 focus:border-gold-500/50"
+            className="h-10 min-w-0 flex-1 border-b border-[var(--color-void-700)] bg-transparent px-0.5 text-base text-parchment-100 outline-none transition-colors placeholder:text-parchment-500/70 focus:border-gold-500/50 sm:h-8 sm:text-sm"
           />
           <button
             type="button"
             onClick={onNew}
             aria-label={FLAVOUR.newNote}
             title={FLAVOUR.newNote}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+            className="grid h-10 w-10 shrink-0 sm:h-8 sm:w-8 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
           >
             <Plus size={17} aria-hidden="true" />
           </button>
@@ -225,7 +225,7 @@ export function Sidebar({
             aria-pressed={showFilters}
             title="Filters"
             className={cx(
-              "grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-colors hover:bg-white/[0.06]",
+              "grid h-10 w-10 shrink-0 sm:h-8 sm:w-8 place-items-center rounded-lg transition-colors hover:bg-white/[0.06]",
               showFilters
                 ? "text-gold-300"
                 : "text-parchment-500 hover:text-parchment-100",

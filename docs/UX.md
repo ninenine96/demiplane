@@ -30,8 +30,13 @@ archive.*
   IDE feeling.
 - Writing width is constrained to a comfortable reading measure
   (`max-w-[44rem]`, centred) with generous vertical padding.
-- The surface is the raw document (markdown source), set in a readable serif —
-  like inscribing a page, not filling a form.
+- The surface is the raw document (markdown source) in Inter — consistent with
+  the rest of the app, like inscribing a page rather than filling a form.
+- **Images are pasted, not attached.** Paste an image anywhere on the canvas and
+  it is uploaded and inscribed at the cursor (`![name](/api/attachments/...)`).
+  There is no file picker; the page menu's **Haversack** section lists what has
+  been tucked away and lets you remove it. Drag-and-drop still works as a
+  convenience.
 - **The formatting toolbar is removed.** `@uiw/react-md-editor` runs with
   `hideToolbar`. Formatting is markdown syntax plus shortcuts:
 
@@ -47,8 +52,8 @@ archive.*
 
 ## The top bar is nearly empty
 
-Permanently: the back affordance (mobile), the page title, a tiny sync dot, and
-one overflow menu. Nothing else.
+Permanently: the back affordance (mobile), the page title, a reveal/veil
+toggle, a tiny sync dot, and one overflow menu. Nothing else.
 
 The **page menu** (the `⋯`) is the progressive-disclosure surface for everything
 occasional:
@@ -157,6 +162,23 @@ the **Grimoire of keys**, generated from a single registry in
 
 `Cmd/Ctrl+B` and `Cmd/Ctrl+K` are contextual, exactly like an editor: the
 writing surface wins when focused, otherwise the archive action fires.
+
+## Phone ergonomics
+
+Mobile is the primary device, so:
+
+- Master–detail: the list and the canvas are separate full-screen views with a
+  back chevron; they slide between each other.
+- Every tappable control is at least **40px** on phones (top-bar icons, search,
+  list rows) and tightens to the desktop size from `sm` up.
+- Inputs are **≥16px** on phones, so iOS never zoom-jumps when a field is
+  focused.
+- The page menu opens as a **bottom sheet** on phones — drag-handle affordance,
+  safe-area padded, sliding up — and as a dropdown on desktop.
+- Fixed chrome honours `env(safe-area-inset-*)`, and `100dvh` keeps browser
+  chrome from cropping content.
+- `touch-action: manipulation` removes the double-tap zoom delay and the tap
+  highlight flash.
 
 ## Empty states
 

@@ -138,6 +138,7 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Import | Restore from a fallen timeline. |
 | Conflict (both kept) | Two timelines converged — both versions preserved. |
 | Attachment upload | Tucking it into the Haversack... |
+| Haversack hint | Paste an image into the page and it is tucked into the Haversack. |
 | 404 | This page has drifted into the Astral Plane. |
 | Unauthorized | The portal does not recognise you. |
 | Empty folder | Nothing inscribed here yet. |
@@ -188,7 +189,9 @@ note explaining why.
   failed attempts in 15 minutes. No link is ever followed, so mail scanners
   cannot consume it.
 - Attachments: 15 MB cap, content-type allowlist, served through the Worker
-  with `Cache-Control: private, immutable`; never public R2 URLs.
+  with `Cache-Control: private, immutable`; never public R2 URLs. Images are
+  added by **pasting** into the canvas (no file picker); drag-and-drop also
+  works. The page menu's Haversack lists and removes them.
 - Search is client-side over Dexie so it works offline. Ranked full-text via
   MiniSearch (`frontend/lib/search.ts`); D1 FTS remains a future server fallback.
 - Export builds a store-only zip (`fflate`, level 0) to stay well under the

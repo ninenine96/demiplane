@@ -102,7 +102,7 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
-                className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--color-void-600)] bg-void-950/70 px-3 text-parchment-100 outline-none transition-colors focus:border-gold-500/60"
+                className="h-12 w-full rounded-[var(--radius-control)] border border-[var(--color-void-600)] bg-void-950/70 px-3 text-base text-parchment-100 outline-none transition-colors focus:border-gold-500/60"
               />
               <Button
                 type="submit"

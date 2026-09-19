@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -190,5 +191,108 @@ export function EmptyState({
         {children}
       </p>
     </div>
+  );
+}
+
+/** A quiet popover anchored to a trigger. Children receive a close callback. */
+export function Menu({
+  label,
+  trigger,
+  panelClassName,
+  children,
+}: {
+  label: string;
+  trigger: ReactNode;
+  panelClassName?: string;
+  children: (close: () => void) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className={cx(
+          "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-parchment-500",
+          "transition-colors hover:bg-white/[0.06] hover:text-parchment-100",
+          open && "bg-white/[0.06] text-parchment-100",
+        )}
+      >
+        <span aria-hidden="true">{trigger}</span>
+      </button>
+      {open ? (
+        <div
+          className={cx(
+            "absolute right-0 z-50 mt-2 w-72 rounded-[var(--radius-card)]",
+            "border border-[var(--color-void-700)] bg-void-800 p-2",
+            "shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
+            panelClassName,
+          )}
+        >
+          {children(() => setOpen(false))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function MenuItem({
+  icon,
+  className,
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { icon?: ReactNode }) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={cx(
+        "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm",
+        "text-parchment-300 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
+        className,
+      )}
+    >
+      {icon ? (
+        <span aria-hidden="true" className="text-parchment-500">
+          {icon}
+        </span>
+      ) : null}
+      {children}
+    </button>
+  );
+}
+
+export function MenuDivider() {
+  return <div className="my-1.5 h-px bg-[var(--color-void-700)]" />;
+}
+
+export function MenuLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="px-3 pb-1 pt-2 text-[10px] uppercase tracking-[0.18em] text-parchment-500">
+      {children}
+    </p>
   );
 }

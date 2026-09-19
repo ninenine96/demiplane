@@ -1,204 +1,159 @@
-# Demiplane — UX & Visual Design Plan
+# Demiplane — UX & Visual Design
 
-> A wizard's desk, not a corporate dashboard.
+> Content first. UI second. Fantasy atmosphere third.
 
-The current UI grew fast and it shows: cramped mobile layout, inconsistent
-spacing, plain controls, and a textarea/CodeMirror editor that fights the
-viewport. This document is the plan to make Demiplane feel like a well-loved
-pocket dimension — and to make the editor genuinely pleasant on a phone.
+Demiplane is a **minimal notes app with a fantasy identity** — an Obsidian-like
+writing surface with a restrained arcane skin. The chrome should dissolve around
+the document. The fantasy is atmosphere and language, never extra controls.
 
-## Design principles
+## Core principle
 
-1. **Mobile is the primary device.** The phone is where notes actually happen.
-   Every layout decision starts there and scales up.
-2. **One clear action per surface.** On mobile, the list and the note are
-   separate screens, not stacked halves.
-3. **Arcane, not noisy.** The flavour lives in words, typography, colour, and
-   small motion — never in clutter. Clarity outranks flavour where it matters.
-4. **Fast and quiet.** No layout shift, no spinners where optimistic UI works,
-   no jank from fixed pixel heights fighting the viewport.
-5. **Offline is normal, not an error state.**
+If a UI element can disappear until it is needed, it disappears. If a control
+can be a keyboard shortcut or a contextual action, it becomes one. If something
+is decorative but does not improve hierarchy or atmosphere, it is removed.
+
+The result should look almost plain at first glance. Then the typography, the
+aged gold, the language, and the small details register: *this is a magical
+archive.*
+
+## Hierarchy of attention
+
+1. **The page** — title and body dominate every screen.
+2. **Primary actions** — new page, search, open.
+3. **Progressive disclosure** — metadata, attachments, filters, backup, all
+   behind a quiet menu or keyboard shortcut.
+4. **Atmosphere** — colour, type, hairlines, copy.
+
+## The editor is a single canvas
+
+- **One page, one continuous document.** No permanent split editor/preview. No
+  IDE feeling.
+- Writing width is constrained to a comfortable reading measure
+  (`max-w-[44rem]`, centred) with generous vertical padding.
+- The surface is the raw document (markdown source), set in a readable serif —
+  like inscribing a page, not filling a form.
+- **The formatting toolbar is removed.** `@uiw/react-md-editor` runs with
+  `hideToolbar`. Formatting is markdown syntax plus shortcuts:
+
+  | Shortcut | Action |
+  | --- | --- |
+  | `Cmd/Ctrl + E` | Reveal / veil the page (preview toggle) |
+  | `Cmd/Ctrl + B` | Bold the selection |
+  | `Cmd/Ctrl + I` | Italicise the selection |
+  | `Cmd/Ctrl + K` | Wrap the selection as a link |
+
+- **Preview is a mode, not a pane.** The same canvas renders the sanitized
+  `marked` + DOMPurify output; toggle back to edit. Never side-by-side.
+
+## The top bar is nearly empty
+
+Permanently: the back affordance (mobile), the page title, a tiny sync dot, and
+one overflow menu. Nothing else.
+
+The **page menu** (the `⋯`) is the progressive-disclosure surface for everything
+occasional:
+
+- Reveal / veil the page
+- **Satchel** (folder)
+- **Sigils** (tags)
+- **Haversack** (attachments + upload)
+- **Banish this page** / recover from the Void
+
+The default page shows only a title and its content.
+
+## The sidebar is a summonable archive
+
+- On desktop it is a quiet 288px column that collapses completely. A slim gilded
+  edge trigger on the left summons it again; `Cmd/Ctrl + \` toggles it. The
+  collapsed state is remembered per device.
+- On mobile it is simply the list screen; selecting a page opens the editor
+  full-screen with a back chevron (master–detail).
+- Contents, kept minimal: wordmark, one quiet search field (Scry), a small
+  `+`, and an overflow menu. **Filters (satchel, Void) are hidden** behind the
+  filter affordance. **Backup and sign-out live in the overflow menu**, not as
+  permanent chrome.
+- No per-note tag/folder chips in the list — title and excerpt only.
+
+## Empty states
+
+Extremely quiet, lots of negative space, typography carries it:
+
+```
+        This demiplane is empty.
+
+        Inscribe a new page.
+
+        [ + Inscribe a new page ]
+```
+
+## Status & feedback
+
+- A single **sync dot** in the top bar. Full flavour and plain status live in its
+  accessible name and tooltip; clicking opens a portal (syncs).
+- Optimistic saves; never block typing on the network.
+- Discrete events (grimoire copied, timeline folded in, conflict preserved)
+  appear as a stacked toast, then leave.
 
 ## Visual language — modern arcane archive
 
-The base is still a clean, contemporary application: generous spacing, Inter for
-all controls, crisp inputs, restrained borders. The atmosphere comes from
-*material* choices — warm charcoal, aged gold, deep violet, warm ivory — plus
-one display serif. Think a grimoire translated into a well-made modern app, not
-medieval cosplay. **No parchment, leather, wood, scrolls, runes, frames,
-particles, smoke, or gratuitous glow.** Ornament only where it reinforces
-hierarchy.
+A clean contemporary app with warm, archival materials. **No parchment, leather,
+wood, scrolls, runes, frames, particles, smoke, or gratuitous glow.** Ornament
+only where it reinforces hierarchy.
 
-### Colour tokens (semantic, not literal)
+### Colour tokens
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--bg` (void-950) | `#131110` | Warm charcoal ground |
-| `--surface` (void-900) | `#1a1714` | Sidebar, headers, panels |
-| `--surface-raised` (void-800) | `#211d19` | Cards, popovers, toasts |
-| `--border` (void-700) | `#2e2823` | Hairlines, dividers |
-| `--text` (parchment-100) | `#f1e9da` | Warm ivory |
-| `--text-muted` (parchment-500) | `#a4998a` | Secondary text, meta |
-| `--violet` (arcane-500) | `#5f4d92` | Primary action |
-| `--gold` (gold-400) | `#c3a15c` | Aged gilding: wordmark, sigils, focus |
-| `--gold-300` | `#d9c08a` | Highlights on dark surfaces |
-| `--danger` (ember-400) | `#c76f66` | Banish, destructive |
-| `--success` (sage-400) | `#86a98c` | Synced, remembered |
+| void-950 | `#131110` | Warm charcoal ground |
+| void-900 | `#1a1714` | Sidebar, headers |
+| void-800 | `#211d19` | Cards, popovers, toasts |
+| void-700 | `#2e2823` | Hairlines, dividers |
+| parchment-100 | `#f1e9da` | Warm ivory text |
+| parchment-500 | `#a4998a` | Secondary text, meta |
+| arcane-500 | `#5f4d92` | Primary action (deep violet) |
+| gold-400 | `#c3a15c` | Aged gilding: wordmark, focus, accents |
+| gold-300 | `#d9c08a` | Highlights on dark surfaces |
+| ember-400 | `#c76f66` | Destructive |
+| sage-400 | `#86a98c` | Synced |
 
-Gold is a **muted brass**, never bright yellow. Gilded hairlines
-(`--gild-faint`, `rgba(195,161,92,0.16)`) mark structural dividers; focus rings
-and selection use the same gold at low alpha.
+Gold is muted brass, never bright yellow. Gilded hairlines mark structural
+dividers; focus rings and selection use the same gold at low alpha.
 
 ### Typography
 
 | Role | Family | Notes |
 | --- | --- | --- |
-| UI / controls | **Inter** (variable) | Buttons, inputs, lists, meta. The app stays legible and modern. |
-| Wordmark & labels | **Cinzel** | "Demiplane" and small uppercase labels, letterspaced, gilded. |
-| Note title & preview | **Spectral** | Serif for inscribing and reading a page — headings use Cinzel. |
-| Code | `ui-monospace` stack | Inline code and code blocks. |
+| UI / controls | **Inter** | Buttons, inputs, lists, meta. |
+| Wordmark & labels | **Cinzel** | "Demiplane" and small uppercase labels, gilded. |
+| Note title, editor, preview | **Spectral** | The manuscript surface. Preview headings use Cinzel. |
+| Code | `ui-monospace` | Inline code and blocks. |
 
-Self-hosted via `@fontsource` so they work offline and behind corporate
-networks (no Google Fonts CDN, no layout flash). Load only Latin subsets.
-
-Type scale: 11 / 12 / 13 / 15 / 16 / 18 / 20, line-height 1.55 body. Controls
-are never set in a display serif.
+Self-hosted via `@fontsource` (offline, no CDN). Controls are never set in a
+display serif.
 
 ### Signature details
 
-- The wordmark carries a faint gilded underline (inscription rule).
-- Structural dividers (sidebar header/footer, editor header) use the gilded
-  hairline; content dividers stay neutral.
-- The active note gets a 2px gilded inset rule on its leading edge.
-- The auth card carries a single gilded top hairline.
-- Icons are Lucide at `stroke-width: 1.6` for a slightly engraved feel.
-
-### Iconography
-
-**Lucide** (`lucide-react`) at 16–20px, `stroke-width: 1.6`, `--text-muted`
-by default, `--gold` on active. Icons always pair with a text label or an
-`aria-label` — never icon-only without an accessible name.
-
-### Shape, space, motion
-
-- Radii: 10px controls, 14px cards, 999px pills.
-- Spacing scale: 4 / 8 / 12 / 16 / 20 / 24 / 32. Err on the side of roomier —
-  the previous pass was cramped; default to 16–20px section padding on mobile.
-- Elevation: neutral shadow (`0 16px 40px rgba(0,0,0,0.5)`), no coloured glow.
-- Motion: 150–200ms `ease-out` for state changes; 250ms for drawers/toasts.
-  Honor `prefers-reduced-motion: reduce` (drop transforms, keep opacity).
-- No fixed/overlapping chrome on mobile: status toasts stack in one bottom
-  container, the list screen has no floating button over its footer, and every
-  fixed element accounts for `env(safe-area-inset-*)`.
-
-## Component system
-
-Adopt **Radix UI primitives** for the elements we keep hand-rolling badly —
-Dialog, Dropdown, Tooltip, Toast, Sheet/Drawer. They are unstyled, accessible
-(ARIA, focus trap, keyboard), and tiny. We style them with our tokens. This is
-the shadcn/ui pattern: the component code lives in our repo
-(`frontend/components/ui/*`), so we own it and can flavour it.
-
-Start with what the app actually needs, not a component zoo:
-
-| Component | Replaces | Why |
-| --- | --- | --- |
-| `Button` (variants: primary/ghost/danger, sizes sm/md, `icon`) | ad-hoc classes | consistent hit area ≥44px touch |
-| `IconButton` | bare `<button>` glyphs | accessible names, focus ring |
-| `Input`, `Textarea`, `Label` | raw inputs | unified focus/border |
-| `Dialog` (Radix) | `window.confirm` for Banish | themed confirm, restores focus, works on mobile |
-| `Sheet` (Radix) | — | mobile satchel/settings drawer |
-| `Toast` (Radix or custom) | floating dismiss boxes | consistent status surface |
-| `Chip` | satchel/sigil pills | tappable tags |
-| `Tooltip` (Radix) | `title` attributes | proper disclosure on desktop |
-| `Skeleton` | raw spinners | no layout shift while loading |
-
-## Information architecture & responsive layout
-
-### Mobile (primary)
-
-- **Master–detail, two screens:** the satchel list fills the screen; selecting a
-  page opens the editor full-screen with a back chevron. No stacked halves.
-- **Top bar:** back/menu, note title, status dot. Sticky, translucent,
-  safe-area padded.
-- **List screen:** search at top, "Inscribe a new page" as a prominent button
-  (and a FAB once ≥1 page exists), satchels/sigils as filter chips.
-- **Editor screen:** title field, a **formatting toolbar** pinned above the
-  keyboard, body, and a preview toggle. On mobile, editor *or* preview —
-  never side by side.
-- **Viewport:** use `100dvh` and `env(safe-area-inset-*)` so browser chrome and
-  notches do not crop content.
-- **Touch:** ≥44px targets, 8px minimum gaps, no hover-only affordances.
-
-### Tablet / desktop
-
-- Two-pane: sidebar (320px) + editor/preview. Preview may sit beside the editor.
-- Keyboard shortcuts: `Cmd/Ctrl+K` search, `Cmd/Ctrl+Enter` toggle preview,
-  `Cmd/Ctrl+N` new page, `Esc` close dialogs.
-
-## Editor
-
-The editor is the heart of the app and the biggest source of jank. Move from the
-current bespoke CodeMirror + fixed split to a purpose-built library.
-
-**Decision: [`@uiw/react-md-editor`](https://github.com/uiwjs/react-md-editor)
-(MIT).** It ships a markdown textarea with a real formatting toolbar
-(bold/italic/heading/list/quote/link/code/table), drag-and-drop and paste image
-handling, and a preview mode — all mobile-friendly and actively maintained.
-
-How we will use it:
-
-- `preview="edit"` on mobile (editor surface + toolbar only), `preview="live"`
-  side-by-side on desktop.
-- Keep our **own `marked` + DOMPurify preview** for the read view so output
-  stays sanitized and matches the Spectral "tome" styling; do not trust a second
-  markdown pipeline for untrusted content.
-- Wire the Haversack into its drop/paste pipeline so images upload and insert a
-  markdown reference automatically.
-- Theming via `data-color-mode="dark"` plus token overrides scoped to
-  `.w-md-editor` (fonts, background, toolbar, focus ring).
-
-Risks / alternatives: `@uiw/react-md-editor` is textarea-based (great on mobile,
-less syntax-highlighted than CodeMirror). If we later want true WYSIWYG markdown,
-**Milkdown** (ProseMirror) is the upgrade path; it is heavier and can normalise
-markdown, so it is deferred.
-
-## Editor polish checklist
-
-- [ ] Formatting toolbar with correct `aria-label`s and shortcut hints.
-- [ ] Preview toggle remembered per device.
-- [ ] Autosave indicator: "Inscribed…" → "Committed to the demiplane."
-- [ ] Word count / last-synced in a subtle footer.
-- [ ] Haversack drop target with visible drop zone.
-- [ ] Focus mode on desktop (hide sidebar).
-
-## Status, sync & feedback
-
-- A single unobtrusive **status dot + short line** in the header, with the full
-  flavour text on tap/expand. Plain `aria-live` status always present.
-- Optimistic saves; never block typing on the network.
-- Toasts for discrete events (export copied, import folded in, conflict kept).
-- Offline is a calm state, not an alarm: "You've stepped outside the ley lines."
+- Faint gilded underline on the wordmark.
+- Gilded hairlines on structural dividers only.
+- 2px gilded inset rule on the active note's leading edge.
+- Single gilded top hairline on the auth card.
+- Lucide icons at `stroke-width: 1.6`.
 
 ## Accessibility
 
-- Focus-visible rings in `--accent` on every interactive element.
-- Dialogs/drawers trap focus and restore it (Radix).
-- Colour contrast ≥ 4.5:1 for body text on surfaces.
+- Focus-visible gold rings on every interactive element.
+- Menus/popovers close on Escape and outside click; triggers expose
+  `aria-expanded`.
+- Colour contrast ≥ 4.5:1 for body text.
 - `prefers-reduced-motion` respected.
 - Screen readers get literal meaning via `sr-only` plain statuses.
 
-## Rollout phases
+## Rollout
 
-1. **Foundation** ✅ tokens, self-hosted fonts, Lucide, responsive
-   master–detail shell, `Button`/`Input` primitives, safe-area + `dvh` fixes.
-   *Revised* to be modern-first (Inter everywhere, Cinzel wordmark only) and to
-   open up spacing after the first pass felt cramped.
-2. **Editor** ✅ swapped to `@uiw/react-md-editor`, toolbar, preview toggle,
-   drop integration, themed neutral.
-3. **Components** — Radix `Dialog`/`Sheet`/`Toast`/`Tooltip`, replace
-   `window.confirm`, unify loading with skeletons.
-4. **Polish** — motion pass, focus mode, keyboard shortcuts, light theme.
+1. Foundation ✅ tokens, fonts, Lucide, master–detail shell.
+2. Content-first rework ✅ single-canvas serif editor (no toolbar), nearly empty
+   top bar, page menu for metadata, summonable sidebar, quiet empty states.
+3. Components ⏳ Radix Dialog/Sheet/Toast/Tooltip, replace `window.confirm`.
+4. Polish ⏳ command palette (`Cmd/Ctrl+K`), motion, focus mode, light theme.
 
-Each phase keeps the Flavour Charter in `AGENTS.md` intact — new strings go into
-the lexicon.
+New strings always go into the lexicon in `AGENTS.md`.

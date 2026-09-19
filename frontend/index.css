@@ -208,40 +208,60 @@ body {
   color: var(--color-gold-300);
 }
 
-/* Editor: modern and crisp, warmed to the archive. */
+/* Editor: one continuous, serif page. No toolbar, no IDE chrome. */
 .w-md-editor {
   background: transparent !important;
   color: var(--color-parchment-100) !important;
   box-shadow: none !important;
-  font-family: var(--font-sans) !important;
+  border: none !important;
+  font-family: var(--font-serif) !important;
 }
 .w-md-editor-toolbar {
-  background: var(--color-void-900) !important;
-  border-bottom: 1px solid var(--color-void-700) !important;
-  padding: 8px 10px !important;
+  display: none !important;
 }
-.w-md-editor-toolbar ul > li > button {
-  color: var(--color-parchment-500) !important;
-  border-radius: 8px;
-}
-.w-md-editor-toolbar ul > li > button:hover {
-  color: var(--color-gold-300) !important;
-  background: rgba(195, 161, 92, 0.1) !important;
+.w-md-editor-content,
+.w-md-editor-area {
+  background: transparent !important;
+  border: none !important;
 }
 .w-md-editor-text-pre > code,
-.w-md-editor-text-input,
 .w-md-editor-text {
-  font-family: var(--font-sans) !important;
-  font-size: 15px !important;
-  line-height: 1.75 !important;
+  font-family: var(--font-serif) !important;
+  font-size: 16.5px !important;
+  line-height: 1.85 !important;
 }
-.w-md-editor-text-input {
+.w-md-editor-text-pre > code {
   color: var(--color-parchment-100) !important;
-  -webkit-text-fill-color: currentColor !important;
+}
+/* The textarea stays transparent over the highlighted layer. */
+.w-md-editor-text-input {
+  font-family: var(--font-serif) !important;
+  font-size: 16.5px !important;
+  line-height: 1.85 !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   caret-color: var(--color-gold-300) !important;
 }
+.w-md-editor-text-input::placeholder {
+  color: var(--color-parchment-500) !important;
+  -webkit-text-fill-color: var(--color-parchment-500) !important;
+}
 .w-md-editor-text-pre {
-  opacity: 0.5;
+  opacity: 1 !important;
+}
+/* Calm the syntax highlighter to a monochrome manuscript. */
+.w-md-editor-text-pre .token {
+  color: inherit !important;
+  background: none !important;
+}
+.w-md-editor-text-pre .token.punctuation,
+.w-md-editor-text-pre .token.blockquote,
+.w-md-editor-text-pre .token.list {
+  color: var(--color-parchment-500) !important;
+}
+.w-md-editor-text-pre .token.title,
+.w-md-editor-text-pre .token.bold {
+  color: var(--color-gold-300) !important;
 }
 .wmde-markdown {
   background: transparent !important;

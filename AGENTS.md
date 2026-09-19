@@ -74,8 +74,10 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
 - CodeMirror editor, preview, satchel/sigil, search, Void (soft delete)
 - Attachments (Haversack) and zip export/import (grimoire)
 - 14-day remembered sessions with sliding renewal
-- UX overhaul in progress — see [`docs/UX.md`](docs/UX.md) (Phases 1–2 done:
-  tokens/fonts/Lucide, responsive master–detail shell, `@uiw/react-md-editor`)
+- Content-first UX: single-canvas serif editor with no toolbar, a nearly empty
+  top bar, metadata behind a page menu, and a summonable sidebar — see
+  [`docs/UX.md`](docs/UX.md). Shortcuts: `Cmd/Ctrl+E` preview, `B`/`I`/`K`
+  format, `\` toggle sidebar, `N` new page.
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set

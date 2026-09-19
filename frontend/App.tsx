@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { ChevronsRight } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
 import { AuthScreen } from "./components/AuthScreen";
 import { EditorPane } from "./components/EditorPane";
@@ -11,10 +12,23 @@ function readLoginToken(): string | null {
   return params.get("login");
 }
 
+function initialSidebarState(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem("demiplane.sidebar") !== "closed";
+}
+
 export function App() {
   const store = useDemiplane();
   const [pendingToken, setPendingToken] = useState<string | null>(readLoginToken);
   const [notice, setNotice] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(initialSidebarState);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "demiplane.sidebar",
+      sidebarOpen ? "open" : "closed",
+    );
+  }, [sidebarOpen]);
 
   const clearToken = useCallback(() => {
     setPendingToken(null);
@@ -26,6 +40,22 @@ export function App() {
   useEffect(() => {
     if (store.auth === "authenticated" && pendingToken) clearToken();
   }, [store.auth, pendingToken, clearToken]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      if (event.key === "\\") {
+        event.preventDefault();
+        setSidebarOpen((value) => !value);
+      }
+      if (event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        void store.createNote();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [store]);
 
   const confirmMagicLink = useCallback(
     async (token: string, remember: boolean) => {
@@ -85,23 +115,36 @@ export function App() {
     <div className="flex h-[100dvh] overflow-hidden">
       <div
         className={cx(
-          "h-full w-full lg:flex lg:w-80 lg:flex-none",
+          "h-full w-full lg:w-72 lg:flex-none",
           showEditor ? "hidden" : "block",
+          sidebarOpen ? "lg:block" : "lg:hidden",
         )}
       >
         <Sidebar
           notes={store.notes}
           activeId={store.activeId}
           email={store.email}
-          syncStatus={store.syncStatus}
           onSelect={store.setActiveId}
           onNew={() => void store.createNote()}
           onSync={() => void store.refresh()}
           onLogout={() => void store.logout()}
           onExport={() => void handleExport()}
           onImport={(file) => void handleImport(file)}
+          onCollapse={() => setSidebarOpen(false)}
         />
       </div>
+
+      {!sidebarOpen ? (
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Summon the archive"
+          title="Summon the archive"
+          className="fixed left-0 top-1/2 z-30 hidden h-16 w-5 -translate-y-1/2 place-items-center rounded-r-lg border border-l-0 border-[var(--color-void-700)] bg-void-900 text-parchment-500 transition-colors hover:text-gold-300 lg:grid"
+        >
+          <ChevronsRight size={15} aria-hidden="true" />
+        </button>
+      ) : null}
 
       <main
         className={cx(
@@ -111,9 +154,11 @@ export function App() {
       >
         <EditorPane
           note={active}
+          syncStatus={store.syncStatus}
           onSave={store.saveNote}
           onDelete={store.deleteNote}
           onUndelete={store.undeleteNote}
+          onSync={() => void store.refresh()}
           onBack={() => store.setActiveId(null)}
           onNew={() => void store.createNote()}
         />

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -50,7 +50,8 @@ export function Button({
       {...props}
       className={cx(
         "inline-flex items-center justify-center rounded-[var(--radius-control)] font-medium",
-        "transition-[background-color,border-color,transform] duration-150 active:translate-y-px",
+        "transition-[background-color,border-color,transform,box-shadow] duration-150",
+        "active:translate-y-px active:scale-[0.98]",
         "disabled:cursor-not-allowed disabled:opacity-45 disabled:active:translate-y-0",
         VARIANTS[variant],
         SIZES[size],
@@ -87,7 +88,7 @@ export function IconButton({
       title={label}
       className={cx(
         "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-control)]",
-        "transition-colors duration-150 disabled:opacity-45",
+        "transition-[color,background-color,border-color,transform] duration-150 active:scale-95 disabled:opacity-45",
         VARIANTS[variant],
         dims,
         className,
@@ -206,18 +207,40 @@ export function Menu({
   panelClassName?: string;
   children: (close: () => void) => ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [closing, setClosing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const timer = useRef<number | null>(null);
+  const open = mounted && !closing;
+
+  const close = useCallback(() => {
+    setClosing(true);
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      setMounted(false);
+      setClosing(false);
+    }, 160);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (mounted && !closing) {
+      close();
+      return;
+    }
+    if (timer.current) window.clearTimeout(timer.current);
+    setClosing(false);
+    setMounted(true);
+  }, [mounted, closing, close]);
 
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
+        close();
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     };
     document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -225,7 +248,14 @@ export function Menu({
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, close]);
+
+  useEffect(
+    () => () => {
+      if (timer.current) window.clearTimeout(timer.current);
+    },
+    [],
+  );
 
   return (
     <div ref={ref} className="relative">
@@ -234,7 +264,7 @@ export function Menu({
         aria-label={label}
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggle}
         className={cx(
           "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-parchment-500",
           "transition-colors hover:bg-white/[0.06] hover:text-parchment-100",
@@ -243,16 +273,17 @@ export function Menu({
       >
         <span aria-hidden="true">{trigger}</span>
       </button>
-      {open ? (
+      {mounted ? (
         <div
           className={cx(
             "absolute right-0 z-50 mt-2 w-72 rounded-[var(--radius-card)]",
             "border border-[var(--color-void-700)] bg-void-800 p-2",
             "shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
+            closing ? "animate-pop-out" : "animate-pop-in",
             panelClassName,
           )}
         >
-          {children(() => setOpen(false))}
+          {children(close)}
         </div>
       ) : null}
     </div>

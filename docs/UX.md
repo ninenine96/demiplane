@@ -98,13 +98,22 @@ under `prefers-reduced-motion`.
   one moment there is no content.
 - **Pages materialise** — switching notes cross-fades and lifts the canvas
   (`animate-page-in`), so a page feels drawn rather than swapped.
+- **Panes open and close** — menus and popovers pop in *and* out (kept mounted
+  through a short exit); the archive pane animates its width shut on desktop
+  rather than vanishing; below `lg` the list and canvas slide in from opposite
+  edges as master→detail.
 - **The archive slides in** — the sidebar enters with a short horizontal ease.
+- **The list settles** — note rows stagger in with a small delay.
 - **Opening a portal** — while syncing, the sync dot becomes a spinning gold
   ring instead of a pulse.
-- **Toasts rise** — status messages lift in with a soft overshoot.
-- **Arcane bloom** — primary buttons gain a faint violet glow on hover.
+- **Toasts rise and sink** — status messages lift in with a soft overshoot and
+  fade down on dismiss.
+- **Arcane bloom** — primary buttons gain a faint violet glow on hover and
+  press in slightly on click.
+- **Attachments appear** — new Haversack chips ease in.
 
-Keep motion to entrances and state changes. Never animate the text being typed.
+Keep motion to entrances, exits and state changes. Never animate the text being
+typed.
 
 
 ## Editor alignment

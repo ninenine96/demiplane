@@ -411,6 +411,107 @@ svg.lucide {
   animation: toast-in 0.34s cubic-bezier(0.2, 0.7, 0.3, 1.08) both;
 }
 
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.32s ease-out both;
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.32s ease-out both;
+}
+.animate-pop-in {
+  animation: pop-in 0.16s ease-out both;
+  transform-origin: top right;
+}
+.animate-pop-out {
+  animation: pop-out 0.14s ease-in both;
+  transform-origin: top right;
+}
+.animate-toast-out {
+  animation: toast-out 0.2s ease-in both;
+}
+
+/*
+ * The archive pane slides shut by animating its width, so closing is as smooth
+ * as opening. Below lg it is simply the list screen and ignores this.
+ */
+@media (min-width: 1024px) {
+  .archive-shell {
+    width: 18rem;
+    overflow: hidden;
+    transition:
+      width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.24s ease;
+  }
+  .archive-shell[data-open="false"] {
+    width: 0;
+    opacity: 0;
+  }
+}
+
+/* Below lg the archive and the canvas are separate screens: slide between them. */
+@media (max-width: 1023px) {
+  .archive-shell {
+    animation: slide-in-left 0.32s ease-out both;
+  }
+  .editor-shell {
+    animation: slide-in-right 0.32s ease-out both;
+  }
+}
+
 /* An arcane scrying portal for quiet empty states. */
 .portal {
   position: relative;

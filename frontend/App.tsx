@@ -135,10 +135,10 @@ export function App() {
     <div className="flex h-[100dvh] overflow-hidden">
       <div
         className={cx(
-          "h-full w-full lg:w-72 lg:flex-none",
-          showEditor ? "hidden" : "block",
-          sidebarOpen ? "lg:block" : "lg:hidden",
+          "archive-shell h-full w-full lg:flex-none",
+          showEditor ? "hidden lg:flex" : "flex",
         )}
+        data-open={sidebarOpen ? "true" : "false"}
       >
         <Sidebar
           notes={store.notes}
@@ -166,7 +166,7 @@ export function App() {
           onClick={() => setSidebarOpen(true)}
           aria-label="Summon the archive"
           title="Summon the archive"
-          className="fixed left-0 top-1/2 z-30 hidden h-16 w-5 -translate-y-1/2 place-items-center rounded-r-lg border border-l-0 border-[var(--color-void-700)] bg-void-900 text-parchment-500 transition-colors hover:text-gold-300 lg:grid"
+          className="animate-fade-in-up fixed left-0 top-1/2 z-30 hidden h-16 w-5 -translate-y-1/2 place-items-center rounded-r-lg border border-l-0 border-[var(--color-void-700)] bg-void-900 text-parchment-500 transition-colors hover:text-gold-300 lg:grid"
         >
           <ChevronsRight size={15} aria-hidden="true" />
         </button>
@@ -174,7 +174,7 @@ export function App() {
 
       <main
         className={cx(
-          "min-h-0 min-w-0 flex-1",
+          "editor-shell min-h-0 min-w-0 flex-1",
           showEditor ? "block" : "hidden lg:block",
         )}
       >
@@ -225,15 +225,26 @@ function Toast({
   tone: "neutral" | "success";
   onDismiss: () => void;
 }) {
+  const [leaving, setLeaving] = useState(false);
+
+  function dismiss() {
+    if (leaving) return;
+    setLeaving(true);
+    window.setTimeout(onDismiss, 200);
+  }
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="animate-toast-in pointer-events-auto w-full max-w-sm rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+      className={cx(
+        "pointer-events-auto w-full max-w-sm rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.5)]",
+        leaving ? "animate-toast-out" : "animate-toast-in",
+      )}
     >
       <StatusLine flavour={flavour} plain={plain} tone={tone} />
       <button
-        onClick={onDismiss}
+        onClick={dismiss}
         className="mt-3 text-xs text-parchment-500 transition-colors hover:text-parchment-100"
       >
         Dismiss

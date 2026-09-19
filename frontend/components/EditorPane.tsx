@@ -308,7 +308,7 @@ export function EditorPane({
               {attachments.length > 0 ? (
                 <>
                   <MenuLabel>Haversack</MenuLabel>
-                  <ul className="flex flex-wrap gap-1.5 px-2 pb-1">
+                  <ul className="animate-fade-in-up flex flex-wrap gap-1.5 px-2 pb-1">
                     {attachments.map((attachment) => (
                       <li
                         key={attachment.id}

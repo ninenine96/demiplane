@@ -252,9 +252,13 @@ export function Sidebar({
                 : FLAVOUR.emptyNotes}
           </EmptyState>
         ) : (
-          <ul className="animate-fade-in-up space-y-0.5">
-            {visible.map((note) => (
-              <li key={note.id}>
+          <ul className="space-y-0.5">
+            {visible.map((note, index) => (
+              <li
+                key={note.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(index, 12) * 18}ms` }}
+              >
                 <button
                   onClick={() => onSelect(note.id)}
                   className={cx(

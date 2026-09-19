@@ -29,7 +29,7 @@ export interface DemiplaneStore {
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
   submitMagicLink: (email: string) => Promise<{ devLink?: string }>;
-  confirmMagicLink: (token: string) => Promise<void>;
+  confirmMagicLink: (token: string, remember: boolean) => Promise<void>;
   clearConflicts: () => void;
   exportGrimoire: () => Promise<void>;
   importGrimoire: (
@@ -125,8 +125,8 @@ export function useDemiplane(): DemiplaneStore {
   }, []);
 
   const confirmMagicLink = useCallback(
-    async (token: string) => {
-      const result = await api.verifyMagicLink(token);
+    async (token: string, remember: boolean) => {
+      const result = await api.verifyMagicLink(token, remember);
       setEmail(result.email);
       setAuth("authenticated");
       await afterSync();

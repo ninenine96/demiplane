@@ -24,3 +24,14 @@ export function apiError(
 export function ok<T>(data: T, init: ResponseInit = {}): Response {
   return json({ data }, init);
 }
+
+/** Returns a copy of the response with an extra Set-Cookie header appended. */
+export function withCookie(response: Response, cookie: string): Response {
+  const headers = new Headers(response.headers);
+  headers.append("set-cookie", cookie);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}

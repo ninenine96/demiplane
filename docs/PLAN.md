@@ -240,6 +240,9 @@ filtering entirely.
 8. **Deploy** — provision, secrets, deploy, cross-device smoke test.
    ✅ deployed at https://demiplane.prohan.workers.dev; phone smoke test pending
 9. **Optional** — custom domain, conflict-copy UX, D1 FTS, test coverage. ⏳
+10. **UX overhaul** — see [`UX.md`](UX.md). Phases 1–2 done (design tokens,
+    self-hosted fonts, Lucide, responsive master–detail shell,
+    `@uiw/react-md-editor`). Next: Radix Dialog/Sheet/Toast, motion, focus mode.
 
 ### Local development notes
 

@@ -5,7 +5,7 @@ import { Button, StatusLine } from "./ui";
 interface AuthScreenProps {
   pendingToken: string | null;
   onSubmit: (email: string) => Promise<{ devLink?: string }>;
-  onConfirm: (token: string) => Promise<void>;
+  onConfirm: (token: string, remember: boolean) => Promise<void>;
 }
 
 export function AuthScreen({
@@ -16,6 +16,7 @@ export function AuthScreen({
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [devLink, setDevLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errorPlain, setErrorPlain] = useState<string>(PLAIN.authError);
@@ -45,7 +46,7 @@ export function AuthScreen({
     setBusy(true);
     setError(null);
     try {
-      await onConfirm(pendingToken);
+      await onConfirm(pendingToken, remember);
     } catch (confirmError) {
       setError(
         confirmError instanceof Error
@@ -78,6 +79,22 @@ export function AuthScreen({
               A sending stone found its way here. Seal the portal to enter your
               pocket dimension.
             </p>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-void-950/50 p-3">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[var(--color-arcane-500)]"
+              />
+              <span className="text-sm">
+                <span className="block text-parchment-100">
+                  {FLAVOUR.rememberLocation}
+                </span>
+                <span className="mt-0.5 block text-xs text-parchment-500">
+                  {FLAVOUR.rememberLocationHint}
+                </span>
+              </span>
+            </label>
             <Button onClick={handleConfirm} disabled={busy} className="w-full">
               {busy ? FLAVOUR.loading : FLAVOUR.confirmLogin}
             </Button>

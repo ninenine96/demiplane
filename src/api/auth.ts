@@ -5,8 +5,11 @@ import { apiError, ok } from "../lib/responses";
 import {
   clearedSessionCookie,
   createSession,
+  isSecureRequest,
   revokeSession,
   sessionCookie,
+  SESSION_TTL_SECONDS,
+  SHORT_SESSION_TTL_SECONDS,
 } from "../lib/session";
 import { authRequestSchema } from "../lib/validation";
 
@@ -16,10 +19,6 @@ const RATE_WINDOW_SECONDS = 15 * 60;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
-}
-
-function isSecureRequest(url: URL): boolean {
-  return url.protocol === "https:";
 }
 
 /** Step 1: the keeper asks for a sending stone. */
@@ -101,6 +100,9 @@ export async function handleAuthVerify(
     body && typeof body === "object" && "token" in body
       ? (body as { token?: unknown }).token
       : null;
+  const remember =
+    !(body && typeof body === "object" && "remember" in body) ||
+    (body as { remember?: unknown }).remember !== false;
 
   if (typeof token !== "string" || token.length < 16) {
     return apiError(
@@ -131,15 +133,27 @@ export async function handleAuthVerify(
     .bind(nowSeconds(), tokenHash)
     .run();
 
-  const session = await createSession(env, row.email);
+  const session = await createSession(
+    env,
+    row.email,
+    remember ? SESSION_TTL_SECONDS : SHORT_SESSION_TTL_SECONDS,
+  );
   const headers = new Headers();
   headers.append(
     "set-cookie",
-    sessionCookie(session.token, isSecureRequest(url)),
+    sessionCookie(
+      session.token,
+      isSecureRequest(url),
+      remember ? SESSION_TTL_SECONDS : null,
+    ),
   );
 
   return ok(
-    { email: row.email, message: FLAVOUR.loginConfirmed },
+    {
+      email: row.email,
+      remembered: remember,
+      message: FLAVOUR.loginConfirmed,
+    },
     { headers },
   );
 }

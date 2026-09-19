@@ -22,8 +22,14 @@ import {
 } from "./api/attachments";
 import { handleExport, handleImport } from "./api/export";
 import { handleSyncPull, handleSyncPush } from "./api/sync";
-import { apiError, ok } from "./lib/responses";
-import { readSession } from "./lib/session";
+import { apiError, ok, withCookie } from "./lib/responses";
+import {
+  isSecureRequest,
+  readSession,
+  sessionCookie,
+  SESSION_TTL_SECONDS,
+  type ActiveSession,
+} from "./lib/session";
 import { noteInputSchema, syncPushSchema } from "./lib/validation";
 
 const NOTE_PATH = /^\/api\/notes\/([A-Za-z0-9-]+)$/;
@@ -40,7 +46,17 @@ export default {
     }
 
     try {
-      return await handleApi(request, env, url);
+      const session = await readSession(env, request);
+      const response = await handleApi(request, env, url, session);
+
+      // Sliding expiry: refresh the cookie when an active keeper was renewed.
+      if (session?.renew) {
+        return withCookie(
+          response,
+          sessionCookie(session.token, isSecureRequest(url), SESSION_TTL_SECONDS),
+        );
+      }
+      return response;
     } catch (error) {
       console.error("[Demiplane] the weave tore", error);
       return apiError(
@@ -56,6 +72,7 @@ async function handleApi(
   request: Request,
   env: Env,
   url: URL,
+  session: ActiveSession | null,
 ): Promise<Response> {
   const { pathname } = url;
   const method = request.method;
@@ -75,7 +92,6 @@ async function handleApi(
   }
 
   // --- Everything below needs a valid session ----------------------------
-  const session = await readSession(env, request);
   if (!session) {
     return apiError(401, FLAVOUR.unauthorized, "Unauthorized.");
   }

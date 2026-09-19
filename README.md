@@ -13,8 +13,14 @@ in.
 ## Features
 
 - **Passwordless magic-link sign-in** — self-hosted on your own origin, so no
-  third-party auth domain to get blocked. Scanner-safe confirm step.
-- **Markdown editor with live preview** — CodeMirror 6, `marked` + DOMPurify.
+  third-party auth domain to get blocked. Scanner-safe confirm step, and a
+  "remember this location for a fortnight" session that slides forward as you use
+  it.
+- **Markdown editor with live preview** — `@uiw/react-md-editor` with a
+  formatting toolbar, sanitized preview via `marked` + DOMPurify.
+- **A wizard's study, not a dashboard** — Cinzel/Inter/Spectral typography,
+  Lucide icons, mobile-first master–detail layout. See
+  [`docs/UX.md`](docs/UX.md).
 - **Satchels & sigils** (folders & tags) plus instant search.
 - **Offline-first** — notes live in IndexedDB (Dexie); edits sync when a
   connection returns. Conflicts keep both versions. Installable PWA.
@@ -31,7 +37,9 @@ in.
 | --- | --- |
 | Runtime | Cloudflare Workers + Static Assets (`run_worker_first: ["/api/*"]`) |
 | Build | `@cloudflare/vite-plugin` + Vite + TypeScript |
-| Frontend | React + Tailwind, CodeMirror 6, `marked` + DOMPurify |
+| Frontend | React + Tailwind, `@uiw/react-md-editor`, `marked` + DOMPurify |
+| Fonts | Cinzel (display), Inter (UI), Spectral (prose) via `@fontsource` |
+| Icons | `lucide-react` |
 | Local store | Dexie (IndexedDB) |
 | Search | MiniSearch (client-side, offline) |
 | PWA | `vite-plugin-pwa` (Workbox) |

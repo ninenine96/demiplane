@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { EditorView } from "@codemirror/view";
+import MDEditor from "@uiw/react-md-editor";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Paperclip,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import { FLAVOUR, PLAIN } from "../../shared/messages";
 import type { Attachment } from "../../shared/types";
 import type { LocalNote } from "../db/dexie";
 import { api } from "../lib/api";
 import { renderMarkdown } from "../lib/markdown";
-import { Button, StatusLine } from "./ui";
+import { Button, cx, IconButton, StatusLine } from "./ui";
 
 interface EditorPaneProps {
   note: LocalNote | undefined;
@@ -17,6 +23,13 @@ interface EditorPaneProps {
   ) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onUndelete: (id: string) => Promise<void>;
+  onBack: () => void;
+  onNew: () => void;
+}
+
+function prefersDesktopPreview(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia("(min-width: 1024px)").matches;
 }
 
 export function EditorPane({
@@ -24,12 +37,14 @@ export function EditorPane({
   onSave,
   onDelete,
   onUndelete,
+  onBack,
+  onNew,
 }: EditorPaneProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [folder, setFolder] = useState("");
   const [tags, setTags] = useState("");
-  const [showPreview, setShowPreview] = useState(true);
+  const [showPreview, setShowPreview] = useState(prefersDesktopPreview);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -62,6 +77,17 @@ export function EditorPane({
       cancelled = true;
     };
   }, [note?.id]);
+
+  function scheduleSave(
+    patch: Partial<Pick<LocalNote, "title" | "body" | "folder" | "tags">>,
+  ) {
+    const id = note?.id;
+    if (!id) return;
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      void onSave(id, patch);
+    }, 600);
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!note || !files || files.length === 0) return;
@@ -98,27 +124,21 @@ export function EditorPane({
     }
   }
 
-  function scheduleSave(
-    patch: Partial<Pick<LocalNote, "title" | "body" | "folder" | "tags">>,
-  ) {
-    const id = note?.id;
-    if (!id) return;
-    if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      void onSave(id, patch);
-    }, 600);
-  }
-
   if (!note) {
     return (
-      <section className="flex h-full items-center justify-center border-l border-white/5 text-center">
-        <div className="max-w-sm px-6">
-          <p className="font-serif text-xl text-gold-400">
+      <section className="flex h-full items-center justify-center px-6 text-center">
+        <div className="max-w-sm">
+          <p className="font-display text-xl text-gold-400">
             {FLAVOUR.emptyNotes}
           </p>
-          <p className="mt-2 text-sm text-parchment-500">
+          <p className="mt-2 text-sm text-parchment-500">{FLAVOUR.newNote}</p>
+          <Button
+            className="mt-5"
+            onClick={onNew}
+            icon={<Paperclip size={16} />}
+          >
             {FLAVOUR.newNote}
-          </p>
+          </Button>
         </div>
       </section>
     );
@@ -126,9 +146,10 @@ export function EditorPane({
 
   return (
     <section
-      className={`flex h-full min-w-0 flex-col border-l border-white/5 ${
-        dragging ? "ring-2 ring-inset ring-arcane-400/60" : ""
-      }`}
+      className={cx(
+        "flex h-full min-w-0 flex-col bg-void-900/20",
+        dragging && "ring-2 ring-inset ring-arcane-400/60",
+      )}
       onDragOver={(event) => {
         event.preventDefault();
         setDragging(true);
@@ -140,8 +161,18 @@ export function EditorPane({
         void handleFiles(event.dataTransfer.files);
       }}
     >
-      <header className="space-y-3 border-b border-white/5 px-5 py-4">
-        <div className="flex items-center gap-2">
+      <header
+        className="border-b border-[var(--color-void-700)] bg-void-900/70 backdrop-blur"
+        style={{ paddingTop: "var(--safe-top)" }}
+      >
+        <div className="flex items-center gap-2 px-3 py-2.5 sm:px-4">
+          <IconButton
+            label={FLAVOUR.backToArchives}
+            onClick={onBack}
+            className="lg:hidden"
+          >
+            <ArrowLeft size={18} />
+          </IconButton>
           <input
             aria-label="Note title"
             value={title}
@@ -150,21 +181,26 @@ export function EditorPane({
               scheduleSave({ title: event.target.value });
             }}
             placeholder={FLAVOUR.noteTitlePlaceholder}
-            className="min-w-0 flex-1 bg-transparent font-serif text-2xl text-parchment-100 outline-none placeholder:text-parchment-500/60"
+            className="min-w-0 flex-1 bg-transparent px-0 font-display text-lg text-parchment-100 outline-none placeholder:text-parchment-500/70 sm:text-xl"
           />
-          <Button
-            variant="ghost"
+          <IconButton
+            label={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
             onClick={() => setShowPreview((value) => !value)}
-            aria-pressed={showPreview}
+            variant={showPreview ? "ghost" : "ghost"}
           >
-            {showPreview ? "Hide preview" : "Show preview"}
-          </Button>
+            {showPreview ? <EyeOff size={18} /> : <Eye size={18} />}
+          </IconButton>
           {note.deleted ? (
-            <Button variant="ghost" onClick={() => void onUndelete(note.id)}>
-              {FLAVOUR.undelete}
-            </Button>
+            <IconButton
+              label={FLAVOUR.undelete}
+              variant="gold"
+              onClick={() => void onUndelete(note.id)}
+            >
+              <Undo2 size={18} />
+            </IconButton>
           ) : (
-            <Button
+            <IconButton
+              label={FLAVOUR.deleteConfirm}
               variant="danger"
               onClick={() => {
                 if (
@@ -176,26 +212,26 @@ export function EditorPane({
                 }
               }}
             >
-              Banish
-            </Button>
+              <Trash2 size={18} />
+            </IconButton>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2 px-3 pb-3 text-xs sm:px-4">
           <label className="flex items-center gap-2 text-parchment-500">
-            Satchel
+            <span className="sr-only sm:not-sr-only">Satchel</span>
             <input
               value={folder}
               onChange={(event) => {
                 setFolder(event.target.value);
                 scheduleSave({ folder: event.target.value || null });
               }}
-              placeholder="Work/Projects"
-              className="rounded-md border border-white/10 bg-void-950/60 px-2 py-1 text-parchment-100 outline-none focus:border-arcane-400"
+              placeholder={FLAVOUR.folderNew}
+              className="h-8 w-32 rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-2 text-parchment-100 outline-none focus:border-arcane-400 sm:w-44"
             />
           </label>
-          <label className="flex min-w-[12rem] flex-1 items-center gap-2 text-parchment-500">
-            Sigils
+          <label className="flex min-w-[10rem] flex-1 items-center gap-2 text-parchment-500">
+            <span className="sr-only sm:not-sr-only">Sigils</span>
             <input
               value={tags}
               onChange={(event) => {
@@ -207,13 +243,10 @@ export function EditorPane({
                     .filter(Boolean),
                 });
               }}
-              placeholder="ideas, work, arcane"
-              className="min-w-0 flex-1 rounded-md border border-white/10 bg-void-950/60 px-2 py-1 text-parchment-100 outline-none focus:border-arcane-400"
+              placeholder={FLAVOUR.tagNew}
+              className="h-8 min-w-0 flex-1 rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-2 text-parchment-100 outline-none focus:border-arcane-400"
             />
           </label>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
           <input
             ref={fileInput}
             type="file"
@@ -226,20 +259,20 @@ export function EditorPane({
           />
           <Button
             variant="ghost"
+            size="sm"
+            icon={<Paperclip size={15} />}
             onClick={() => fileInput.current?.click()}
             disabled={uploading}
           >
-            {uploading ? FLAVOUR.attachmentUpload : "Tuck into the Haversack"}
-          </Button>
-          {attachments.length > 0 ? (
-            <span className="text-parchment-500">
-              {attachments.length} trinket{attachments.length === 1 ? "" : "s"} stowed
+            <span className="hidden sm:inline">
+              {uploading ? FLAVOUR.attachmentUpload : "Tuck into the Haversack"}
             </span>
-          ) : null}
+            <span className="sm:hidden">Stow</span>
+          </Button>
         </div>
 
         {attachments.length > 0 ? (
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-2 px-3 pb-3 sm:px-4">
             {attachments.map((attachment) => {
               const isImage = (attachment.contentType ?? "").startsWith(
                 "image/",
@@ -247,7 +280,7 @@ export function EditorPane({
               return (
                 <li
                   key={attachment.id}
-                  className="group flex items-center gap-2 rounded-lg border border-white/10 bg-void-950/50 px-2 py-1 text-xs"
+                  className="group flex items-center gap-2 rounded-lg border border-[var(--color-void-700)] bg-void-950/50 px-2 py-1 text-xs"
                 >
                   {isImage ? (
                     <img
@@ -271,13 +304,15 @@ export function EditorPane({
                   >
                     {attachment.filename}
                   </a>
-                  <button
+                  <IconButton
+                    label={`Remove ${attachment.filename}`}
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6"
                     onClick={() => void removeAttachment(attachment.id)}
-                    aria-label={`Remove ${attachment.filename}`}
-                    className="text-parchment-500 hover:text-red-300"
                   >
-                    ×
-                  </button>
+                    <Trash2 size={13} />
+                  </IconButton>
                 </li>
               );
             })}
@@ -285,43 +320,52 @@ export function EditorPane({
         ) : null}
 
         {uploading ? (
-          <StatusLine
-            flavour={FLAVOUR.attachmentUpload}
-            plain={PLAIN.attachmentUploading}
-          />
+          <div className="px-3 pb-2 sm:px-4">
+            <StatusLine
+              flavour={FLAVOUR.attachmentUpload}
+              plain={PLAIN.attachmentUploading}
+            />
+          </div>
         ) : null}
       </header>
 
       {note.deleted ? (
         <div
           role="status"
-          className="border-b border-red-500/20 bg-red-950/30 px-5 py-2 text-xs text-red-200"
+          className="border-b border-ember-400/20 bg-ember-400/10 px-4 py-2 text-xs text-ember-400"
         >
           {FLAVOUR.deleteDone}{" "}
           <span className="sr-only">This note is in the trash.</span>
         </div>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
-        <div className="min-h-0 overflow-hidden border-white/5 lg:border-r">
-          <CodeMirror
+      <div className="flex min-h-0 flex-1">
+        <div
+          className={cx(
+            "h-full min-w-0 flex-1",
+            showPreview && "hidden lg:block",
+          )}
+          data-color-mode="dark"
+        >
+          <MDEditor
             value={body}
-            height="100%"
-            extensions={[
-              markdown({ base: markdownLanguage }),
-              EditorView.lineWrapping,
-            ]}
-            basicSetup={{ lineNumbers: false, foldGutter: false }}
             onChange={(value) => {
-              setBody(value);
-              scheduleSave({ body: value });
+              const next = value ?? "";
+              setBody(next);
+              scheduleSave({ body: next });
             }}
-            placeholder={FLAVOUR.editorPlaceholder}
+            preview="edit"
+            height="100%"
+            visibleDragbar={false}
+            textareaProps={{ "aria-label": "Note body" }}
+            style={{ height: "100%" }}
           />
         </div>
+
         {showPreview ? (
-          <div className="prose-arcane min-h-0 overflow-y-auto px-6 py-5 leading-relaxed">
+          <div className="min-h-0 flex-1 overflow-y-auto border-l border-[var(--color-void-700)] px-5 py-6 sm:px-8 lg:max-w-[50%]">
             <div
+              className="prose-arcane max-w-3xl"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
             />
             {body.trim() === "" ? (

@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from "react";
+import { Download, Plus, Upload } from "lucide-react";
 import { FLAVOUR } from "../../shared/messages";
 import type { LocalNote } from "../db/dexie";
 import type { SyncStatus } from "../sync/engine";
 import { excerpt } from "../lib/markdown";
 import { buildSearchIndex, searchNoteIds } from "../lib/search";
 import { SyncBadge } from "./SyncBadge";
-import { Button, EmptyState } from "./ui";
+import { Button, EmptyState, Input } from "./ui";
 
 interface SidebarProps {
   notes: LocalNote[];
@@ -63,7 +64,10 @@ export function Sidebar({
 
   return (
     <aside className="flex h-full w-full flex-col bg-void-900/60 lg:w-80 lg:flex-none">
-      <header className="space-y-3 border-b border-white/5 px-4 py-4">
+      <header
+        className="space-y-3 border-b border-[var(--color-void-700)] px-4 py-4"
+        style={{ paddingTop: "calc(1rem + var(--safe-top))" }}
+      >
         <div className="flex items-baseline justify-between">
           <h1 className="font-serif text-lg tracking-wide text-gold-400">
             Demiplane
@@ -82,16 +86,19 @@ export function Sidebar({
       </header>
 
       <div className="space-y-2 px-4 py-3">
-        <Button onClick={onNew} className="w-full">
+        <Button
+          onClick={onNew}
+          block
+          icon={<Plus size={16} />}
+        >
           {FLAVOUR.newNote}
         </Button>
-        <input
+        <Input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={FLAVOUR.searchPlaceholder}
           aria-label={FLAVOUR.searchPlaceholder}
-          className="w-full rounded-lg border border-white/10 bg-void-950/60 px-3 py-2 text-sm text-parchment-100 outline-none focus:border-arcane-400"
         />
         <div className="flex items-center gap-2 text-xs">
           <select
@@ -180,7 +187,10 @@ export function Sidebar({
         )}
       </nav>
 
-      <footer className="flex items-center gap-2 border-t border-white/5 px-3 py-3">
+      <footer
+        className="grid grid-cols-2 gap-2 border-t border-[var(--color-void-700)] px-3 py-3"
+        style={{ paddingBottom: "calc(0.75rem + var(--safe-bottom))" }}
+      >
         <input
           ref={importInput}
           type="file"
@@ -194,15 +204,19 @@ export function Sidebar({
         />
         <Button
           variant="ghost"
-          className="flex-1 text-xs"
+          size="sm"
+          icon={<Download size={15} />}
           onClick={onExport}
+          className="h-auto py-2 text-[11px] leading-tight"
         >
           {FLAVOUR.export}
         </Button>
         <Button
           variant="ghost"
-          className="flex-1 text-xs"
+          size="sm"
+          icon={<Upload size={15} />}
           onClick={() => importInput.current?.click()}
+          className="h-auto py-2 text-[11px] leading-tight"
         >
           {FLAVOUR.import}
         </Button>

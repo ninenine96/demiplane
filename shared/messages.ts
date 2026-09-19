@@ -20,6 +20,9 @@ export const FLAVOUR = {
   newNote: "Inscribe a new page.",
   noteTitlePlaceholder: "Name this page...",
   editorPlaceholder: "Speak your mind onto the page...",
+  previewShow: "Reveal the page",
+  previewHide: "Veil the page",
+  backToArchives: "Back to the archives",
   deleteConfirm: "Banish this page?",
   deleteConfirmBody:
     "It will be sent to the Void, where it can be recovered for a while. No page is truly gone until the Void is cleared.",
@@ -49,6 +52,9 @@ export const FLAVOUR = {
   loginPrompt: "Speak the keeper's email to unseal the portal.",
   loginButton: "Send a sending stone",
   confirmLogin: "Seal the portal",
+  rememberLocation: "Remember this location for a fortnight.",
+  rememberLocationHint:
+    "Leave it unchecked to let the portal forget you when this window closes.",
   logout: "You slip back through the portal.",
   unauthorized: "The portal does not recognise you.",
   sessionExpired: "The portal has forgotten you. Ask for a new sending stone.",

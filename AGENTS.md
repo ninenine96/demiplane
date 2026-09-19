@@ -20,7 +20,9 @@ The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 | --- | --- |
 | Runtime | Cloudflare Workers + Static Assets (`run_worker_first: ["/api/*"]`) |
 | Build | `@cloudflare/vite-plugin` + Vite + TypeScript |
-| Frontend | React + Tailwind, CodeMirror 6, `marked` + DOMPurify |
+| Frontend | React + Tailwind, `@uiw/react-md-editor`, `marked` + DOMPurify |
+| Fonts | Cinzel (display), Inter (UI), Spectral (prose) via `@fontsource` |
+| Icons | `lucide-react` |
 | Local store | Dexie (IndexedDB) |
 | Search | MiniSearch (client-side, offline) |
 | PWA | `vite-plugin-pwa` (Workbox) |
@@ -71,6 +73,9 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
 - Offline-first Dexie store + background sync, installable PWA
 - CodeMirror editor, preview, satchel/sigil, search, Void (soft delete)
 - Attachments (Haversack) and zip export/import (grimoire)
+- 14-day remembered sessions with sliding renewal
+- UX overhaul in progress — see [`docs/UX.md`](docs/UX.md) (Phases 1–2 done:
+  tokens/fonts/Lucide, responsive master–detail shell, `@uiw/react-md-editor`)
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
@@ -126,6 +131,10 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Unnamed note | An untitled page |
 | Login prompt | Speak the keeper's email to unseal the portal. |
 | Confirm login | Seal the portal |
+| Remember this location | Remember this location for a fortnight. |
+| Show preview | Reveal the page |
+| Hide preview | Veil the page |
+| Back to list (mobile) | Back to the archives |
 | Session expired | The portal has forgotten you. Ask for a new sending stone. |
 | Invalid sending stone | That sending stone has crumbled to dust. Request another. |
 | Rate limited | The stones need a moment to cool. Try again shortly. |
@@ -158,6 +167,8 @@ note explaining why.
 - Deletes are soft (tombstone in D1); R2 objects move to `trash/`.
 - Sync uses a monotonic `change_log.seq` cursor — never client clocks.
 - Sessions: hashed tokens only, in D1; HttpOnly + Secure + SameSite=Lax cookie.
+  A remembered location lasts 14 days and slides forward on activity; unchecking
+  "remember" yields a browser-session cookie instead.
 - Magic-link tokens: hashed, single-use, 10-minute TTL.
 - Magic links must be confirmed by a button POST, never auto-consumed on GET
   (corporate mail scanners follow links).

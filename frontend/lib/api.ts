@@ -79,10 +79,13 @@ export const api = {
     return body.data;
   },
 
-  async verifyMagicLink(token: string): Promise<{ email: string }> {
+  async verifyMagicLink(
+    token: string,
+    remember: boolean,
+  ): Promise<{ email: string }> {
     const body = await request<{ data: { email: string } }>(
       "/api/auth/verify",
-      { method: "POST", body: JSON.stringify({ token }) },
+      { method: "POST", body: JSON.stringify({ token, remember }) },
     );
     return body.data;
   },

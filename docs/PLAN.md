@@ -237,7 +237,8 @@ filtering entirely.
    authenticated streaming, type/size limits, delete; offline caching still TODO)
 7. **Search + backup** — client-side search (basic substring live; MiniSearch/
    FlexSearch upgrade still TODO), export/import zip grimoire. ✅ export/import done
-8. **Deploy** — provision, secrets, deploy, cross-device smoke test. ⏳ next
+8. **Deploy** — provision, secrets, deploy, cross-device smoke test.
+   ✅ deployed at https://demiplane.prohan.workers.dev; phone smoke test pending
 9. **Optional** — custom domain, conflict-copy UX, D1 FTS, test coverage. ⏳
 
 ### Local development notes

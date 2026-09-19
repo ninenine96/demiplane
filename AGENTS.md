@@ -39,6 +39,7 @@ npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
 npm run db:migrate:local   # apply D1 migrations to the local database
 npm run db:migrate:remote  # apply D1 migrations to the deployed database
+bash scripts/provision.sh  # create deployed D1 + R2, wire database_id, migrate
 ```
 
 Local dev needs the migrations applied once (`npm run db:migrate:local`). With
@@ -53,9 +54,31 @@ Local secrets go in `.dev.vars` (gitignored). Deployed secrets via
 ```
 src/          Worker: router, auth middleware, api/*, db/*, lib/*
 frontend/     React SPA: components, db (dexie), sync engine, lib
+shared/       Types + flavour lexicon shared by Worker and frontend
 migrations/   D1 SQL migrations (numbered, append-only)
-docs/PLAN.md  living build plan
+scripts/      provision.sh (D1 + R2 setup, remote migrations)
+docs/PLAN.md  living build plan + deployment log + risks
+README.md     public-facing overview
 ```
+
+## Status
+
+Built and deployed (see the deployment log in `docs/PLAN.md`):
+
+- Magic-link auth, hashed sessions, dev-mode `devLink`
+- Notes as markdown in R2, D1 index + `change_log` cursor, conflict copies
+- Offline-first Dexie store + background sync, installable PWA
+- CodeMirror editor, preview, satchel/sigil, search, Void (soft delete)
+- Attachments (Haversack) and zip export/import (grimoire)
+
+Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
+subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
+via `wrangler secret put`; `AUTH_DEV_MODE` is `"false"` in production so the API
+never returns a magic link in a response.
+
+Known follow-ups: ranked search (MiniSearch/FlexSearch), offline attachment
+caching, and `preview_urls: false` hardening.
+
 
 ## Flavour Charter — HARD REQUIREMENT
 
@@ -97,6 +120,19 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | 404 | This page has drifted into the Astral Plane. |
 | Unauthorized | The portal does not recognise you. |
 | Empty folder | Nothing inscribed here yet. |
+| Empty Void (trash) | The Void is empty. For now. |
+| Unnamed note | An untitled page |
+| Login prompt | Speak the keeper's email to unseal the portal. |
+| Confirm login | Seal the portal |
+| Session expired | The portal has forgotten you. Ask for a new sending stone. |
+| Invalid sending stone | That sending stone has crumbled to dust. Request another. |
+| Rate limited | The stones need a moment to cool. Try again shortly. |
+| Attachment done | Safely in the Haversack. |
+| Attachment failed | The Haversack resisted. Try again. |
+| Export done | Your grimoire is copied. Keep it somewhere safe. |
+| Import confirm | Restoring will merge another grimoire into this demiplane. |
+| Import done | The fallen timeline has been folded in. |
+| Generic error | A wild surge in the weave. Nothing was lost — try again. |
 
 Extend this table as new moments appear; keep it in one place so the voice
 stays consistent. If a string needs to be plain for safety, add it here with a
@@ -123,4 +159,13 @@ note explaining why.
 - Magic-link tokens: hashed, single-use, 10-minute TTL.
 - Magic links must be confirmed by a button POST, never auto-consumed on GET
   (corporate mail scanners follow links).
+- Attachments: 15 MB cap, content-type allowlist, served through the Worker
+  with `Cache-Control: private, immutable`; never public R2 URLs.
+- Search is client-side over Dexie so it works offline. Substring today;
+  MiniSearch/FlexSearch is the planned upgrade.
+- Export builds a store-only zip (`fflate`, level 0) to stay well under the
+  Worker CPU budget; import never overwrites — colliding ids become conflict
+  copies.
+- Deployment: `scripts/provision.sh` for D1 + R2; secrets via `wrangler secret
+  put`; see the deployment log in `docs/PLAN.md`.
 - Commit messages: imperative, concise, no secrets.

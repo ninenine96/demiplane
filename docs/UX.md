@@ -19,46 +19,46 @@ pocket dimension — and to make the editor genuinely pleasant on a phone.
    no jank from fixed pixel heights fighting the viewport.
 5. **Offline is normal, not an error state.**
 
-## Visual language — "Night at the Wizard's Table"
+## Visual language — modern, with a fantasy accent
 
-A dark study lit by a candle: deep violet night, parchment text, gold
-inscription, arcane glow for action.
+The base is a clean, contemporary dark interface: neutral surfaces, generous
+spacing, Inter for almost everything, restrained borders, no glow for its own
+sake. The fantasy lives in small, deliberate details only — a gold accent, the
+Cinzel wordmark, tag sigils, and the flavour copy. **When in doubt, choose
+modern.** A control that reads as "fantasy" must earn its place.
 
 ### Colour tokens (semantic, not literal)
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--bg` | `#0c0a1a` | App background |
-| `--surface` | `#151030` | Panels, sidebar |
-| `--surface-raised` | `#1e1740` | Cards, popovers, editor |
-| `--border` | `rgba(232,199,120,0.14)` | Hairlines, dividers |
-| `--text` | `#f3eeff` | Primary text |
-| `--text-muted` | `#a79ecb` | Secondary text, meta |
-| `--accent` | `#7c5cff` | Primary action, focus |
-| `--accent-soft` | `rgba(124,92,255,0.16)` | Selected rows, tints |
-| `--gold` | `#e8c778` | Headings, sigils, the "arcane" highlight |
-| `--gold-deep` | `#b8923f` | Icons, rules, small caps labels |
-| `--danger` | `#e5646e` | Banish, destructive |
-| `--success` | `#6fd39a` | Synced, remembered |
+| `--bg` | `#0e0e12` | App background |
+| `--surface` | `#15151b` | Sidebar, headers, panels |
+| `--surface-raised` | `#1b1b23` | Cards, popovers, toasts |
+| `--border` | `#26262f` | Hairlines, dividers, inputs |
+| `--text` | `#f4f4f6` | Primary text |
+| `--text-muted` | `#9a9aa8` | Secondary text, meta |
+| `--accent` | `#7c6cff` | Primary action, focus, selection |
+| `--gold` | `#d8b46a` | The single fantasy accent: wordmark, sigils |
+| `--danger` | `#f0616d` | Banish, destructive |
+| `--success` | `#5ad19a` | Synced, remembered |
 
-Dark theme only for now (color-scheme: dark). A future "Daylight Parchment"
-light theme can invert these tokens without touching components.
+Dark theme only for now (`color-scheme: dark`). A light "Daylight" theme can
+invert these tokens without touching components.
 
 ### Typography
 
 | Role | Family | Notes |
 | --- | --- | --- |
-| Display / headings | **Cinzel** | Inscriptional serif. Used for the app name, note titles, section headings. | 
-| UI / body | **Inter** (variable) | Buttons, labels, lists, inputs. Legible at small sizes. |
-| Prose / preview | **Spectral** | Long-form reading in the preview pane, like a tome. |
-| Code | **ui-monospace** stack | Inline code and code blocks. |
+| UI / body / headings | **Inter** (variable) | Default for everything. Headings are Inter at 600 weight. |
+| Wordmark only | **Cinzel** | Just "Demiplane" in the sidebar and auth card. The one overtly arcane touch. |
+| Prose / preview | **Spectral** | Long-form reading in the preview pane. Optional and easy to drop. |
+| Code | `ui-monospace` stack | Inline code and code blocks. |
 
 Self-hosted via `@fontsource` so they work offline and behind corporate
-networks (no Google Fonts CDN, no layout flash). Load only Latin subsets and
-needed weights.
+networks (no Google Fonts CDN, no layout flash). Load only Latin subsets.
 
-Type scale: 12 / 13 / 14 / 16 / 20 / 26 / 32, line-height 1.5 body, 1.25
-headings. Titles are Cinzel; never set body copy in Cinzel (it is tiring).
+Type scale: 11 / 12 / 13 / 15 / 16 / 18 / 20, line-height 1.55 body. Never set
+body copy in a display serif.
 
 ### Iconography
 
@@ -69,10 +69,14 @@ by default, `--gold` on active. Icons always pair with a text label or an
 ### Shape, space, motion
 
 - Radii: 10px controls, 14px cards, 999px pills.
-- Spacing scale: 4 / 8 / 12 / 16 / 20 / 24 / 32.
-- Elevation: soft violet glow (`0 10px 30px rgba(0,0,0,.45)`), never harsh grey.
+- Spacing scale: 4 / 8 / 12 / 16 / 20 / 24 / 32. Err on the side of roomier —
+  the previous pass was cramped; default to 16–20px section padding on mobile.
+- Elevation: neutral shadow (`0 16px 40px rgba(0,0,0,0.5)`), no coloured glow.
 - Motion: 150–200ms `ease-out` for state changes; 250ms for drawers/toasts.
   Honor `prefers-reduced-motion: reduce` (drop transforms, keep opacity).
+- No fixed/overlapping chrome on mobile: status toasts stack in one bottom
+  container, the list screen has no floating button over its footer, and every
+  fixed element accounts for `env(safe-area-inset-*)`.
 
 ## Component system
 
@@ -173,13 +177,15 @@ markdown, so it is deferred.
 
 ## Rollout phases
 
-1. **Foundation (this pass):** tokens, self-hosted fonts, Lucide, responsive
+1. **Foundation** ✅ tokens, self-hosted fonts, Lucide, responsive
    master–detail shell, `Button`/`Input` primitives, safe-area + `dvh` fixes.
-2. **Editor:** swap to `@uiw/react-md-editor`, toolbar, preview toggle, drop
-   integration, themed.
-3. **Components:** Radix `Dialog`/`Sheet`/`Toast`/`Tooltip`, replace
+   *Revised* to be modern-first (Inter everywhere, Cinzel wordmark only) and to
+   open up spacing after the first pass felt cramped.
+2. **Editor** ✅ swapped to `@uiw/react-md-editor`, toolbar, preview toggle,
+   drop integration, themed neutral.
+3. **Components** — Radix `Dialog`/`Sheet`/`Toast`/`Tooltip`, replace
    `window.confirm`, unify loading with skeletons.
-4. **Polish:** motion pass, focus mode, keyboard shortcuts, light theme.
+4. **Polish** — motion pass, focus mode, keyboard shortcuts, light theme.
 
 Each phase keeps the Flavour Charter in `AGENTS.md` intact — new strings go into
 the lexicon.

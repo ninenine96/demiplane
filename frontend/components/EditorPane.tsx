@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   Paperclip,
+  Plus,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -127,16 +128,12 @@ export function EditorPane({
   if (!note) {
     return (
       <section className="flex h-full items-center justify-center px-6 text-center">
-        <div className="max-w-sm">
-          <p className="font-display text-xl text-gold-400">
+        <div className="max-w-sm space-y-3">
+          <p className="text-lg font-medium text-parchment-100">
             {FLAVOUR.emptyNotes}
           </p>
-          <p className="mt-2 text-sm text-parchment-500">{FLAVOUR.newNote}</p>
-          <Button
-            className="mt-5"
-            onClick={onNew}
-            icon={<Paperclip size={16} />}
-          >
+          <p className="text-sm text-parchment-500">{FLAVOUR.newNote}</p>
+          <Button className="mt-1" onClick={onNew} icon={<Plus size={16} />}>
             {FLAVOUR.newNote}
           </Button>
         </div>
@@ -147,7 +144,7 @@ export function EditorPane({
   return (
     <section
       className={cx(
-        "flex h-full min-w-0 flex-col bg-void-900/20",
+        "flex h-full min-w-0 flex-col bg-void-950/40",
         dragging && "ring-2 ring-inset ring-arcane-400/60",
       )}
       onDragOver={(event) => {
@@ -162,12 +159,13 @@ export function EditorPane({
       }}
     >
       <header
-        className="border-b border-[var(--color-void-700)] bg-void-900/70 backdrop-blur"
-        style={{ paddingTop: "var(--safe-top)" }}
+        className="space-y-3 border-b border-[var(--color-void-700)] bg-void-900 px-4 py-3 sm:px-5"
+        style={{ paddingTop: "calc(0.75rem + var(--safe-top))" }}
       >
-        <div className="flex items-center gap-2 px-3 py-2.5 sm:px-4">
+        <div className="flex items-center gap-1">
           <IconButton
             label={FLAVOUR.backToArchives}
+            size="sm"
             onClick={onBack}
             className="lg:hidden"
           >
@@ -181,26 +179,46 @@ export function EditorPane({
               scheduleSave({ title: event.target.value });
             }}
             placeholder={FLAVOUR.noteTitlePlaceholder}
-            className="min-w-0 flex-1 bg-transparent px-0 font-display text-lg text-parchment-100 outline-none placeholder:text-parchment-500/70 sm:text-xl"
+            className="min-w-0 flex-1 bg-transparent px-1 text-base font-semibold text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/70 sm:text-lg"
+          />
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              void handleFiles(event.target.files);
+              event.target.value = "";
+            }}
           />
           <IconButton
-            label={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
-            onClick={() => setShowPreview((value) => !value)}
-            variant={showPreview ? "ghost" : "ghost"}
+            label="Tuck into the Haversack"
+            size="sm"
+            onClick={() => fileInput.current?.click()}
+            disabled={uploading}
           >
-            {showPreview ? <EyeOff size={18} /> : <Eye size={18} />}
+            <Paperclip size={17} />
+          </IconButton>
+          <IconButton
+            label={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
+            size="sm"
+            onClick={() => setShowPreview((value) => !value)}
+          >
+            {showPreview ? <EyeOff size={17} /> : <Eye size={17} />}
           </IconButton>
           {note.deleted ? (
             <IconButton
               label={FLAVOUR.undelete}
+              size="sm"
               variant="gold"
               onClick={() => void onUndelete(note.id)}
             >
-              <Undo2 size={18} />
+              <Undo2 size={17} />
             </IconButton>
           ) : (
             <IconButton
               label={FLAVOUR.deleteConfirm}
+              size="sm"
               variant="danger"
               onClick={() => {
                 if (
@@ -212,67 +230,41 @@ export function EditorPane({
                 }
               }}
             >
-              <Trash2 size={18} />
+              <Trash2 size={17} />
             </IconButton>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 px-3 pb-3 text-xs sm:px-4">
-          <label className="flex items-center gap-2 text-parchment-500">
-            <span className="sr-only sm:not-sr-only">Satchel</span>
-            <input
-              value={folder}
-              onChange={(event) => {
-                setFolder(event.target.value);
-                scheduleSave({ folder: event.target.value || null });
-              }}
-              placeholder={FLAVOUR.folderNew}
-              className="h-8 w-32 rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-2 text-parchment-100 outline-none focus:border-arcane-400 sm:w-44"
-            />
-          </label>
-          <label className="flex min-w-[10rem] flex-1 items-center gap-2 text-parchment-500">
-            <span className="sr-only sm:not-sr-only">Sigils</span>
-            <input
-              value={tags}
-              onChange={(event) => {
-                setTags(event.target.value);
-                scheduleSave({
-                  tags: event.target.value
-                    .split(",")
-                    .map((tag) => tag.trim())
-                    .filter(Boolean),
-                });
-              }}
-              placeholder={FLAVOUR.tagNew}
-              className="h-8 min-w-0 flex-1 rounded-lg border border-[var(--color-void-700)] bg-void-950/60 px-2 text-parchment-100 outline-none focus:border-arcane-400"
-            />
-          </label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
-            ref={fileInput}
-            type="file"
-            multiple
-            className="hidden"
+            value={folder}
             onChange={(event) => {
-              void handleFiles(event.target.files);
-              event.target.value = "";
+              setFolder(event.target.value);
+              scheduleSave({ folder: event.target.value || null });
             }}
+            placeholder={FLAVOUR.folderNew}
+            aria-label="Satchel"
+            className="h-9 w-full rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none transition-colors focus:border-arcane-400 sm:w-44"
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Paperclip size={15} />}
-            onClick={() => fileInput.current?.click()}
-            disabled={uploading}
-          >
-            <span className="hidden sm:inline">
-              {uploading ? FLAVOUR.attachmentUpload : "Tuck into the Haversack"}
-            </span>
-            <span className="sm:hidden">Stow</span>
-          </Button>
+          <input
+            value={tags}
+            onChange={(event) => {
+              setTags(event.target.value);
+              scheduleSave({
+                tags: event.target.value
+                  .split(",")
+                  .map((tag) => tag.trim())
+                  .filter(Boolean),
+              });
+            }}
+            placeholder={FLAVOUR.tagNew}
+            aria-label="Sigils"
+            className="h-9 w-full min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none transition-colors focus:border-arcane-400"
+          />
         </div>
 
         {attachments.length > 0 ? (
-          <ul className="flex flex-wrap gap-2 px-3 pb-3 sm:px-4">
+          <ul className="flex flex-wrap gap-2">
             {attachments.map((attachment) => {
               const isImage = (attachment.contentType ?? "").startsWith(
                 "image/",
@@ -280,18 +272,18 @@ export function EditorPane({
               return (
                 <li
                   key={attachment.id}
-                  className="group flex items-center gap-2 rounded-lg border border-[var(--color-void-700)] bg-void-950/50 px-2 py-1 text-xs"
+                  className="flex items-center gap-2 rounded-lg border border-[var(--color-void-700)] bg-void-950/50 py-1 pl-1.5 pr-1 text-xs"
                 >
                   {isImage ? (
                     <img
                       src={attachment.url}
                       alt={attachment.filename}
-                      className="h-8 w-8 rounded object-cover"
+                      className="h-7 w-7 rounded object-cover"
                     />
                   ) : (
                     <span
                       aria-hidden="true"
-                      className="flex h-8 w-8 items-center justify-center rounded bg-white/5 text-[10px] uppercase text-parchment-500"
+                      className="flex h-7 w-7 items-center justify-center rounded bg-white/5 text-[10px] uppercase text-parchment-500"
                     >
                       {(attachment.filename.split(".").pop() ?? "?").slice(0, 4)}
                     </span>
@@ -300,14 +292,13 @@ export function EditorPane({
                     href={attachment.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="max-w-[10rem] truncate text-parchment-300 hover:text-parchment-100"
+                    className="max-w-[9rem] truncate text-parchment-300 hover:text-parchment-100"
                   >
                     {attachment.filename}
                   </a>
                   <IconButton
                     label={`Remove ${attachment.filename}`}
                     size="sm"
-                    variant="ghost"
                     className="h-6 w-6"
                     onClick={() => void removeAttachment(attachment.id)}
                   >
@@ -320,19 +311,17 @@ export function EditorPane({
         ) : null}
 
         {uploading ? (
-          <div className="px-3 pb-2 sm:px-4">
-            <StatusLine
-              flavour={FLAVOUR.attachmentUpload}
-              plain={PLAIN.attachmentUploading}
-            />
-          </div>
+          <StatusLine
+            flavour={FLAVOUR.attachmentUpload}
+            plain={PLAIN.attachmentUploading}
+          />
         ) : null}
       </header>
 
       {note.deleted ? (
         <div
           role="status"
-          className="border-b border-ember-400/20 bg-ember-400/10 px-4 py-2 text-xs text-ember-400"
+          className="border-b border-ember-400/20 bg-ember-400/10 px-4 py-2.5 text-xs text-ember-400"
         >
           {FLAVOUR.deleteDone}{" "}
           <span className="sr-only">This note is in the trash.</span>
@@ -365,7 +354,7 @@ export function EditorPane({
         {showPreview ? (
           <div className="min-h-0 flex-1 overflow-y-auto border-l border-[var(--color-void-700)] px-5 py-6 sm:px-8 lg:max-w-[50%]">
             <div
-              className="prose-arcane max-w-3xl"
+              className="prose-arcane mx-auto max-w-3xl"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
             />
             {body.trim() === "" ? (

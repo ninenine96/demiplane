@@ -6,7 +6,7 @@ import type { SyncStatus } from "../sync/engine";
 import { excerpt } from "../lib/markdown";
 import { buildSearchIndex, searchNoteIds } from "../lib/search";
 import { SyncBadge } from "./SyncBadge";
-import { Button, EmptyState, Input } from "./ui";
+import { Button, Chip, EmptyState, Input } from "./ui";
 
 interface SidebarProps {
   notes: LocalNote[];
@@ -63,36 +63,34 @@ export function Sidebar({
   }, [notes, showTrash, folder, matchedIds]);
 
   return (
-    <aside className="flex h-full w-full flex-col bg-void-900/60 lg:w-80 lg:flex-none">
+    <aside className="flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:w-80 lg:flex-none">
       <header
-        className="space-y-3 border-b border-[var(--color-void-700)] px-4 py-4"
-        style={{ paddingTop: "calc(1rem + var(--safe-top))" }}
+        className="space-y-4 border-b border-[var(--color-void-700)] px-5 pb-5"
+        style={{ paddingTop: "calc(1.25rem + var(--safe-top))" }}
       >
-        <div className="flex items-baseline justify-between">
-          <h1 className="font-serif text-lg tracking-wide text-gold-400">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-display text-lg tracking-wide text-gold-400">
             Demiplane
           </h1>
           <button
             onClick={onLogout}
-            className="text-xs text-parchment-500 hover:text-parchment-100"
+            className="rounded-lg px-2 py-1 text-xs text-parchment-500 transition-colors hover:bg-white/5 hover:text-parchment-100"
           >
             {FLAVOUR.logout}
           </button>
         </div>
-        <SyncBadge status={syncStatus} onSync={onSync} />
-        <p className="truncate text-xs text-parchment-500" title={email}>
-          {email}
-        </p>
-      </header>
-
-      <div className="space-y-2 px-4 py-3">
-        <Button
-          onClick={onNew}
-          block
-          icon={<Plus size={16} />}
-        >
+        <div className="space-y-1.5">
+          <SyncBadge status={syncStatus} onSync={onSync} />
+          <p className="truncate text-xs text-parchment-500" title={email}>
+            {email}
+          </p>
+        </div>
+        <Button onClick={onNew} block icon={<Plus size={16} />}>
           {FLAVOUR.newNote}
         </Button>
+      </header>
+
+      <div className="space-y-3 px-5 py-4">
         <Input
           type="search"
           value={query}
@@ -100,12 +98,12 @@ export function Sidebar({
           placeholder={FLAVOUR.searchPlaceholder}
           aria-label={FLAVOUR.searchPlaceholder}
         />
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2">
           <select
             value={folder}
             onChange={(event) => setFolder(event.target.value)}
             aria-label="Filter by satchel"
-            className="min-w-0 flex-1 rounded-md border border-white/10 bg-void-950/60 px-2 py-1 text-parchment-100 outline-none"
+            className="h-9 min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-2 text-xs text-parchment-300 outline-none focus:border-arcane-400"
           >
             <option value="all">All satchels</option>
             {folders.map((name) => (
@@ -114,21 +112,16 @@ export function Sidebar({
               </option>
             ))}
           </select>
-          <button
+          <Chip
+            active={showTrash}
             onClick={() => setShowTrash((value) => !value)}
-            aria-pressed={showTrash}
-            className={`rounded-md px-2 py-1 ${
-              showTrash
-                ? "bg-red-900/50 text-red-100"
-                : "text-parchment-500 hover:text-parchment-100"
-            }`}
           >
             Void
-          </button>
+          </Chip>
         </div>
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
         {visible.length === 0 ? (
           <EmptyState>
             {showTrash
@@ -138,48 +131,48 @@ export function Sidebar({
                 : FLAVOUR.emptyNotes}
           </EmptyState>
         ) : (
-          <ul className="space-y-1">
+          <ul className="space-y-1.5">
             {visible.map((note) => (
               <li key={note.id}>
                 <button
                   onClick={() => onSelect(note.id)}
-                  className={`w-full rounded-lg px-3 py-2 text-left transition ${
+                  className={`w-full rounded-[var(--radius-control)] px-3 py-2.5 text-left transition-colors ${
                     note.id === activeId
-                      ? "bg-arcane-500/20 ring-1 ring-arcane-500/40"
-                      : "hover:bg-white/5"
+                      ? "bg-arcane-500/15 ring-1 ring-inset ring-arcane-500/30"
+                      : "hover:bg-white/[0.05]"
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-parchment-100">
                       {note.title || FLAVOUR.unnamedNote}
                     </span>
                     {note.dirty === 1 ? (
                       <span
-                        className="h-1.5 w-1.5 flex-none rounded-full bg-gold-500"
+                        className="h-1.5 w-1.5 flex-none rounded-full bg-gold-400"
                         title={FLAVOUR.savePending}
                       />
                     ) : null}
                   </span>
-                  <span className="mt-0.5 block truncate text-xs text-parchment-500">
+                  <span className="mt-1 block truncate text-xs text-parchment-500">
                     {excerpt(note.body)}
                   </span>
-                  {(note.folder || note.tags.length > 0) && (
-                    <span className="mt-1 flex flex-wrap gap-1">
+                  {note.folder || note.tags.length > 0 ? (
+                    <span className="mt-2 flex flex-wrap gap-1.5">
                       {note.folder ? (
-                        <span className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-arcane-300">
+                        <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-parchment-300">
                           {note.folder}
                         </span>
                       ) : null}
                       {note.tags.slice(0, 4).map((tag) => (
                         <span
                           key={tag}
-                          className="rounded bg-gold-500/10 px-1.5 py-0.5 text-[10px] text-gold-400"
+                          className="rounded-md bg-gold-400/10 px-1.5 py-0.5 text-[10px] text-gold-400"
                         >
                           #{tag}
                         </span>
                       ))}
                     </span>
-                  )}
+                  ) : null}
                 </button>
               </li>
             ))}
@@ -188,8 +181,8 @@ export function Sidebar({
       </nav>
 
       <footer
-        className="grid grid-cols-2 gap-2 border-t border-[var(--color-void-700)] px-3 py-3"
-        style={{ paddingBottom: "calc(0.75rem + var(--safe-bottom))" }}
+        className="grid grid-cols-2 gap-3 border-t border-[var(--color-void-700)] px-4 pt-4"
+        style={{ paddingBottom: "calc(1rem + var(--safe-bottom))" }}
       >
         <input
           ref={importInput}
@@ -207,7 +200,7 @@ export function Sidebar({
           size="sm"
           icon={<Download size={15} />}
           onClick={onExport}
-          className="h-auto py-2 text-[11px] leading-tight"
+          className="h-auto py-2.5 text-[11px] leading-tight"
         >
           {FLAVOUR.export}
         </Button>
@@ -216,7 +209,7 @@ export function Sidebar({
           size="sm"
           icon={<Upload size={15} />}
           onClick={() => importInput.current?.click()}
-          className="h-auto py-2 text-[11px] leading-tight"
+          className="h-auto py-2.5 text-[11px] leading-tight"
         >
           {FLAVOUR.import}
         </Button>

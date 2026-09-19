@@ -186,7 +186,7 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      <p className="font-display text-parchment-500 italic">{children}</p>
+      <p className="max-w-xs text-sm text-parchment-500">{children}</p>
     </div>
   );
 }

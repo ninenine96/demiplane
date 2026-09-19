@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
 import { AuthScreen } from "./components/AuthScreen";
 import { EditorPane } from "./components/EditorPane";
 import { Sidebar } from "./components/Sidebar";
-import { Button, cx, StatusLine } from "./components/ui";
+import { cx, StatusLine } from "./components/ui";
 import { useDemiplane } from "./useDemiplane";
 
 function readLoginToken(): string | null {
@@ -120,40 +119,26 @@ export function App() {
         />
       </main>
 
-      {!showEditor ? (
-        <div
-          className="fixed right-4 z-30 lg:hidden"
-          style={{ bottom: "calc(1rem + var(--safe-bottom))" }}
-        >
-          <Button
-            variant="primary"
-            size="lg"
-            icon={<Plus size={18} />}
-            onClick={() => void store.createNote()}
-            aria-label={FLAVOUR.newNote}
-            className="h-14 rounded-full px-5 shadow-[var(--shadow-arcane)]"
-          >
-            {FLAVOUR.newNote}
-          </Button>
-        </div>
-      ) : null}
-
-      {store.conflicts > 0 ? (
-        <Toast
-          tone="success"
-          flavour={FLAVOUR.conflict}
-          plain={`${store.conflicts} note(s) kept as conflict copies.`}
-          onDismiss={store.clearConflicts}
-        />
-      ) : null}
-
-      {notice ? (
-        <Toast
-          tone="neutral"
-          flavour={notice}
-          onDismiss={() => setNotice(null)}
-        />
-      ) : null}
+      <div
+        className="pointer-events-none fixed inset-x-0 z-50 flex flex-col items-center gap-3 px-4"
+        style={{ bottom: "calc(1rem + var(--safe-bottom))" }}
+      >
+        {store.conflicts > 0 ? (
+          <Toast
+            tone="success"
+            flavour={FLAVOUR.conflict}
+            plain={`${store.conflicts} note(s) kept as conflict copies.`}
+            onDismiss={store.clearConflicts}
+          />
+        ) : null}
+        {notice ? (
+          <Toast
+            tone="neutral"
+            flavour={notice}
+            onDismiss={() => setNotice(null)}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -173,13 +158,12 @@ function Toast({
     <div
       role="status"
       aria-live="polite"
-      className="fixed left-4 right-4 z-40 mx-auto max-w-sm rounded-[var(--radius-card)] border border-arcane-500/40 bg-void-800/95 p-4 shadow-[var(--shadow-glow)] backdrop-blur"
-      style={{ bottom: "calc(1rem + var(--safe-bottom))" }}
+      className="pointer-events-auto w-full max-w-sm rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
     >
       <StatusLine flavour={flavour} plain={plain} tone={tone} />
       <button
         onClick={onDismiss}
-        className="mt-2 text-xs text-parchment-500 transition-colors hover:text-parchment-100"
+        className="mt-3 text-xs text-parchment-500 transition-colors hover:text-parchment-100"
       >
         Dismiss
       </button>

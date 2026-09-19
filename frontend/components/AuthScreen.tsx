@@ -64,12 +64,15 @@ export function AuthScreen({
   }
 
   return (
-    <main className="flex min-h-full items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-void-900/70 p-8 shadow-2xl backdrop-blur">
-        <p className="mb-2 text-xs uppercase tracking-[0.25em] text-gold-500">
+    <main
+      className="flex min-h-[100dvh] items-center justify-center px-4 py-8"
+      style={{ paddingTop: "calc(2rem + var(--safe-top))", paddingBottom: "calc(2rem + var(--safe-bottom))" }}
+    >
+      <div className="w-full max-w-md rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-900 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] sm:p-8">
+        <p className="mb-3 text-[11px] uppercase tracking-[0.28em] text-gold-500">
           Demiplane
         </p>
-        <h1 className="font-serif text-2xl text-parchment-100">
+        <h1 className="text-xl font-semibold text-parchment-100 sm:text-2xl">
           {pendingToken ? FLAVOUR.confirmLogin : FLAVOUR.loginPrompt}
         </h1>
 

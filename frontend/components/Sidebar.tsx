@@ -3,6 +3,7 @@ import { FLAVOUR } from "../../shared/messages";
 import type { LocalNote } from "../db/dexie";
 import type { SyncStatus } from "../sync/engine";
 import { excerpt } from "../lib/markdown";
+import { buildSearchIndex, searchNoteIds } from "../lib/search";
 import { SyncBadge } from "./SyncBadge";
 import { Button, EmptyState } from "./ui";
 
@@ -44,23 +45,21 @@ export function Sidebar({
     return [...set].sort();
   }, [notes]);
 
+  const searchIndex = useMemo(() => buildSearchIndex(notes), [notes]);
+  const matchedIds = useMemo(
+    () => searchNoteIds(searchIndex, query),
+    [searchIndex, query],
+  );
+
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     return notes
       .filter((note) => note.deleted === showTrash)
       .filter((note) =>
         folder === "all" ? true : (note.folder ?? "") === folder,
       )
-      .filter((note) => {
-        if (!needle) return true;
-        return (
-          note.title.toLowerCase().includes(needle) ||
-          note.body.toLowerCase().includes(needle) ||
-          note.tags.some((tag) => tag.toLowerCase().includes(needle))
-        );
-      })
+      .filter((note) => matchedIds === null || matchedIds.has(note.id))
       .sort((a, b) => b.updatedAt - a.updatedAt);
-  }, [notes, query, showTrash, folder]);
+  }, [notes, showTrash, folder, matchedIds]);
 
   return (
     <aside className="flex h-full w-full flex-col bg-void-900/60 lg:w-80 lg:flex-none">

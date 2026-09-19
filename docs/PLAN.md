@@ -235,8 +235,8 @@ filtering entirely.
    ✅ done (delta sync + conflict copies + autosave)
 6. **Attachments** — upload/download, offline cache. ✅ done (upload via Worker → R2,
    authenticated streaming, type/size limits, delete; offline caching still TODO)
-7. **Search + backup** — client-side search (basic substring live; MiniSearch/
-   FlexSearch upgrade still TODO), export/import zip grimoire. ✅ export/import done
+7. **Search + backup** — client-side ranked search (MiniSearch over Dexie) and
+   zip export/import. ✅ done
 8. **Deploy** — provision, secrets, deploy, cross-device smoke test.
    ✅ deployed at https://demiplane.prohan.workers.dev; phone smoke test pending
 9. **Optional** — custom domain, conflict-copy UX, D1 FTS, test coverage. ⏳

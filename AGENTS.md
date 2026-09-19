@@ -22,6 +22,7 @@ The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 | Build | `@cloudflare/vite-plugin` + Vite + TypeScript |
 | Frontend | React + Tailwind, CodeMirror 6, `marked` + DOMPurify |
 | Local store | Dexie (IndexedDB) |
+| Search | MiniSearch (client-side, offline) |
 | PWA | `vite-plugin-pwa` (Workbox) |
 | Storage | R2 (notes + attachments), D1 (metadata/session/sync) |
 | Email | Resend free tier (magic link) |
@@ -76,8 +77,9 @@ subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
 via `wrangler secret put`; `AUTH_DEV_MODE` is `"false"` in production so the API
 never returns a magic link in a response.
 
-Known follow-ups: ranked search (MiniSearch/FlexSearch), offline attachment
-caching, and `preview_urls: false` hardening.
+Known follow-ups: D1 FTS as a server-side search fallback, a custom domain,
+and broader test coverage. Offline attachment caching and `preview_urls: false`
+are already in place.
 
 
 ## Flavour Charter — HARD REQUIREMENT
@@ -161,8 +163,8 @@ note explaining why.
   (corporate mail scanners follow links).
 - Attachments: 15 MB cap, content-type allowlist, served through the Worker
   with `Cache-Control: private, immutable`; never public R2 URLs.
-- Search is client-side over Dexie so it works offline. Substring today;
-  MiniSearch/FlexSearch is the planned upgrade.
+- Search is client-side over Dexie so it works offline. Ranked full-text via
+  MiniSearch (`frontend/lib/search.ts`); D1 FTS remains a future server fallback.
 - Export builds a store-only zip (`fflate`, level 0) to stay well under the
   Worker CPU budget; import never overwrites — colliding ids become conflict
   copies.

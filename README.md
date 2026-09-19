@@ -33,6 +33,7 @@ in.
 | Build | `@cloudflare/vite-plugin` + Vite + TypeScript |
 | Frontend | React + Tailwind, CodeMirror 6, `marked` + DOMPurify |
 | Local store | Dexie (IndexedDB) |
+| Search | MiniSearch (client-side, offline) |
 | PWA | `vite-plugin-pwa` (Workbox) |
 | Storage | R2 (notes + attachments), D1 (metadata/sessions/sync) |
 | Email | Resend (magic link) |

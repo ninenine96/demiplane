@@ -8,6 +8,8 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Upload,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { FLAVOUR } from "../../shared/messages";
 import type { LocalNote } from "../db/dexie";
@@ -34,6 +36,12 @@ interface SidebarProps {
   onExport: () => void;
   onImport: (file: File) => void;
   onCollapse: () => void;
+  scale: number;
+  canZoomIn: boolean;
+  canZoomOut: boolean;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onZoomReset: () => void;
 }
 
 export function Sidebar({
@@ -47,6 +55,12 @@ export function Sidebar({
   onExport,
   onImport,
   onCollapse,
+  scale,
+  canZoomIn,
+  canZoomOut,
+  onZoomIn,
+  onZoomOut,
+  onZoomReset,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [showTrash, setShowTrash] = useState(false);
@@ -94,7 +108,7 @@ export function Sidebar({
           >
             <PanelLeftClose size={17} aria-hidden="true" />
           </button>
-          <h1 className="wordmark flex-1 font-display text-[15px] tracking-[0.08em] text-gold-400">
+          <h1 className="wordmark flex-1 font-display text-[0.9375rem] tracking-[0.08em] text-gold-400">
             Demiplane
           </h1>
           <input
@@ -270,6 +284,46 @@ export function Sidebar({
           </ul>
         )}
       </nav>
+
+      <footer
+        className="flex items-center justify-between gap-2 border-t border-[var(--color-void-700)] px-4 pt-2.5"
+        style={{ paddingBottom: "calc(0.625rem + var(--safe-bottom))" }}
+      >
+        <span className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
+          Scale
+        </span>
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={onZoomOut}
+            disabled={!canZoomOut}
+            aria-label="Decrease scale"
+            title="Decrease scale"
+            className="grid h-7 w-7 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 disabled:opacity-30 disabled:hover:bg-transparent"
+          >
+            <ZoomOut size={15} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={onZoomReset}
+            aria-label="Reset scale to one hundred percent"
+            title="Reset scale"
+            className="min-w-[2.5rem] rounded-md py-1 text-center text-[0.6875rem] tabular-nums text-parchment-500 transition-colors hover:text-parchment-100"
+          >
+            {Math.round(scale * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={onZoomIn}
+            disabled={!canZoomIn}
+            aria-label="Increase scale"
+            title="Increase scale"
+            className="grid h-7 w-7 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 disabled:opacity-30 disabled:hover:bg-transparent"
+          >
+            <ZoomIn size={15} aria-hidden="true" />
+          </button>
+        </div>
+      </footer>
     </aside>
   );
 }

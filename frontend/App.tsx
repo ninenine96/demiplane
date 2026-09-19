@@ -17,11 +17,26 @@ function initialSidebarState(): boolean {
   return window.localStorage.getItem("demiplane.sidebar") !== "closed";
 }
 
+const MIN_SCALE = 0.85;
+const MAX_SCALE = 1.35;
+const SCALE_STEP = 0.05;
+
+function initialScale(): number {
+  if (typeof window === "undefined") return 1;
+  const raw = Number(window.localStorage.getItem("demiplane.scale"));
+  return Number.isFinite(raw) && raw >= MIN_SCALE && raw <= MAX_SCALE ? raw : 1;
+}
+
+function clampScale(value: number): number {
+  return Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number(value.toFixed(2))));
+}
+
 export function App() {
   const store = useDemiplane();
   const [pendingToken, setPendingToken] = useState<string | null>(readLoginToken);
   const [notice, setNotice] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(initialSidebarState);
+  const [scale, setScale] = useState(initialScale);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -29,6 +44,11 @@ export function App() {
       sidebarOpen ? "open" : "closed",
     );
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--ui-scale", String(scale));
+    window.localStorage.setItem("demiplane.scale", String(scale));
+  }, [scale]);
 
   const clearToken = useCallback(() => {
     setPendingToken(null);
@@ -131,6 +151,12 @@ export function App() {
           onExport={() => void handleExport()}
           onImport={(file) => void handleImport(file)}
           onCollapse={() => setSidebarOpen(false)}
+          scale={scale}
+          canZoomIn={scale < MAX_SCALE}
+          canZoomOut={scale > MIN_SCALE}
+          onZoomIn={() => setScale((value) => clampScale(value + SCALE_STEP))}
+          onZoomOut={() => setScale((value) => clampScale(value - SCALE_STEP))}
+          onZoomReset={() => setScale(1)}
         />
       </div>
 

@@ -24,9 +24,9 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-9 px-3 text-[13px] gap-1.5",
+  sm: "h-9 px-3 text-[0.8125rem] gap-1.5",
   md: "h-11 px-4 text-sm gap-2",
-  lg: "h-12 px-5 text-[15px] gap-2",
+  lg: "h-12 px-5 text-[0.9375rem] gap-2",
 };
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -187,7 +187,7 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      <p className="max-w-xs font-display text-[13px] tracking-wide text-parchment-300">
+      <p className="max-w-xs font-display text-[0.8125rem] tracking-wide text-parchment-300">
         {children}
       </p>
     </div>
@@ -291,7 +291,7 @@ export function MenuDivider() {
 
 export function MenuLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="px-3 pb-1 pt-2 text-[10px] uppercase tracking-[0.18em] text-parchment-500">
+    <p className="px-3 pb-1 pt-2 text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
       {children}
     </p>
   );

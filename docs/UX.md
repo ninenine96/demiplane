@@ -74,6 +74,23 @@ The default page shows only a title and its content.
   permanent chrome.
 - No per-note tag/folder chips in the list — title and excerpt only.
 
+## UI scale
+
+The whole interface scales from one quiet control: two tiny `ZoomOut` / `ZoomIn`
+icons in the sidebar footer with the current percentage between them (click it
+to reset to 100%). It sets `--ui-scale` on the root, which feeds
+`html { font-size }`; every dimension is written in `rem`, so spacing, type and
+the editor scale together. Range 85–135%, remembered per device.
+
+## Editor alignment
+
+MDEditor layers an invisible `<textarea>` exactly over a highlighted `<pre>`.
+If the two have any different metric the caret drifts from the glyphs.
+`frontend/index.css` therefore forces the **same** family, size, line-height,
+letter-spacing, word-spacing, ligatures, kerning, tab-size, text-indent and
+padding on both layers, and sets `--md-editor-font-family` to Spectral. Keep
+these rules together when editing the editor theme.
+
 ## Empty states
 
 Extremely quiet, lots of negative space, typography carries it:

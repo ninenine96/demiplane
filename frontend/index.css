@@ -41,6 +41,11 @@
   --gild-faint: rgba(195, 161, 92, 0.16);
 }
 
+html {
+  /* Drives the whole UI scale; set by the sidebar zoom control. */
+  font-size: calc(16px * var(--ui-scale, 1));
+}
+
 html,
 body,
 #root {
@@ -63,7 +68,7 @@ body {
     #131110;
   color: var(--color-parchment-100);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -210,11 +215,11 @@ body {
 
 /* Editor: one continuous, serif page. No toolbar, no IDE chrome. */
 .w-md-editor {
+  --md-editor-font-family: var(--font-serif) !important;
   background: transparent !important;
   color: var(--color-parchment-100) !important;
   box-shadow: none !important;
   border: none !important;
-  font-family: var(--font-serif) !important;
 }
 .w-md-editor-toolbar {
   display: none !important;
@@ -224,23 +229,41 @@ body {
   background: transparent !important;
   border: none !important;
 }
+
+/*
+ * The whole canvas relies on the transparent textarea sitting exactly over the
+ * highlight layer. Every metric that can shift the cursor must match on both.
+ */
+.w-md-editor-text,
+.w-md-editor-text-pre,
 .w-md-editor-text-pre > code,
-.w-md-editor-text {
+.w-md-editor-text-input {
   font-family: var(--font-serif) !important;
-  font-size: 16.5px !important;
+  font-size: 1.03125rem !important;
   line-height: 1.85 !important;
+  letter-spacing: 0 !important;
+  word-spacing: 0 !important;
+  font-variant-ligatures: none !important;
+  font-kerning: none !important;
+  font-feature-settings: normal !important;
+  font-optical-sizing: none !important;
+  font-synthesis: none !important;
+  text-rendering: geometricPrecision !important;
+  tab-size: 4 !important;
+  text-indent: 0 !important;
+}
+.w-md-editor-text {
+  padding: 14px 12px !important;
 }
 .w-md-editor-text-pre > code {
   color: var(--color-parchment-100) !important;
 }
-/* The textarea stays transparent over the highlighted layer. */
+/* The textarea stays invisible over the highlighted layer. */
 .w-md-editor-text-input {
-  font-family: var(--font-serif) !important;
-  font-size: 16.5px !important;
-  line-height: 1.85 !important;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
   caret-color: var(--color-gold-300) !important;
+  -webkit-font-smoothing: antialiased;
 }
 .w-md-editor-text-input::placeholder {
   color: var(--color-parchment-500) !important;
@@ -253,6 +276,8 @@ body {
 .w-md-editor-text-pre .token {
   color: inherit !important;
   background: none !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
 }
 .w-md-editor-text-pre .token.punctuation,
 .w-md-editor-text-pre .token.blockquote,

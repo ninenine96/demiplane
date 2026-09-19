@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void-950: #0d0a1c;
+  --color-void-900: #140f2e;
+  --color-void-800: #1b1430;
+  --color-void-700: #241a45;
+  --color-void-600: #2f2260;
+  --color-arcane-500: #6d4bd6;
+  --color-arcane-400: #8b6ff0;
+  --color-arcane-300: #b8a4ff;
+  --color-parchment-100: #efe9ff;
+  --color-parchment-300: #c9c0e8;
+  --color-parchment-500: #8f85b5;
+  --color-gold-400: #e8d6a8;
+  --color-gold-500: #b8923f;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 800px at 80% -10%, rgba(109, 75, 214, 0.28), transparent 60%),
+    radial-gradient(900px 600px at 0% 100%, rgba(184, 146, 63, 0.12), transparent 55%),
+    #0d0a1c;
+  color: var(--color-parchment-100);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(139, 111, 240, 0.4);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(139, 111, 240, 0.3);
+  border-radius: 999px;
+}
+
+.cm-editor {
+  height: 100%;
+  background: transparent;
+  font-size: 15px;
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+.cm-scroller {
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+.prose-arcane h1,
+.prose-arcane h2,
+.prose-arcane h3 {
+  font-family: var(--font-serif);
+  color: var(--color-gold-400);
+}
+.prose-arcane a {
+  color: var(--color-arcane-300);
+}
+.prose-arcane code {
+  background: rgba(109, 75, 214, 0.18);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.prose-arcane pre {
+  background: rgba(13, 10, 28, 0.7);
+  padding: 14px;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+.prose-arcane blockquote {
+  border-left: 3px solid var(--color-arcane-500);
+  padding-left: 14px;
+  color: var(--color-parchment-300);
+  margin-left: 0;
+}
+.prose-arcane img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+.prose-arcane table {
+  border-collapse: collapse;
+}
+.prose-arcane th,
+.prose-arcane td {
+  border: 1px solid rgba(139, 111, 240, 0.3);
+  padding: 6px 10px;
+}

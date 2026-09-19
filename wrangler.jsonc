@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "demiplane",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "demiplane-db",
+      // Replace with the id printed by: wrangler d1 create demiplane-db
+      // Local dev ignores this value and uses .wrangler/state instead.
+      "database_id": "2106e302-90ee-4527-a588-df6cb54fdd45",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "demiplane-files"
+    }
+  ],
+  "vars": {
+    "APP_NAME": "Demiplane",
+    "AUTH_DEV_MODE": "false"
+  }
+}

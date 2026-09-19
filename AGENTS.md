@@ -76,8 +76,9 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
 - 14-day remembered sessions with sliding renewal
 - Content-first UX: single-canvas serif editor with no toolbar, a nearly empty
   top bar, metadata behind a page menu, and a summonable sidebar — see
-  [`docs/UX.md`](docs/UX.md). Shortcuts: `Cmd/Ctrl+E` preview, `B`/`I`/`K`
-  format, `\` toggle sidebar, `N` new page.
+  [`docs/UX.md`](docs/UX.md). Shortcuts (`?` opens the Grimoire of keys):
+  `Cmd/Ctrl+E` preview, `B`/`I`/`K` format, `\` toggle sidebar, `N` new page.
+  Right-click opens context menus for pages and the canvas.
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
@@ -114,7 +115,11 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Sync in progress | Opening a portal... |
 | Sync failed | The portal flickered — retrying. |
 | Offline | You've stepped outside the ley lines. Changes are safe here until the portal returns. |
-| Magic link sent | A sending stone is on its way — check your inbox. |
+| Magic link sent | A sending stone is on its way — it bears a sigil. |
+| Login code prompt | Enter the sigil inscribed on the sending stone. |
+| Invalid code | That sigil is not recognised. Read the stone again. |
+| Too many wrong codes | Too many wrong sigils. Request a fresh sending stone. |
+| Shortcuts dialog | Grimoire of keys |
 | Login confirmed | The portal recognises you. |
 | Logout | You slip back through the portal. |
 | Delete confirm | Banish this page? |
@@ -175,9 +180,10 @@ note explaining why.
 - Sessions: hashed tokens only, in D1; HttpOnly + Secure + SameSite=Lax cookie.
   A remembered location lasts 14 days and slides forward on activity; unchecking
   "remember" yields a browser-session cookie instead.
-- Magic-link tokens: hashed, single-use, 10-minute TTL.
-- Magic links must be confirmed by a button POST, never auto-consumed on GET
-  (corporate mail scanners follow links).
+- Login is a hashed, single-use **six-digit code** (a "sigil"), 10-minute TTL,
+  emailed via Resend. Verify is rate-limited per email and locks out after 10
+  failed attempts in 15 minutes. No link is ever followed, so mail scanners
+  cannot consume it.
 - Attachments: 15 MB cap, content-type allowlist, served through the Worker
   with `Cache-Control: private, immutable`; never public R2 URLs.
 - Search is client-side over Dexie so it works offline. Ranked full-text via

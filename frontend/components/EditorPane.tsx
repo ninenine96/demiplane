@@ -16,6 +16,7 @@ import type { LocalNote } from "../db/dexie";
 import type { SyncStatus } from "../sync/engine";
 import { api } from "../lib/api";
 import { renderMarkdown } from "../lib/markdown";
+import { ContextMenu, useContextMenu } from "./ContextMenu";
 import { SyncDot } from "./SyncBadge";
 import {
   Button,
@@ -61,7 +62,11 @@ export function EditorPane({
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const saveTimer = useRef<number | null>(null);
+  const pendingSave = useRef<Partial<
+    Pick<LocalNote, "title" | "body" | "folder" | "tags">
+  > | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
+  const contextMenu = useContextMenu();
 
   useEffect(() => {
     if (!note) return;
@@ -140,16 +145,29 @@ export function EditorPane({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  function flushSave() {
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    const patch = pendingSave.current;
+    pendingSave.current = null;
+    const id = note?.id;
+    if (patch && id) void onSave(id, patch);
+  }
+
   function scheduleSave(
     patch: Partial<Pick<LocalNote, "title" | "body" | "folder" | "tags">>,
   ) {
-    const id = note?.id;
-    if (!id) return;
+    if (!note?.id) return;
+    pendingSave.current = { ...(pendingSave.current ?? {}), ...patch };
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      void onSave(id, patch);
-    }, 600);
+    saveTimer.current = window.setTimeout(flushSave, 600);
   }
+
+  // Flush any pending save when switching pages or leaving the editor, so a
+  // just-typed word is never lost to the draft cleanup.
+  useEffect(() => () => flushSave(), [note?.id]);
 
   async function handleFiles(files: FileList | null) {
     if (!note || !files || files.length === 0) return;
@@ -224,6 +242,40 @@ export function EditorPane({
         setDragging(false);
         void handleFiles(event.dataTransfer.files);
       }}
+      onContextMenu={(event) =>
+        contextMenu.open(event, [
+          {
+            label: showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow,
+            icon: showPreview ? <EyeOff size={15} /> : <Eye size={15} />,
+            onSelect: () => setShowPreview((value) => !value),
+          },
+          {
+            label: "Tuck into the Haversack",
+            icon: <Paperclip size={15} />,
+            onSelect: () => fileInput.current?.click(),
+          },
+          note.deleted
+            ? {
+                label: FLAVOUR.undelete,
+                icon: <Undo2 size={15} />,
+                onSelect: () => void onUndelete(note.id),
+              }
+            : {
+                label: FLAVOUR.deleteConfirm,
+                icon: <Trash2 size={15} />,
+                danger: true,
+                onSelect: () => {
+                  if (
+                    window.confirm(
+                      `${FLAVOUR.deleteConfirm}\n\n${FLAVOUR.deleteConfirmBody}`,
+                    )
+                  ) {
+                    void onDelete(note.id);
+                  }
+                },
+              },
+        ])
+      }
     >
       <header
         className="flex items-center gap-1 px-3 py-2 sm:px-5"
@@ -258,7 +310,11 @@ export function EditorPane({
             event.target.value = "";
           }}
         />
-        <Menu label="Page" trigger={<MoreHorizontal size={17} />} panelClassName="w-80">
+        <Menu
+          label="Page"
+          trigger={<MoreHorizontal size={17} />}
+          panelClassName="w-[min(20rem,calc(100vw-1.5rem))]"
+        >
           {(close) => (
             <>
               <MenuItem
@@ -435,6 +491,8 @@ export function EditorPane({
           </div>
         )}
       </div>
+
+      <ContextMenu state={contextMenu.state} onClose={contextMenu.close} />
     </section>
   );
 }

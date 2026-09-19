@@ -1,12 +1,16 @@
 import { useMemo, useRef, useState } from "react";
 import {
   Download,
+  Keyboard,
   LogOut,
   MoreHorizontal,
   PanelLeftClose,
   Plus,
   RefreshCw,
+  Scroll,
   SlidersHorizontal,
+  Trash2,
+  Undo2,
   Upload,
   ZoomIn,
   ZoomOut,
@@ -15,6 +19,7 @@ import { FLAVOUR } from "../../shared/messages";
 import type { LocalNote } from "../db/dexie";
 import { excerpt } from "../lib/markdown";
 import { buildSearchIndex, searchNoteIds } from "../lib/search";
+import { ContextMenu, useContextMenu } from "./ContextMenu";
 import {
   Chip,
   EmptyState,
@@ -36,6 +41,9 @@ interface SidebarProps {
   onExport: () => void;
   onImport: (file: File) => void;
   onCollapse: () => void;
+  onShowShortcuts: () => void;
+  onDelete: (id: string) => void;
+  onUndelete: (id: string) => void;
   scale: number;
   canZoomIn: boolean;
   canZoomOut: boolean;
@@ -55,6 +63,9 @@ export function Sidebar({
   onExport,
   onImport,
   onCollapse,
+  onShowShortcuts,
+  onDelete,
+  onUndelete,
   scale,
   canZoomIn,
   canZoomOut,
@@ -67,6 +78,7 @@ export function Sidebar({
   const [showFilters, setShowFilters] = useState(false);
   const [folder, setFolder] = useState<string>("all");
   const importInput = useRef<HTMLInputElement | null>(null);
+  const contextMenu = useContextMenu();
 
   const folders = useMemo(() => {
     const set = new Set<string>();
@@ -169,6 +181,16 @@ export function Sidebar({
                 </MenuItem>
                 <MenuDivider />
                 <MenuItem
+                  icon={<Keyboard size={15} />}
+                  onClick={() => {
+                    onShowShortcuts();
+                    close();
+                  }}
+                >
+                  {FLAVOUR.shortcutsTitle}
+                </MenuItem>
+                <MenuDivider />
+                <MenuItem
                   icon={<LogOut size={15} />}
                   onClick={() => {
                     onLogout();
@@ -261,6 +283,35 @@ export function Sidebar({
               >
                 <button
                   onClick={() => onSelect(note.id)}
+                  onContextMenu={(event) =>
+                    contextMenu.open(event, [
+                      {
+                        label: "Open page",
+                        icon: <Scroll size={15} />,
+                        onSelect: () => onSelect(note.id),
+                      },
+                      note.deleted
+                        ? {
+                            label: FLAVOUR.undelete,
+                            icon: <Undo2 size={15} />,
+                            onSelect: () => onUndelete(note.id),
+                          }
+                        : {
+                            label: FLAVOUR.deleteConfirm,
+                            icon: <Trash2 size={15} />,
+                            danger: true,
+                            onSelect: () => {
+                              if (
+                                window.confirm(
+                                  `${FLAVOUR.deleteConfirm}\n\n${FLAVOUR.deleteConfirmBody}`,
+                                )
+                              ) {
+                                onDelete(note.id);
+                              }
+                            },
+                          },
+                    ])
+                  }
                   className={cx(
                     "w-full rounded-lg px-3 py-2.5 text-left transition-colors",
                     note.id === activeId
@@ -328,6 +379,8 @@ export function Sidebar({
           </button>
         </div>
       </footer>
+
+      <ContextMenu state={contextMenu.state} onClose={contextMenu.close} />
     </aside>
   );
 }

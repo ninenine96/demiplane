@@ -125,6 +125,31 @@ letter-spacing, word-spacing, ligatures, kerning, tab-size, text-indent and
 padding on both layers, and sets `--md-editor-font-family` to Spectral. Keep
 these rules together when editing the editor theme.
 
+## Context menus & keys
+
+Right-click (and long-press where it maps to `contextmenu`) is a first-class
+surface, not an afterthought:
+
+- **On a page row** — Open, Banish / Recover.
+- **On the canvas** — Reveal / Veil the page, Tuck into the Haversack,
+  Banish / Recover.
+
+Menus are cursor-positioned, clamped to the viewport, and close on outside
+click, Escape, scroll, resize, or another right-click.
+
+Every action is also reachable from the keyboard. `?` (or `Cmd/Ctrl+/`) opens
+the **Grimoire of keys**, generated from a single registry in
+`frontend/lib/shortcuts.ts` so the help can never drift from the bindings.
+
+| Key | Action |
+| --- | --- |
+| `Cmd/Ctrl+N` | Inscribe a new page |
+| `Cmd/Ctrl+\` | Summon or fold the archive |
+| `Cmd/Ctrl+E` | Reveal or veil the page |
+| `Cmd/Ctrl+B` / `I` / `K` | Bold / italic / link the selection |
+| `?` | Grimoire of keys |
+| `Esc` | Close a menu, or return to the archive |
+
 ## Empty states
 
 Extremely quiet, lots of negative space, typography carries it:

@@ -13,6 +13,22 @@ export function randomToken(byteLength = 32): string {
   return toBase64Url(bytes);
 }
 
+/**
+ * A numeric one-time code (the "sigil" on a sending stone). Rejection sampling
+ * keeps the distribution uniform rather than modulo-biased.
+ */
+export function randomCode(digits = 6): string {
+  const max = 10 ** digits;
+  const ceiling = Math.floor(0xffffffff / max) * max;
+  const buffer = new Uint32Array(1);
+  let value = 0;
+  do {
+    crypto.getRandomValues(buffer);
+    value = buffer[0] ?? 0;
+  } while (value >= ceiling);
+  return String(value % max).padStart(digits, "0");
+}
+
 /** SHA-256 hex digest. Only hashes are ever stored for tokens. */
 export async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);

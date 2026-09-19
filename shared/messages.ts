@@ -46,12 +46,16 @@ export const FLAVOUR = {
   conflictNoteSuffix: "conflict",
 
   // --- Auth ---------------------------------------------------------------
-  magicLinkSent: "A sending stone is on its way — check your inbox.",
-  magicLinkSentPlain: "If that address is the keeper of this demiplane, a login link has been sent.",
+  codeSent: "A sending stone is on its way — it bears a sigil.",
+  codeSentPlain: "If that address is the keeper of this demiplane, a login code has been sent.",
+  codePrompt: "Enter the sigil inscribed on the sending stone.",
+  resendCode: "Request another stone",
+  codeInvalid: "That sigil is not recognised. Read the stone again.",
+  codeLocked: "Too many wrong sigils. Request a fresh sending stone.",
   loginConfirmed: "The portal recognises you.",
   loginPrompt: "Speak the keeper's email to unseal the portal.",
   loginButton: "Send a sending stone",
-  confirmLogin: "Seal the portal",
+  confirmLogin: "Unseal the portal",
   rememberLocation: "Remember this location for a fortnight.",
   rememberLocationHint:
     "Leave it unchecked to let the portal forget you when this window closes.",
@@ -70,6 +74,10 @@ export const FLAVOUR = {
   enlargeUp: "Enlarge the archive",
   enlargeDown: "Reduce the archive",
   trueSight: "Return to true sight",
+
+  // --- Keys ---------------------------------------------------------------
+  shortcutsTitle: "Grimoire of keys",
+  shortcutsHint: "Every working of this demiplane, inscribed for the swift.",
 
   // --- Attachments / backup ----------------------------------------------
   attachmentUpload: "Tucking it into the Haversack...",

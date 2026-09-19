@@ -276,7 +276,7 @@ export function Menu({
       {mounted ? (
         <div
           className={cx(
-            "absolute right-0 z-50 mt-2 w-72 rounded-[var(--radius-card)]",
+            "absolute right-0 z-50 mt-2 max-h-[70dvh] overflow-y-auto rounded-[var(--radius-card)]",
             "border border-[var(--color-void-700)] bg-void-800 p-2",
             "shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
             closing ? "animate-pop-out" : "animate-pop-in",

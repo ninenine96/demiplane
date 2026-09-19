@@ -6,6 +6,15 @@ export const authRequestSchema = z.object({
   email: z.email().max(320),
 });
 
+export const authVerifySchema = z.object({
+  email: z.email().max(320),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "A six-digit sigil is required."),
+  remember: z.boolean().optional().default(true),
+});
+
 export const noteInputSchema = z.object({
   title: z.string().max(500),
   body: z.string().max(MAX_NOTE_BYTES),

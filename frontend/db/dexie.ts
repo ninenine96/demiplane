@@ -13,6 +13,8 @@ export interface LocalNote {
   version: number;
   baseVersion: number;
   dirty: 0 | 1;
+  /** 1 while a freshly-created page has never been edited. */
+  draft?: 0 | 1;
 }
 
 interface MetaRow {
@@ -35,6 +37,13 @@ class DemiplaneDB extends Dexie {
 
 export const db = new DemiplaneDB();
 
+/** All local pages, newest first. */
+export async function reloadNotes(): Promise<LocalNote[]> {
+  const all = await db.notes.toArray();
+  all.sort((a, b) => b.updatedAt - a.updatedAt);
+  return all;
+}
+
 export function toLocal(note: Note, dirty: 0 | 1 = 0): LocalNote {
   return {
     id: note.id,
@@ -48,7 +57,42 @@ export function toLocal(note: Note, dirty: 0 | 1 = 0): LocalNote {
     version: note.version,
     baseVersion: note.version,
     dirty,
+    draft: 0,
   };
+}
+
+/** A brand-new page that is not written to the demiplane until first edited. */
+export async function createDraftLocal(id: string): Promise<LocalNote> {
+  const now = Date.now();
+  const draft: LocalNote = {
+    id,
+    title: "",
+    body: "",
+    folder: null,
+    tags: [],
+    createdAt: now,
+    updatedAt: now,
+    deleted: false,
+    version: 0,
+    baseVersion: 0,
+    dirty: 0,
+    draft: 1,
+  };
+  await db.notes.put(draft);
+  return draft;
+}
+
+/** Deletes a local page outright (used to discard untouched drafts). */
+export async function discardLocal(id: string): Promise<void> {
+  await db.notes.delete(id);
+}
+
+/** Removes any drafts left behind by a previous session. */
+export async function purgeDrafts(): Promise<void> {
+  const drafts = await db.notes.filter((note) => note.draft === 1).toArray();
+  if (drafts.length > 0) {
+    await db.notes.bulkDelete(drafts.map((note) => note.id));
+  }
 }
 
 export function toNote(local: LocalNote): Note {
@@ -93,7 +137,7 @@ export async function upsertLocalEdit(
   const existing = await db.notes.get(id);
   const now = Date.now();
   const next: LocalNote = existing
-    ? { ...existing, ...patch, updatedAt: now, dirty: 1 }
+    ? { ...existing, ...patch, updatedAt: now, dirty: 1, draft: 0 }
     : {
         id,
         title: patch.title ?? "",
@@ -106,6 +150,7 @@ export async function upsertLocalEdit(
         version: 0,
         baseVersion: 0,
         dirty: 1,
+        draft: 0,
       };
   await db.notes.put(next);
   return next;

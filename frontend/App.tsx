@@ -3,14 +3,10 @@ import { ChevronsRight } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
 import { AuthScreen } from "./components/AuthScreen";
 import { EditorPane } from "./components/EditorPane";
+import { ShortcutsDialog } from "./components/ShortcutsDialog";
 import { Sidebar } from "./components/Sidebar";
 import { cx, StatusLine } from "./components/ui";
 import { useDemiplane } from "./useDemiplane";
-
-function readLoginToken(): string | null {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("login");
-}
 
 function initialSidebarState(): boolean {
   if (typeof window === "undefined") return true;
@@ -33,10 +29,10 @@ function clampScale(value: number): number {
 
 export function App() {
   const store = useDemiplane();
-  const [pendingToken, setPendingToken] = useState<string | null>(readLoginToken);
   const [notice, setNotice] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(initialSidebarState);
   const [scale, setScale] = useState(initialScale);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -50,40 +46,37 @@ export function App() {
     window.localStorage.setItem("demiplane.scale", String(scale));
   }, [scale]);
 
-  const clearToken = useCallback(() => {
-    setPendingToken(null);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("login");
-    window.history.replaceState({}, "", url.toString());
-  }, []);
-
-  useEffect(() => {
-    if (store.auth === "authenticated" && pendingToken) clearToken();
-  }, [store.auth, pendingToken, clearToken]);
-
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-      if (event.key === "\\") {
+      const mod = event.metaKey || event.ctrlKey;
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable === true;
+
+      if (mod && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        return;
+      }
+      if (mod && event.key === "\\") {
         event.preventDefault();
         setSidebarOpen((value) => !value);
+        return;
       }
-      if (event.key.toLowerCase() === "n") {
+      if (mod && event.key.toLowerCase() === "n") {
         event.preventDefault();
         void store.createNote();
+        return;
+      }
+      if (!typing && (event.key === "?" || (mod && event.key === "/"))) {
+        event.preventDefault();
+        setShowShortcuts((value) => !value);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [store]);
-
-  const confirmMagicLink = useCallback(
-    async (token: string, remember: boolean) => {
-      await store.confirmMagicLink(token, remember);
-      clearToken();
-    },
-    [store, clearToken],
-  );
 
   const handleExport = useCallback(async () => {
     try {
@@ -121,9 +114,8 @@ export function App() {
   if (store.auth === "unauthenticated") {
     return (
       <AuthScreen
-        pendingToken={pendingToken}
-        onSubmit={store.submitMagicLink}
-        onConfirm={confirmMagicLink}
+        requestCode={store.requestLoginCode}
+        verifyCode={store.verifyLoginCode}
       />
     );
   }
@@ -144,13 +136,16 @@ export function App() {
           notes={store.notes}
           activeId={store.activeId}
           email={store.email}
-          onSelect={store.setActiveId}
+          onSelect={store.selectNote}
           onNew={() => void store.createNote()}
           onSync={() => void store.refresh()}
           onLogout={() => void store.logout()}
           onExport={() => void handleExport()}
           onImport={(file) => void handleImport(file)}
           onCollapse={() => setSidebarOpen(false)}
+          onShowShortcuts={() => setShowShortcuts(true)}
+          onDelete={(id) => void store.deleteNote(id)}
+          onUndelete={(id) => void store.undeleteNote(id)}
           scale={scale}
           canZoomIn={scale < MAX_SCALE}
           canZoomOut={scale > MIN_SCALE}
@@ -185,10 +180,14 @@ export function App() {
           onDelete={store.deleteNote}
           onUndelete={store.undeleteNote}
           onSync={() => void store.refresh()}
-          onBack={() => store.setActiveId(null)}
+          onBack={store.goBack}
           onNew={() => void store.createNote()}
         />
       </main>
+
+      {showShortcuts ? (
+        <ShortcutsDialog onClose={() => setShowShortcuts(false)} />
+      ) : null}
 
       <div
         className="pointer-events-none fixed inset-x-0 z-50 flex flex-col items-center gap-3 px-4"

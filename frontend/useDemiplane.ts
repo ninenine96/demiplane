@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
-import { FLAVOUR } from "../shared/messages";
-import { db, upsertLocalEdit, type LocalNote } from "./db/dexie";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createDraftLocal,
+  db,
+  discardLocal,
+  purgeDrafts,
+  reloadNotes,
+  upsertLocalEdit,
+  type LocalNote,
+} from "./db/dexie";
 import { api, DemiplaneError } from "./lib/api";
 import {
   installSyncTriggers,
@@ -18,7 +25,8 @@ export interface DemiplaneStore {
   activeId: string | null;
   syncStatus: SyncStatus;
   conflicts: number;
-  setActiveId: (id: string | null) => void;
+  selectNote: (id: string | null) => void;
+  goBack: () => void;
   createNote: () => Promise<void>;
   saveNote: (
     id: string,
@@ -28,8 +36,12 @@ export interface DemiplaneStore {
   undeleteNote: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
-  submitMagicLink: (email: string) => Promise<{ devLink?: string }>;
-  confirmMagicLink: (token: string, remember: boolean) => Promise<void>;
+  requestLoginCode: (email: string) => Promise<{ devCode?: string }>;
+  verifyLoginCode: (
+    email: string,
+    code: string,
+    remember: boolean,
+  ) => Promise<void>;
   clearConflicts: () => void;
   exportGrimoire: () => Promise<void>;
   importGrimoire: (
@@ -45,9 +57,15 @@ export function useDemiplane(): DemiplaneStore {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [conflicts, setConflicts] = useState(0);
 
+  const activeIdRef = useRef<string | null>(null);
+  const draftTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
   const reload = useCallback(async () => {
-    const all = await db.notes.toArray();
-    all.sort((a, b) => b.updatedAt - a.updatedAt);
+    const all = await reloadNotes();
     setNotes(all);
   }, []);
 
@@ -59,7 +77,35 @@ export function useDemiplane(): DemiplaneStore {
     await reload();
   }, [reload]);
 
+  /** Untouched drafts are discarded once the editor has flushed its last save. */
+  const discardDraftSoon = useCallback(
+    (id: string | null) => {
+      if (!id) return;
+      if (draftTimer.current) window.clearTimeout(draftTimer.current);
+      draftTimer.current = window.setTimeout(async () => {
+        const row = await db.notes.get(id);
+        if (row && row.draft === 1) {
+          await discardLocal(id);
+          await reload();
+        }
+      }, 800);
+    },
+    [reload],
+  );
+
+  const selectNote = useCallback(
+    (id: string | null) => {
+      const current = activeIdRef.current;
+      if (current && current !== id) discardDraftSoon(current);
+      setActiveId(id);
+    },
+    [discardDraftSoon],
+  );
+
+  const goBack = useCallback(() => selectNote(null), [selectNote]);
+
   const bootstrap = useCallback(async () => {
+    await purgeDrafts();
     await reload();
     try {
       const me = await api.me();
@@ -79,15 +125,16 @@ export function useDemiplane(): DemiplaneStore {
   useEffect(() => {
     if (auth !== "authenticated") return;
     return installSyncTriggers();
-  }, [auth, afterSync]);
+  }, [auth]);
 
   const createNote = useCallback(async () => {
+    const current = activeIdRef.current;
+    if (current) discardDraftSoon(current);
     const id = crypto.randomUUID();
-    await upsertLocalEdit(id, { title: FLAVOUR.unnamedNote, body: "" });
+    await createDraftLocal(id);
     await reload();
     setActiveId(id);
-    void afterSync();
-  }, [afterSync, reload]);
+  }, [discardDraftSoon, reload]);
 
   const saveNote = useCallback<DemiplaneStore["saveNote"]>(
     async (id, patch) => {
@@ -120,13 +167,13 @@ export function useDemiplane(): DemiplaneStore {
     await afterSync();
   }, [afterSync]);
 
-  const submitMagicLink = useCallback(async (address: string) => {
-    return api.requestMagicLink(address);
+  const requestLoginCode = useCallback(async (address: string) => {
+    return api.requestMagicCode(address);
   }, []);
 
-  const confirmMagicLink = useCallback(
-    async (token: string, remember: boolean) => {
-      const result = await api.verifyMagicLink(token, remember);
+  const verifyLoginCode = useCallback(
+    async (address: string, code: string, remember: boolean) => {
+      const result = await api.verifyMagicCode(address, code, remember);
       setEmail(result.email);
       setAuth("authenticated");
       await afterSync();
@@ -169,15 +216,16 @@ export function useDemiplane(): DemiplaneStore {
     activeId,
     syncStatus,
     conflicts,
-    setActiveId,
+    selectNote,
+    goBack,
     createNote,
     saveNote,
     deleteNote,
     undeleteNote,
     refresh,
     logout,
-    submitMagicLink,
-    confirmMagicLink,
+    requestLoginCode,
+    verifyLoginCode,
     clearConflicts,
     exportGrimoire,
     importGrimoire,

@@ -213,7 +213,7 @@ export function EditorPane({
             <span className="portal-ring-inner" />
           </div>
           <div className="space-y-2">
-            <p className="font-display text-lg tracking-wide text-gold-300">
+            <p className="text-lg font-semibold text-gold-300">
               {FLAVOUR.emptyNotes}
             </p>
             <p className="text-sm text-parchment-500">{FLAVOUR.newNote}</p>
@@ -297,8 +297,22 @@ export function EditorPane({
             scheduleSave({ title: event.target.value });
           }}
           placeholder={FLAVOUR.noteTitlePlaceholder}
-          className="min-w-0 flex-1 bg-transparent px-1 font-serif text-lg font-medium text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/60 sm:text-xl"
+          className="min-w-0 flex-1 bg-transparent px-1 text-lg font-medium text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/60 sm:text-xl"
         />
+        <button
+          type="button"
+          onClick={() => setShowPreview((value) => !value)}
+          aria-label={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
+          title={showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow}
+          aria-pressed={showPreview}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+        >
+          {showPreview ? (
+            <EyeOff size={17} aria-hidden="true" />
+          ) : (
+            <Eye size={17} aria-hidden="true" />
+          )}
+        </button>
         <SyncDot status={syncStatus} onSync={onSync} />
         <input
           ref={fileInput}

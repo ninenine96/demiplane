@@ -6,8 +6,10 @@ export interface Shortcut {
 
 /** The single source of truth for the keyboard map and the help dialog. */
 export const SHORTCUTS: Shortcut[] = [
+  { group: "The archive", keys: "Mod+B", label: "Summon or fold the archive" },
+  { group: "The archive", keys: "Mod+\\", label: "Summon or fold (alternate)" },
   { group: "The archive", keys: "Mod+N", label: "Inscribe a new page" },
-  { group: "The archive", keys: "Mod+\\", label: "Summon or fold the archive" },
+  { group: "The archive", keys: "Mod+K", label: "Scry the archives (find)" },
   { group: "The archive", keys: "?", label: "Open this grimoire of keys" },
   { group: "The page", keys: "Mod+E", label: "Reveal or veil the page" },
   { group: "The page", keys: "Mod+B", label: "Bind the selection in bold" },

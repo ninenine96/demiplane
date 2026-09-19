@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { ChevronsRight } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
 import { AuthScreen } from "./components/AuthScreen";
@@ -17,6 +23,10 @@ const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.35;
 const SCALE_STEP = 0.05;
 
+const MIN_SIDEBAR = 220;
+const MAX_SIDEBAR = 460;
+const DEFAULT_SIDEBAR = 288;
+
 function initialScale(): number {
   if (typeof window === "undefined") return 1;
   const raw = Number(window.localStorage.getItem("demiplane.scale"));
@@ -27,10 +37,19 @@ function clampScale(value: number): number {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, Number(value.toFixed(2))));
 }
 
+function initialSidebarWidth(): number {
+  if (typeof window === "undefined") return DEFAULT_SIDEBAR;
+  const raw = Number(window.localStorage.getItem("demiplane.sidebarWidth"));
+  return Number.isFinite(raw) && raw >= MIN_SIDEBAR && raw <= MAX_SIDEBAR
+    ? raw
+    : DEFAULT_SIDEBAR;
+}
+
 export function App() {
   const store = useDemiplane();
   const [notice, setNotice] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(initialSidebarState);
+  const [sidebarWidth, setSidebarWidth] = useState(initialSidebarWidth);
   const [scale, setScale] = useState(initialScale);
   const [showShortcuts, setShowShortcuts] = useState(false);
 
@@ -42,21 +61,38 @@ export function App() {
   }, [sidebarOpen]);
 
   useEffect(() => {
+    window.localStorage.setItem(
+      "demiplane.sidebarWidth",
+      String(sidebarWidth),
+    );
+  }, [sidebarWidth]);
+
+  useEffect(() => {
     document.documentElement.style.setProperty("--ui-scale", String(scale));
     window.localStorage.setItem("demiplane.scale", String(scale));
   }, [scale]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented) return;
+      if (showShortcuts) return;
+
       const mod = event.metaKey || event.ctrlKey;
       const target = event.target as HTMLElement | null;
       const typing =
         target?.tagName === "INPUT" ||
         target?.tagName === "TEXTAREA" ||
         target?.isContentEditable === true;
+      const key = event.key.toLowerCase();
 
-      if (mod && event.key.toLowerCase() === "s") {
+      if (mod && key === "s") {
         event.preventDefault();
+        return;
+      }
+      // VSCode-style: fold the archive. The editor overrides this to bold.
+      if (mod && key === "b") {
+        event.preventDefault();
+        setSidebarOpen((value) => !value);
         return;
       }
       if (mod && event.key === "\\") {
@@ -64,19 +100,59 @@ export function App() {
         setSidebarOpen((value) => !value);
         return;
       }
-      if (mod && event.key.toLowerCase() === "n") {
+      if (mod && key === "n") {
         event.preventDefault();
         void store.createNote();
         return;
       }
+      // Find: the editor overrides this to forge a link.
+      if (mod && key === "k") {
+        event.preventDefault();
+        setSidebarOpen(true);
+        requestAnimationFrame(() =>
+          document.getElementById("scry")?.focus(),
+        );
+        return;
+      }
+      if (event.key === "Escape" && store.activeId) {
+        if (window.matchMedia("(max-width: 1023px)").matches) {
+          store.goBack();
+        }
+        return;
+      }
       if (!typing && (event.key === "?" || (mod && event.key === "/"))) {
         event.preventDefault();
-        setShowShortcuts((value) => !value);
+        setShowShortcuts(true);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [store]);
+  }, [store, showShortcuts]);
+
+  const startResize = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = sidebarWidth;
+      const move = (moveEvent: PointerEvent) => {
+        setSidebarWidth(
+          Math.min(
+            MAX_SIDEBAR,
+            Math.max(MIN_SIDEBAR, startWidth + (moveEvent.clientX - startX)),
+          ),
+        );
+      };
+      const stop = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+        document.body.style.userSelect = "";
+      };
+      document.body.style.userSelect = "none";
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", stop);
+    },
+    [sidebarWidth],
+  );
 
   const handleExport = useCallback(async () => {
     try {
@@ -127,10 +203,11 @@ export function App() {
     <div className="flex h-[100dvh] overflow-hidden">
       <div
         className={cx(
-          "archive-shell h-full w-full lg:flex-none",
+          "archive-shell relative h-full w-full lg:flex-none",
           showEditor ? "hidden lg:flex" : "flex",
         )}
         data-open={sidebarOpen ? "true" : "false"}
+        style={{ "--archive-width": `${sidebarWidth}px` } as CSSProperties}
       >
         <Sidebar
           notes={store.notes}
@@ -147,11 +224,15 @@ export function App() {
           onDelete={(id) => void store.deleteNote(id)}
           onUndelete={(id) => void store.undeleteNote(id)}
           scale={scale}
-          canZoomIn={scale < MAX_SCALE}
-          canZoomOut={scale > MIN_SCALE}
-          onZoomIn={() => setScale((value) => clampScale(value + SCALE_STEP))}
-          onZoomOut={() => setScale((value) => clampScale(value - SCALE_STEP))}
+          onScaleChange={(value) => setScale(clampScale(value))}
           onZoomReset={() => setScale(1)}
+        />
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize the archive"
+          onPointerDown={startResize}
+          className="absolute right-0 top-0 z-20 hidden h-full w-1.5 cursor-col-resize touch-none transition-colors hover:bg-gold-400/30 lg:block"
         />
       </div>
 

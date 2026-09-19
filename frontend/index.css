@@ -132,10 +132,10 @@ body {
   border-color: var(--gild-faint) !important;
 }
 
-/* Manuscript preview: Spectral body, Cinzel headings, aged-gold accents. */
+/* Manuscript preview — consistent Inter, readable measure. */
 .prose-arcane {
-  font-family: var(--font-serif);
-  font-size: 1.04rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
   line-height: 1.78;
   color: var(--color-parchment-300);
 }
@@ -146,10 +146,10 @@ body {
 .prose-arcane h2,
 .prose-arcane h3,
 .prose-arcane h4 {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
-  color: var(--color-gold-300);
-  letter-spacing: 0.01em;
+  color: var(--color-parchment-100);
+  letter-spacing: 0;
   line-height: 1.32;
   margin: 1.9em 0 0.6em;
 }
@@ -232,9 +232,9 @@ body {
   color: var(--color-gold-300);
 }
 
-/* Editor: one continuous, serif page. No toolbar, no IDE chrome. */
+/* Editor: one continuous page. Consistent Inter, no toolbar, no IDE chrome. */
 .w-md-editor {
-  --md-editor-font-family: var(--font-serif) !important;
+  --md-editor-font-family: var(--font-sans) !important;
   background: transparent !important;
   color: var(--color-parchment-100) !important;
   box-shadow: none !important;
@@ -257,9 +257,9 @@ body {
 .w-md-editor-text-pre,
 .w-md-editor-text-pre > code,
 .w-md-editor-text-input {
-  font-family: var(--font-serif) !important;
-  font-size: 1.03125rem !important;
-  line-height: 1.85 !important;
+  font-family: var(--font-sans) !important;
+  font-size: 1rem !important;
+  line-height: 1.8 !important;
   letter-spacing: 0 !important;
   word-spacing: 0 !important;
   font-variant-ligatures: none !important;
@@ -490,14 +490,14 @@ svg.lucide {
  */
 @media (min-width: 1024px) {
   .archive-shell {
-    width: 18rem;
+    width: var(--archive-width, 18rem);
     overflow: hidden;
     transition:
       width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       opacity 0.24s ease;
   }
   .archive-shell[data-open="false"] {
-    width: 0;
+    width: 0 !important;
     opacity: 0;
   }
 }

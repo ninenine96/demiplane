@@ -80,13 +80,13 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
       }}
     >
       <div className="animate-fade-in-up w-full max-w-md rounded-[var(--radius-card)] border border-[var(--color-void-700)] border-t-gold-500/40 bg-void-900 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] sm:p-8">
-        <p className="wordmark mb-3 inline-block text-[0.6875rem] uppercase tracking-[0.28em] text-gold-400">
+        <p className="wordmark mb-3 inline-block font-display text-[0.6875rem] uppercase tracking-[0.28em] text-gold-400">
           Demiplane
         </p>
 
         {step === "email" ? (
           <>
-            <h1 className="font-serif text-xl text-parchment-100 sm:text-2xl">
+            <h1 className="text-xl font-semibold text-parchment-100 sm:text-2xl">
               {FLAVOUR.loginPrompt}
             </h1>
             <form onSubmit={handleRequestEmail} className="mt-6 space-y-4">
@@ -115,7 +115,7 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
           </>
         ) : (
           <>
-            <h1 className="font-serif text-xl text-parchment-100 sm:text-2xl">
+            <h1 className="text-xl font-semibold text-parchment-100 sm:text-2xl">
               {FLAVOUR.codePrompt}
             </h1>
             <p className="mt-2 text-sm text-parchment-500">

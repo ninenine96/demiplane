@@ -188,7 +188,7 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      <p className="max-w-xs font-display text-[0.8125rem] tracking-wide text-parchment-300">
+      <p className="max-w-xs text-[0.8125rem] leading-relaxed text-parchment-300">
         {children}
       </p>
     </div>

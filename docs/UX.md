@@ -63,9 +63,11 @@ The default page shows only a title and its content.
 
 ## The sidebar is a summonable archive
 
-- On desktop it is a quiet 288px column that collapses completely. A slim gilded
-  edge trigger on the left summons it again; `Cmd/Ctrl + \` toggles it. The
-  collapsed state is remembered per device.
+- On desktop it is a quiet column (288px by default) that **drags wider or
+  narrower** — grab the handle on its right edge (220–460px) — and collapses
+  completely. A slim gilded edge trigger on the left summons it again.
+  `Cmd/Ctrl+B` (or `Cmd/Ctrl+\`) toggles it. Width and collapsed state are
+  remembered per device.
 - On mobile it is simply the list screen; selecting a page opens the editor
   full-screen with a back chevron (master–detail).
 - Contents, kept minimal: wordmark, one quiet search field (Scry), a small
@@ -76,14 +78,14 @@ The default page shows only a title and its content.
 
 ## Enlarge / Reduce (UI scale)
 
-The whole interface scales from one quiet control in the sidebar footer: two
-tiny `ZoomOut` / `ZoomIn` icons with the current percentage between them
-(click the percentage — *Return to true sight* — to reset to 100%). The label is
-**Enlarge / Reduce**, the transmutation spell, not "scale".
+The whole interface scales from one control in the sidebar footer: a **slider**
+flanked by `ZoomOut` / `ZoomIn` glyphs, with the current percentage and an
+explicit **reset button** (*Return to true sight*) on the label row. The label
+is **Enlarge / Reduce**, the transmutation spell, not "scale".
 
 It sets `--ui-scale` on the root, which feeds `html { font-size }`; every
 dimension is written in `rem`, so spacing, type and the editor scale together.
-Range 85–135%, remembered per device.
+Range 85–135% in 5% steps, remembered per device.
 
 ## Motion
 
@@ -143,12 +145,18 @@ the **Grimoire of keys**, generated from a single registry in
 
 | Key | Action |
 | --- | --- |
+| `Cmd/Ctrl+B` | Summon or fold the archive (fold a word in bold while writing) |
+| `Cmd/Ctrl+\` | Summon or fold the archive (alternate) |
 | `Cmd/Ctrl+N` | Inscribe a new page |
-| `Cmd/Ctrl+\` | Summon or fold the archive |
+| `Cmd/Ctrl+K` | Scry the archives (find; forges a link while writing) |
 | `Cmd/Ctrl+E` | Reveal or veil the page |
-| `Cmd/Ctrl+B` / `I` / `K` | Bold / italic / link the selection |
+| `Cmd/Ctrl+B` / `I` | Bold / italic the selection (while writing) |
+| `Cmd/Ctrl+K` | Forge a link from the selection (while writing) |
 | `?` | Grimoire of keys |
-| `Esc` | Close a menu, or return to the archive |
+| `Esc` | Close a menu, or return to the archive (mobile) |
+
+`Cmd/Ctrl+B` and `Cmd/Ctrl+K` are contextual, exactly like an editor: the
+writing surface wins when focused, otherwise the archive action fires.
 
 ## Empty states
 
@@ -197,15 +205,18 @@ dividers; focus rings and selection use the same gold at low alpha.
 
 ### Typography
 
+**One family throughout: Inter.** UI, note titles, the editor, and the preview
+all use it, so the app reads as a single consistent surface. The only exception
+is the wordmark.
+
 | Role | Family | Notes |
 | --- | --- | --- |
-| UI / controls | **Inter** | Buttons, inputs, lists, meta. |
-| Wordmark & labels | **Cinzel** | "Demiplane" and small uppercase labels, gilded. |
-| Note title, editor, preview | **Spectral** | The manuscript surface. Preview headings use Cinzel. |
-| Code | `ui-monospace` | Inline code and blocks. |
+| Everything | **Inter** (variable) | Controls, titles, editor, preview. |
+| Wordmark only | **Cinzel** | Just "Demiplane" — the one deliberate exception. |
+| Code | `ui-monospace` | Inline code and code blocks. |
 
-Self-hosted via `@fontsource` (offline, no CDN). Controls are never set in a
-display serif.
+Self-hosted via `@fontsource` (offline, no CDN). Everything scales from
+`--ui-scale`.
 
 ### Signature details
 

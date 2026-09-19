@@ -7,6 +7,7 @@ import {
   PanelLeftClose,
   Plus,
   RefreshCw,
+  RotateCcw,
   Scroll,
   SlidersHorizontal,
   Trash2,
@@ -45,10 +46,7 @@ interface SidebarProps {
   onDelete: (id: string) => void;
   onUndelete: (id: string) => void;
   scale: number;
-  canZoomIn: boolean;
-  canZoomOut: boolean;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
+  onScaleChange: (value: number) => void;
   onZoomReset: () => void;
 }
 
@@ -67,10 +65,7 @@ export function Sidebar({
   onDelete,
   onUndelete,
   scale,
-  canZoomIn,
-  canZoomOut,
-  onZoomIn,
-  onZoomOut,
+  onScaleChange,
   onZoomReset,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
@@ -206,6 +201,7 @@ export function Sidebar({
 
         <div className="mt-3 flex items-center gap-2">
           <input
+            id="scry"
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -341,42 +337,49 @@ export function Sidebar({
       </nav>
 
       <footer
-        className="flex items-center justify-between gap-2 border-t border-[var(--color-void-700)] px-4 pt-2.5"
+        className="gild-rule space-y-2 border-t border-[var(--color-void-700)] px-4 pt-2.5"
         style={{ paddingBottom: "calc(0.625rem + var(--safe-bottom))" }}
       >
-        <span className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
-          {FLAVOUR.enlarge}
-        </span>
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={onZoomOut}
-            disabled={!canZoomOut}
-            aria-label={FLAVOUR.enlargeDown}
-            title={FLAVOUR.enlargeDown}
-            className="grid h-7 w-7 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 disabled:opacity-30 disabled:hover:bg-transparent"
-          >
-            <ZoomOut size={15} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={onZoomReset}
-            aria-label={FLAVOUR.trueSight}
-            title={FLAVOUR.trueSight}
-            className="min-w-[2.5rem] rounded-md py-1 text-center text-[0.6875rem] tabular-nums text-parchment-500 transition-colors hover:text-parchment-100"
-          >
-            {Math.round(scale * 100)}%
-          </button>
-          <button
-            type="button"
-            onClick={onZoomIn}
-            disabled={!canZoomIn}
-            aria-label={FLAVOUR.enlargeUp}
-            title={FLAVOUR.enlargeUp}
-            className="grid h-7 w-7 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 disabled:opacity-30 disabled:hover:bg-transparent"
-          >
-            <ZoomIn size={15} aria-hidden="true" />
-          </button>
+        <div className="flex items-center justify-between">
+          <span className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
+            {FLAVOUR.enlarge}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[0.6875rem] tabular-nums text-parchment-500">
+              {Math.round(scale * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={onZoomReset}
+              aria-label={FLAVOUR.trueSight}
+              title={FLAVOUR.trueSight}
+              className="grid h-6 w-6 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+            >
+              <RotateCcw size={13} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <ZoomOut
+            size={14}
+            className="shrink-0 text-parchment-500"
+            aria-hidden="true"
+          />
+          <input
+            type="range"
+            min={85}
+            max={135}
+            step={5}
+            value={Math.round(scale * 100)}
+            onChange={(event) => onScaleChange(Number(event.target.value) / 100)}
+            aria-label={FLAVOUR.enlarge}
+            className="h-1 min-w-0 flex-1 cursor-pointer accent-[var(--color-gold-400)]"
+          />
+          <ZoomIn
+            size={14}
+            className="shrink-0 text-parchment-500"
+            aria-hidden="true"
+          />
         </div>
       </footer>
 

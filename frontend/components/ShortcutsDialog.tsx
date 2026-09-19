@@ -28,7 +28,7 @@ export function ShortcutsDialog({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-base tracking-wide text-gold-300">
+            <h2 className="text-base font-semibold text-gold-300">
               {FLAVOUR.shortcutsTitle}
             </h2>
             <p className="mt-1 text-xs text-parchment-500">

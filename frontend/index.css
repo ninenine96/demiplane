@@ -2,27 +2,30 @@
 @import "@uiw/react-md-editor/markdown-editor.css";
 
 @theme {
-  /* Modern dark, with a warm gold accent as the only fantasy note. */
-  --color-void-950: #0e0e12;
-  --color-void-900: #15151b;
-  --color-void-800: #1b1b23;
-  --color-void-700: #26262f;
-  --color-void-600: #33333f;
-  --color-arcane-500: #7c6cff;
-  --color-arcane-400: #9182ff;
-  --color-arcane-300: #b3a8ff;
-  --color-parchment-100: #f4f4f6;
-  --color-parchment-300: #c9c9d4;
-  --color-parchment-500: #9a9aa8;
-  --color-gold-400: #d8b46a;
-  --color-gold-500: #b8923f;
-  --color-ember-400: #f0616d;
+  /* Warm charcoal ground, aged gold, deep violet, warm ivory. */
+  --color-void-950: #131110;
+  --color-void-900: #1a1714;
+  --color-void-800: #211d19;
+  --color-void-700: #2e2823;
+  --color-void-600: #3b342c;
+  --color-arcane-500: #5f4d92;
+  --color-arcane-400: #7d6ab0;
+  --color-arcane-300: #a396c9;
+  --color-parchment-100: #f1e9da;
+  --color-parchment-300: #cbbfad;
+  --color-parchment-500: #a4998a;
+  --color-gold-400: #c3a15c;
+  --color-gold-500: #93743a;
+  --color-gold-300: #d9c08a;
+  --color-ember-400: #c76f66;
+  --color-sage-400: #86a98c;
 
   --font-sans:
     "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     sans-serif;
-  /* Reserved for the wordmark only — the single bit of arcane flavour. */
+  /* Inscriptional serif for the wordmark and fantasy-facing labels. */
   --font-display: "Cinzel", "Iowan Old Style", Palatino, Georgia, serif;
+  /* Readable serif for note titles and the manuscript preview. */
   --font-serif: "Spectral", "Iowan Old Style", Palatino, Georgia, serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", monospace;
 
@@ -34,6 +37,8 @@
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --gild: rgba(195, 161, 92, 0.5);
+  --gild-faint: rgba(195, 161, 92, 0.16);
 }
 
 html,
@@ -46,11 +51,16 @@ body {
   margin: 0;
   background:
     radial-gradient(
-      900px 620px at 100% -20%,
-      rgba(124, 108, 255, 0.1),
+      1000px 700px at 85% -15%,
+      rgba(95, 77, 146, 0.16),
       transparent 60%
     ),
-    #0e0e12;
+    radial-gradient(
+      820px 600px at -5% 110%,
+      rgba(147, 116, 58, 0.09),
+      transparent 56%
+    ),
+    #131110;
   color: var(--color-parchment-100);
   font-family: var(--font-sans);
   font-size: 15px;
@@ -61,11 +71,11 @@ body {
 }
 
 ::selection {
-  background: rgba(124, 108, 255, 0.35);
+  background: rgba(195, 161, 92, 0.24);
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-arcane-400);
+  outline: 2px solid var(--gild);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -75,18 +85,34 @@ body {
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(195, 161, 92, 0.2);
   border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(195, 161, 92, 0.32);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Markdown preview — readable prose, quietly serif. */
+/* Gilded wordmark: a hairline inscription rule, no layout change. */
+.wordmark {
+  text-decoration: underline;
+  text-decoration-color: var(--gild);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+/* Faint gilded hairline for structural dividers — an etched edge. */
+.gild-rule {
+  border-color: var(--gild-faint) !important;
+}
+
+/* Manuscript preview: Spectral body, Cinzel headings, aged-gold accents. */
 .prose-arcane {
   font-family: var(--font-serif);
-  font-size: 1.02rem;
-  line-height: 1.75;
+  font-size: 1.04rem;
+  line-height: 1.78;
   color: var(--color-parchment-300);
 }
 .prose-arcane > :first-child {
@@ -96,17 +122,18 @@ body {
 .prose-arcane h2,
 .prose-arcane h3,
 .prose-arcane h4 {
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   font-weight: 600;
-  color: var(--color-parchment-100);
-  line-height: 1.3;
-  margin: 1.8em 0 0.6em;
+  color: var(--color-gold-300);
+  letter-spacing: 0.01em;
+  line-height: 1.32;
+  margin: 1.9em 0 0.6em;
 }
 .prose-arcane h1 {
-  font-size: 1.6rem;
+  font-size: 1.55rem;
 }
 .prose-arcane h2 {
-  font-size: 1.3rem;
+  font-size: 1.28rem;
 }
 .prose-arcane h3 {
   font-size: 1.1rem;
@@ -114,28 +141,30 @@ body {
 .prose-arcane p,
 .prose-arcane ul,
 .prose-arcane ol {
-  margin: 0.9em 0;
+  margin: 0.95em 0;
 }
 .prose-arcane ul,
 .prose-arcane ol {
   padding-left: 1.4em;
 }
 .prose-arcane li {
-  margin: 0.3em 0;
+  margin: 0.32em 0;
 }
 .prose-arcane a {
-  color: var(--color-arcane-300);
+  color: var(--color-gold-300);
+  text-decoration-color: var(--gild);
   text-underline-offset: 3px;
 }
 .prose-arcane code {
   font-family: var(--font-mono);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(195, 161, 92, 0.1);
+  color: var(--color-parchment-100);
   padding: 0.12em 0.38em;
   border-radius: 6px;
   font-size: 0.88em;
 }
 .prose-arcane pre {
-  background: #121218;
+  background: #171412;
   border: 1px solid var(--color-void-700);
   padding: 16px;
   border-radius: var(--radius-control);
@@ -146,10 +175,11 @@ body {
   padding: 0;
 }
 .prose-arcane blockquote {
-  border-left: 3px solid var(--color-void-600);
+  border-left: 2px solid var(--color-gold-500);
   padding: 0.2em 0 0.2em 16px;
   margin: 1.1em 0;
   color: var(--color-parchment-500);
+  font-style: italic;
 }
 .prose-arcane img {
   max-width: 100%;
@@ -158,8 +188,8 @@ body {
 }
 .prose-arcane hr {
   border: none;
-  border-top: 1px solid var(--color-void-700);
-  margin: 1.8em 0;
+  border-top: 1px solid var(--gild-faint);
+  margin: 1.9em 0;
 }
 .prose-arcane table {
   border-collapse: collapse;
@@ -174,10 +204,11 @@ body {
   text-align: left;
 }
 .prose-arcane th {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(195, 161, 92, 0.07);
+  color: var(--color-gold-300);
 }
 
-/* Editor — keep it neutral and modern. */
+/* Editor: modern and crisp, warmed to the archive. */
 .w-md-editor {
   background: transparent !important;
   color: var(--color-parchment-100) !important;
@@ -194,8 +225,8 @@ body {
   border-radius: 8px;
 }
 .w-md-editor-toolbar ul > li > button:hover {
-  color: var(--color-parchment-100) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-gold-300) !important;
+  background: rgba(195, 161, 92, 0.1) !important;
 }
 .w-md-editor-text-pre > code,
 .w-md-editor-text-input,
@@ -207,7 +238,7 @@ body {
 .w-md-editor-text-input {
   color: var(--color-parchment-100) !important;
   -webkit-text-fill-color: currentColor !important;
-  caret-color: var(--color-arcane-300) !important;
+  caret-color: var(--color-gold-300) !important;
 }
 .w-md-editor-text-pre {
   opacity: 0.5;
@@ -215,6 +246,11 @@ body {
 .wmde-markdown {
   background: transparent !important;
   color: var(--color-parchment-300) !important;
+}
+
+/* Slightly engraved icon strokes. */
+svg.lucide {
+  stroke-width: 1.6;
 }
 
 @media (prefers-reduced-motion: reduce) {

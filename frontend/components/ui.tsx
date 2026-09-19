@@ -14,12 +14,12 @@ type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-arcane-500 text-white hover:bg-arcane-400 shadow-[var(--shadow-arcane)]",
-  gold: "bg-gold-400 text-void-950 hover:bg-gold-500 font-semibold",
+    "bg-arcane-500 text-parchment-100 border border-arcane-400/30 hover:bg-arcane-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]",
+  gold: "bg-gold-500 text-void-950 border border-gold-400/40 font-semibold hover:bg-gold-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]",
   ghost:
-    "bg-white/[0.04] text-parchment-100 border border-[var(--color-void-700)] hover:bg-white/[0.09] hover:border-arcane-500/50",
+    "bg-white/[0.03] text-parchment-300 border border-[var(--color-void-600)] hover:bg-white/[0.06] hover:border-gold-500/40 hover:text-parchment-100",
   danger:
-    "bg-ember-400/15 text-ember-400 border border-ember-400/35 hover:bg-ember-400/25",
+    "bg-ember-400/10 text-ember-400 border border-ember-400/30 hover:bg-ember-400/20",
 };
 
 const SIZES: Record<Size, string> = {
@@ -105,9 +105,9 @@ export function Input({
     <input
       {...props}
       className={cx(
-        "h-11 w-full rounded-[var(--radius-control)] border border-[var(--color-void-700)]",
+        "h-11 w-full rounded-[var(--radius-control)] border border-[var(--color-void-600)]",
         "bg-void-950/70 px-3 text-parchment-100 placeholder:text-parchment-500/70",
-        "outline-none transition-colors focus:border-arcane-400",
+        "outline-none transition-colors focus:border-gold-500/60",
         className,
       )}
     />
@@ -125,8 +125,8 @@ export function Chip({
       className={cx(
         "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition-colors",
         active
-          ? "border-arcane-400/60 bg-arcane-500/20 text-arcane-300"
-          : "border-[var(--color-void-700)] text-parchment-500 hover:text-parchment-100",
+          ? "border-gold-500/50 bg-gold-400/10 text-gold-300"
+          : "border-[var(--color-void-600)] text-parchment-500 hover:border-gold-500/30 hover:text-parchment-100",
         className,
       )}
     />
@@ -149,7 +149,7 @@ export function StatusLine({
   const toneClass = {
     neutral: "text-parchment-500",
     error: "text-ember-400",
-    success: "text-gold-400",
+    success: "text-gold-300",
   }[tone];
 
   return (
@@ -165,7 +165,7 @@ export function Spinner({ label }: { label?: string }) {
     <span className="inline-flex items-center gap-2" role="status">
       <span
         aria-hidden="true"
-        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-arcane-400/40 border-t-arcane-300"
+        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gold-500/30 border-t-gold-400"
       />
       <span className="sr-only">{label ?? PLAIN.loadingNotes}</span>
     </span>
@@ -186,7 +186,9 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      <p className="max-w-xs text-sm text-parchment-500">{children}</p>
+      <p className="max-w-xs font-display text-[13px] tracking-wide text-parchment-300">
+        {children}
+      </p>
     </div>
   );
 }

@@ -68,11 +68,11 @@ export function AuthScreen({
       className="flex min-h-[100dvh] items-center justify-center px-4 py-8"
       style={{ paddingTop: "calc(2rem + var(--safe-top))", paddingBottom: "calc(2rem + var(--safe-bottom))" }}
     >
-      <div className="w-full max-w-md rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-900 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] sm:p-8">
-        <p className="mb-3 text-[11px] uppercase tracking-[0.28em] text-gold-500">
+      <div className="w-full max-w-md rounded-[var(--radius-card)] border border-[var(--color-void-700)] border-t-gold-500/40 bg-void-900 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] sm:p-8">
+        <p className="wordmark mb-3 inline-block text-[11px] uppercase tracking-[0.28em] text-gold-400">
           Demiplane
         </p>
-        <h1 className="text-xl font-semibold text-parchment-100 sm:text-2xl">
+        <h1 className="font-serif text-xl text-parchment-100 sm:text-2xl">
           {pendingToken ? FLAVOUR.confirmLogin : FLAVOUR.loginPrompt}
         </h1>
 
@@ -112,7 +112,7 @@ export function AuthScreen({
             {devLink ? (
               <a
                 href={devLink}
-                className="block break-all rounded-lg border border-arcane-500/40 bg-arcane-500/10 p-3 text-xs text-arcane-300 hover:bg-arcane-500/20"
+                className="block break-all rounded-lg border border-gold-500/40 bg-gold-400/10 p-3 text-xs text-gold-300 hover:bg-gold-400/20"
               >
                 {devLink}
               </a>

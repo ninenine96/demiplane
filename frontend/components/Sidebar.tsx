@@ -63,13 +63,13 @@ export function Sidebar({
   }, [notes, showTrash, folder, matchedIds]);
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:w-80 lg:flex-none">
+    <aside className="gild-rule flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:w-80 lg:flex-none">
       <header
-        className="space-y-4 border-b border-[var(--color-void-700)] px-5 pb-5"
+        className="gild-rule space-y-4 border-b border-[var(--color-void-700)] px-5 pb-5"
         style={{ paddingTop: "calc(1.25rem + var(--safe-top))" }}
       >
         <div className="flex items-center justify-between gap-3">
-          <h1 className="font-display text-lg tracking-wide text-gold-400">
+          <h1 className="wordmark font-display text-lg tracking-[0.08em] text-gold-400">
             Demiplane
           </h1>
           <button
@@ -103,7 +103,7 @@ export function Sidebar({
             value={folder}
             onChange={(event) => setFolder(event.target.value)}
             aria-label="Filter by satchel"
-            className="h-9 min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-2 text-xs text-parchment-300 outline-none focus:border-arcane-400"
+            className="h-9 min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--color-void-600)] bg-void-950/60 px-2 text-xs text-parchment-300 outline-none focus:border-gold-500/60"
           >
             <option value="all">All satchels</option>
             {folders.map((name) => (
@@ -138,7 +138,7 @@ export function Sidebar({
                   onClick={() => onSelect(note.id)}
                   className={`w-full rounded-[var(--radius-control)] px-3 py-2.5 text-left transition-colors ${
                     note.id === activeId
-                      ? "bg-arcane-500/15 ring-1 ring-inset ring-arcane-500/30"
+                      ? "bg-white/[0.045] shadow-[inset_2px_0_0_0_var(--color-gold-400)] ring-1 ring-inset ring-gold-500/15"
                       : "hover:bg-white/[0.05]"
                   }`}
                 >
@@ -181,7 +181,7 @@ export function Sidebar({
       </nav>
 
       <footer
-        className="grid grid-cols-2 gap-3 border-t border-[var(--color-void-700)] px-4 pt-4"
+        className="gild-rule grid grid-cols-2 gap-3 border-t border-[var(--color-void-700)] px-4 pt-4"
         style={{ paddingBottom: "calc(1rem + var(--safe-bottom))" }}
       >
         <input

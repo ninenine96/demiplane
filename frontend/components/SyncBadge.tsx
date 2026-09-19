@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../../shared/messages";
 import type { SyncStatus } from "../sync/engine";
 
@@ -26,9 +27,9 @@ export function SyncBadge({
   const info = describe(status, online);
   const dot = {
     neutral: "bg-parchment-500",
-    error: "bg-red-400",
-    success: "bg-emerald-400",
-    active: "bg-arcane-300 animate-pulse",
+    error: "bg-ember-400",
+    success: "bg-sage-400",
+    active: "bg-gold-400 animate-pulse",
   }[info.dot];
 
   return (
@@ -45,10 +46,10 @@ export function SyncBadge({
       </span>
       <button
         onClick={onSync}
-        className="ml-auto rounded-md px-2 py-1 text-arcane-300 hover:bg-white/5"
+        className="ml-auto rounded-md px-2 py-1 text-parchment-500 transition-colors hover:bg-white/5 hover:text-gold-300"
         aria-label={FLAVOUR.syncNow}
       >
-        ⟳
+        <RefreshCw size={14} aria-hidden="true" />
       </button>
     </div>
   );
@@ -78,14 +79,14 @@ function describe(
       return {
         flavour: FLAVOUR.syncFailed,
         plain: PLAIN.syncError,
-        tone: "text-red-300",
+        tone: "text-ember-400",
         dot: "error",
       };
     case "synced":
       return {
         flavour: FLAVOUR.syncDone,
         plain: PLAIN.synced,
-        tone: "text-gold-400",
+        tone: "text-gold-300",
         dot: "success",
       };
     default:

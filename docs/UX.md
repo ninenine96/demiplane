@@ -19,50 +19,63 @@ pocket dimension — and to make the editor genuinely pleasant on a phone.
    no jank from fixed pixel heights fighting the viewport.
 5. **Offline is normal, not an error state.**
 
-## Visual language — modern, with a fantasy accent
+## Visual language — modern arcane archive
 
-The base is a clean, contemporary dark interface: neutral surfaces, generous
-spacing, Inter for almost everything, restrained borders, no glow for its own
-sake. The fantasy lives in small, deliberate details only — a gold accent, the
-Cinzel wordmark, tag sigils, and the flavour copy. **When in doubt, choose
-modern.** A control that reads as "fantasy" must earn its place.
+The base is still a clean, contemporary application: generous spacing, Inter for
+all controls, crisp inputs, restrained borders. The atmosphere comes from
+*material* choices — warm charcoal, aged gold, deep violet, warm ivory — plus
+one display serif. Think a grimoire translated into a well-made modern app, not
+medieval cosplay. **No parchment, leather, wood, scrolls, runes, frames,
+particles, smoke, or gratuitous glow.** Ornament only where it reinforces
+hierarchy.
 
 ### Colour tokens (semantic, not literal)
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--bg` | `#0e0e12` | App background |
-| `--surface` | `#15151b` | Sidebar, headers, panels |
-| `--surface-raised` | `#1b1b23` | Cards, popovers, toasts |
-| `--border` | `#26262f` | Hairlines, dividers, inputs |
-| `--text` | `#f4f4f6` | Primary text |
-| `--text-muted` | `#9a9aa8` | Secondary text, meta |
-| `--accent` | `#7c6cff` | Primary action, focus, selection |
-| `--gold` | `#d8b46a` | The single fantasy accent: wordmark, sigils |
-| `--danger` | `#f0616d` | Banish, destructive |
-| `--success` | `#5ad19a` | Synced, remembered |
+| `--bg` (void-950) | `#131110` | Warm charcoal ground |
+| `--surface` (void-900) | `#1a1714` | Sidebar, headers, panels |
+| `--surface-raised` (void-800) | `#211d19` | Cards, popovers, toasts |
+| `--border` (void-700) | `#2e2823` | Hairlines, dividers |
+| `--text` (parchment-100) | `#f1e9da` | Warm ivory |
+| `--text-muted` (parchment-500) | `#a4998a` | Secondary text, meta |
+| `--violet` (arcane-500) | `#5f4d92` | Primary action |
+| `--gold` (gold-400) | `#c3a15c` | Aged gilding: wordmark, sigils, focus |
+| `--gold-300` | `#d9c08a` | Highlights on dark surfaces |
+| `--danger` (ember-400) | `#c76f66` | Banish, destructive |
+| `--success` (sage-400) | `#86a98c` | Synced, remembered |
 
-Dark theme only for now (`color-scheme: dark`). A light "Daylight" theme can
-invert these tokens without touching components.
+Gold is a **muted brass**, never bright yellow. Gilded hairlines
+(`--gild-faint`, `rgba(195,161,92,0.16)`) mark structural dividers; focus rings
+and selection use the same gold at low alpha.
 
 ### Typography
 
 | Role | Family | Notes |
 | --- | --- | --- |
-| UI / body / headings | **Inter** (variable) | Default for everything. Headings are Inter at 600 weight. |
-| Wordmark only | **Cinzel** | Just "Demiplane" in the sidebar and auth card. The one overtly arcane touch. |
-| Prose / preview | **Spectral** | Long-form reading in the preview pane. Optional and easy to drop. |
+| UI / controls | **Inter** (variable) | Buttons, inputs, lists, meta. The app stays legible and modern. |
+| Wordmark & labels | **Cinzel** | "Demiplane" and small uppercase labels, letterspaced, gilded. |
+| Note title & preview | **Spectral** | Serif for inscribing and reading a page — headings use Cinzel. |
 | Code | `ui-monospace` stack | Inline code and code blocks. |
 
 Self-hosted via `@fontsource` so they work offline and behind corporate
 networks (no Google Fonts CDN, no layout flash). Load only Latin subsets.
 
-Type scale: 11 / 12 / 13 / 15 / 16 / 18 / 20, line-height 1.55 body. Never set
-body copy in a display serif.
+Type scale: 11 / 12 / 13 / 15 / 16 / 18 / 20, line-height 1.55 body. Controls
+are never set in a display serif.
+
+### Signature details
+
+- The wordmark carries a faint gilded underline (inscription rule).
+- Structural dividers (sidebar header/footer, editor header) use the gilded
+  hairline; content dividers stay neutral.
+- The active note gets a 2px gilded inset rule on its leading edge.
+- The auth card carries a single gilded top hairline.
+- Icons are Lucide at `stroke-width: 1.6` for a slightly engraved feel.
 
 ### Iconography
 
-**Lucide** (`lucide-react`) at 16–20px, `stroke-width: 1.75`, `--text-muted`
+**Lucide** (`lucide-react`) at 16–20px, `stroke-width: 1.6`, `--text-muted`
 by default, `--gold` on active. Icons always pair with a text label or an
 `aria-label` — never icon-only without an accessible name.
 

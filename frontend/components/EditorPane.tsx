@@ -129,7 +129,7 @@ export function EditorPane({
     return (
       <section className="flex h-full items-center justify-center px-6 text-center">
         <div className="max-w-sm space-y-3">
-          <p className="text-lg font-medium text-parchment-100">
+          <p className="font-display text-lg tracking-wide text-gold-300">
             {FLAVOUR.emptyNotes}
           </p>
           <p className="text-sm text-parchment-500">{FLAVOUR.newNote}</p>
@@ -145,7 +145,7 @@ export function EditorPane({
     <section
       className={cx(
         "flex h-full min-w-0 flex-col bg-void-950/40",
-        dragging && "ring-2 ring-inset ring-arcane-400/60",
+        dragging && "ring-2 ring-inset ring-gold-400/60",
       )}
       onDragOver={(event) => {
         event.preventDefault();
@@ -159,7 +159,7 @@ export function EditorPane({
       }}
     >
       <header
-        className="space-y-3 border-b border-[var(--color-void-700)] bg-void-900 px-4 py-3 sm:px-5"
+        className="gild-rule space-y-3 border-b border-[var(--color-void-700)] bg-void-900 px-4 py-3 sm:px-5"
         style={{ paddingTop: "calc(0.75rem + var(--safe-top))" }}
       >
         <div className="flex items-center gap-1">
@@ -179,7 +179,7 @@ export function EditorPane({
               scheduleSave({ title: event.target.value });
             }}
             placeholder={FLAVOUR.noteTitlePlaceholder}
-            className="min-w-0 flex-1 bg-transparent px-1 text-base font-semibold text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/70 sm:text-lg"
+            className="min-w-0 flex-1 bg-transparent px-1 font-serif text-lg font-medium text-parchment-100 outline-none placeholder:font-normal placeholder:text-parchment-500/70 sm:text-xl"
           />
           <input
             ref={fileInput}
@@ -244,7 +244,7 @@ export function EditorPane({
             }}
             placeholder={FLAVOUR.folderNew}
             aria-label="Satchel"
-            className="h-9 w-full rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none transition-colors focus:border-arcane-400 sm:w-44"
+            className="h-9 w-full rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none transition-colors focus:border-gold-500/60 sm:w-44"
           />
           <input
             value={tags}
@@ -259,7 +259,7 @@ export function EditorPane({
             }}
             placeholder={FLAVOUR.tagNew}
             aria-label="Sigils"
-            className="h-9 w-full min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none transition-colors focus:border-arcane-400"
+            className="h-9 w-full min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--color-void-700)] bg-void-950/60 px-3 text-sm text-parchment-100 outline-none transition-colors focus:border-gold-500/60"
           />
         </div>
 

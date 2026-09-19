@@ -74,13 +74,38 @@ The default page shows only a title and its content.
   permanent chrome.
 - No per-note tag/folder chips in the list — title and excerpt only.
 
-## UI scale
+## Enlarge / Reduce (UI scale)
 
-The whole interface scales from one quiet control: two tiny `ZoomOut` / `ZoomIn`
-icons in the sidebar footer with the current percentage between them (click it
-to reset to 100%). It sets `--ui-scale` on the root, which feeds
-`html { font-size }`; every dimension is written in `rem`, so spacing, type and
-the editor scale together. Range 85–135%, remembered per device.
+The whole interface scales from one quiet control in the sidebar footer: two
+tiny `ZoomOut` / `ZoomIn` icons with the current percentage between them
+(click the percentage — *Return to true sight* — to reset to 100%). The label is
+**Enlarge / Reduce**, the transmutation spell, not "scale".
+
+It sets `--ui-scale` on the root, which feeds `html { font-size }`; every
+dimension is written in `rem`, so spacing, type and the editor scale together.
+Range 85–135%, remembered per device.
+
+## Motion
+
+A little arcana, never in the way of writing. All of it collapses to nothing
+under `prefers-reduced-motion`.
+
+- **The gilding sheen** — a slow gold highlight sweeps across the DEMIPLANE
+  wordmark every nine seconds (`@supports` background-clip guard, solid gold
+  fallback).
+- **The scrying portal** — the empty editor shows a faint animated sigil: a
+  pulsing arcane core between two counter-rotating rings. Atmosphere for the
+  one moment there is no content.
+- **Pages materialise** — switching notes cross-fades and lifts the canvas
+  (`animate-page-in`), so a page feels drawn rather than swapped.
+- **The archive slides in** — the sidebar enters with a short horizontal ease.
+- **Opening a portal** — while syncing, the sync dot becomes a spinning gold
+  ring instead of a pulse.
+- **Toasts rise** — status messages lift in with a soft overshoot.
+- **Arcane bloom** — primary buttons gain a faint violet glow on hover.
+
+Keep motion to entrances and state changes. Never animate the text being typed.
+
 
 ## Editor alignment
 

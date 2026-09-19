@@ -100,12 +100,31 @@ body {
   background: transparent;
 }
 
-/* Gilded wordmark: a hairline inscription rule, no layout change. */
+/* Gilded wordmark: a hairline inscription rule, plus a slow gilding sheen. */
 .wordmark {
+  color: var(--color-gold-400);
   text-decoration: underline;
   text-decoration-color: var(--gild);
   text-decoration-thickness: 1px;
   text-underline-offset: 6px;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .wordmark {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-gold-500) 0%,
+      var(--color-gold-400) 38%,
+      #f4e3b6 50%,
+      var(--color-gold-400) 62%,
+      var(--color-gold-500) 100%
+    );
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gild-sweep 9s ease-in-out infinite;
+  }
 }
 
 /* Faint gilded hairline for structural dividers — an etched edge. */
@@ -296,6 +315,146 @@ body {
 /* Slightly engraved icon strokes. */
 svg.lucide {
   stroke-width: 1.6;
+}
+
+/* ------------------------------------------------------------------ *
+ * Motion — a little arcana, never in the way of writing.
+ * ------------------------------------------------------------------ */
+
+@keyframes gild-sweep {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -80% 0;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.996);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes archive-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes portal-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.36s ease-out both;
+}
+.animate-page-in {
+  animation: page-in 0.3s ease-out both;
+}
+.animate-archive-in {
+  animation: archive-in 0.3s ease-out both;
+}
+.animate-toast-in {
+  animation: toast-in 0.34s cubic-bezier(0.2, 0.7, 0.3, 1.08) both;
+}
+
+/* An arcane scrying portal for quiet empty states. */
+.portal {
+  position: relative;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin: 0 auto 1.75rem;
+}
+.portal::after {
+  content: "";
+  position: absolute;
+  inset: 1.6rem;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(124, 108, 255, 0.42),
+    rgba(95, 77, 146, 0.14) 55%,
+    transparent 72%
+  );
+  animation: portal-pulse 5.5s ease-in-out infinite;
+}
+.portal-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px dashed rgba(195, 161, 92, 0.34);
+  animation: spin-slow 52s linear infinite;
+}
+.portal-ring-inner {
+  position: absolute;
+  inset: 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(124, 108, 255, 0.3);
+  animation: spin-reverse 34s linear infinite;
+}
+
+/* Primary actions gain a faint arcane bloom on approach. */
+.btn-bloom {
+  transition:
+    box-shadow 200ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+.btn-bloom:hover {
+  box-shadow: 0 0 26px rgba(95, 77, 146, 0.5);
 }
 
 @media (prefers-reduced-motion: reduce) {

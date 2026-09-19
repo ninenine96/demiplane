@@ -29,6 +29,7 @@ export function SyncDot({
   }, []);
 
   const info = describe(status, online);
+  const syncing = online && status === "syncing";
 
   return (
     <button
@@ -38,7 +39,17 @@ export function SyncDot({
       aria-label={`${info.flavour} ${info.plain}`}
       className="grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-colors hover:bg-white/[0.06]"
     >
-      <span aria-hidden="true" className={cx("h-2 w-2 rounded-full", info.dot)} />
+      {syncing ? (
+        <span
+          aria-hidden="true"
+          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gold-500/25 border-t-gold-400"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className={cx("h-2 w-2 rounded-full", info.dot)}
+        />
+      )}
       <span className="sr-only" role="status" aria-live="polite">
         {info.plain}
       </span>

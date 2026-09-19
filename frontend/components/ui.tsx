@@ -15,7 +15,7 @@ type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-arcane-500 text-parchment-100 border border-arcane-400/30 hover:bg-arcane-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]",
+    "btn-bloom bg-arcane-500 text-parchment-100 border border-arcane-400/30 hover:bg-arcane-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]",
   gold: "bg-gold-500 text-void-950 border border-gold-400/40 font-semibold hover:bg-gold-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]",
   ghost:
     "bg-white/[0.03] text-parchment-300 border border-[var(--color-void-600)] hover:bg-white/[0.06] hover:border-gold-500/40 hover:text-parchment-100",

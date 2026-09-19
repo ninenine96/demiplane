@@ -122,6 +122,10 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Undelete | Recover from the Void. |
 | Search placeholder | Scry the archives... |
 | No search results | The archives hold nothing by that name. |
+| UI scale label | Enlarge / Reduce |
+| Enlarge the UI | Enlarge the archive |
+| Reduce the UI | Reduce the archive |
+| Reset the UI scale | Return to true sight |
 | Export | Copy your grimoire. |
 | Import | Restore from a fallen timeline. |
 | Conflict (both kept) | Two timelines converged — both versions preserved. |

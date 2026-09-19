@@ -93,7 +93,7 @@ export function Sidebar({
   }, [notes, showTrash, folder, matchedIds]);
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:w-72 lg:flex-none">
+    <aside className="animate-archive-in flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:w-72 lg:flex-none">
       <header
         className="px-4 pb-3"
         style={{ paddingTop: "calc(1rem + var(--safe-top))" }}
@@ -252,7 +252,7 @@ export function Sidebar({
                 : FLAVOUR.emptyNotes}
           </EmptyState>
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="animate-fade-in-up space-y-0.5">
             {visible.map((note) => (
               <li key={note.id}>
                 <button
@@ -290,15 +290,15 @@ export function Sidebar({
         style={{ paddingBottom: "calc(0.625rem + var(--safe-bottom))" }}
       >
         <span className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
-          Scale
+          {FLAVOUR.enlarge}
         </span>
         <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={onZoomOut}
             disabled={!canZoomOut}
-            aria-label="Decrease scale"
-            title="Decrease scale"
+            aria-label={FLAVOUR.enlargeDown}
+            title={FLAVOUR.enlargeDown}
             className="grid h-7 w-7 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ZoomOut size={15} aria-hidden="true" />
@@ -306,8 +306,8 @@ export function Sidebar({
           <button
             type="button"
             onClick={onZoomReset}
-            aria-label="Reset scale to one hundred percent"
-            title="Reset scale"
+            aria-label={FLAVOUR.trueSight}
+            title={FLAVOUR.trueSight}
             className="min-w-[2.5rem] rounded-md py-1 text-center text-[0.6875rem] tabular-nums text-parchment-500 transition-colors hover:text-parchment-100"
           >
             {Math.round(scale * 100)}%
@@ -316,8 +316,8 @@ export function Sidebar({
             type="button"
             onClick={onZoomIn}
             disabled={!canZoomIn}
-            aria-label="Increase scale"
-            title="Increase scale"
+            aria-label={FLAVOUR.enlargeUp}
+            title={FLAVOUR.enlargeUp}
             className="grid h-7 w-7 place-items-center rounded-md text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-100 disabled:opacity-30 disabled:hover:bg-transparent"
           >
             <ZoomIn size={15} aria-hidden="true" />

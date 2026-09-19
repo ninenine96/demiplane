@@ -65,6 +65,12 @@ export const FLAVOUR = {
   searchPlaceholder: "Scry the archives...",
   searchClear: "Clear the scrying pool",
 
+  // --- Enlarge / Reduce ---------------------------------------------------
+  enlarge: "Enlarge / Reduce",
+  enlargeUp: "Enlarge the archive",
+  enlargeDown: "Reduce the archive",
+  trueSight: "Return to true sight",
+
   // --- Attachments / backup ----------------------------------------------
   attachmentUpload: "Tucking it into the Haversack...",
   attachmentDone: "Safely in the Haversack.",

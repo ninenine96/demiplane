@@ -189,14 +189,18 @@ export function EditorPane({
   if (!note) {
     return (
       <section className="flex h-full items-center justify-center px-6 text-center">
-        <div className="max-w-md space-y-6">
+        <div className="animate-fade-in-up max-w-md space-y-6">
+          <div className="portal" aria-hidden="true">
+            <span className="portal-ring" />
+            <span className="portal-ring-inner" />
+          </div>
           <div className="space-y-2">
             <p className="font-display text-lg tracking-wide text-gold-300">
               {FLAVOUR.emptyNotes}
             </p>
             <p className="text-sm text-parchment-500">{FLAVOUR.newNote}</p>
           </div>
-          <Button onClick={onNew} icon={<Plus size={16} />}>
+          <Button className="btn-bloom" onClick={onNew} icon={<Plus size={16} />}>
             {FLAVOUR.newNote}
           </Button>
         </div>
@@ -394,9 +398,9 @@ export function EditorPane({
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div key={note.id} className="animate-page-in min-h-0 flex-1 overflow-hidden">
         {showPreview ? (
-          <div className="h-full overflow-y-auto">
+          <div className="animate-fade-in-up h-full overflow-y-auto">
             <div className="mx-auto w-full max-w-[44rem] px-6 py-10 sm:py-14">
               <div
                 className="prose-arcane"

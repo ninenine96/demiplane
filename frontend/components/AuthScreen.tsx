@@ -68,7 +68,7 @@ export function AuthScreen({
       className="flex min-h-[100dvh] items-center justify-center px-4 py-8"
       style={{ paddingTop: "calc(2rem + var(--safe-top))", paddingBottom: "calc(2rem + var(--safe-bottom))" }}
     >
-      <div className="w-full max-w-md rounded-[var(--radius-card)] border border-[var(--color-void-700)] border-t-gold-500/40 bg-void-900 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] sm:p-8">
+      <div className="animate-fade-in-up w-full max-w-md rounded-[var(--radius-card)] border border-[var(--color-void-700)] border-t-gold-500/40 bg-void-900 p-6 shadow-[0_24px_60px_rgba(0,0,0,0.5)] sm:p-8">
         <p className="wordmark mb-3 inline-block text-[0.6875rem] uppercase tracking-[0.28em] text-gold-400">
           Demiplane
         </p>
@@ -98,7 +98,11 @@ export function AuthScreen({
                 </span>
               </span>
             </label>
-            <Button onClick={handleConfirm} disabled={busy} className="w-full">
+            <Button
+              onClick={handleConfirm}
+              disabled={busy}
+              className="btn-bloom w-full"
+            >
               {busy ? FLAVOUR.loading : FLAVOUR.confirmLogin}
             </Button>
           </div>
@@ -143,7 +147,7 @@ export function AuthScreen({
               placeholder="you@example.com"
               className="w-full rounded-lg border border-white/10 bg-void-950/60 px-3 py-2 text-parchment-100 outline-none focus:border-arcane-400"
             />
-            <Button type="submit" disabled={busy} className="w-full">
+            <Button type="submit" disabled={busy} className="btn-bloom w-full">
               {busy ? FLAVOUR.loading : FLAVOUR.loginButton}
             </Button>
           </form>

@@ -229,7 +229,7 @@ function Toast({
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-auto w-full max-w-sm rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+      className="animate-toast-in pointer-events-auto w-full max-w-sm rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
     >
       <StatusLine flavour={flavour} plain={plain} tone={tone} />
       <button

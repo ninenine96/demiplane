@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
+  KeyRound,
   Keyboard,
   LogOut,
   MoreHorizontal,
@@ -43,6 +44,7 @@ interface SidebarProps {
   onImport: (file: File) => void;
   onCollapse: () => void;
   onShowShortcuts: () => void;
+  onShowAgentKeys: () => void;
   onDelete: (id: string) => void;
   onUndelete: (id: string) => void;
   scale: number;
@@ -62,6 +64,7 @@ export function Sidebar({
   onImport,
   onCollapse,
   onShowShortcuts,
+  onShowAgentKeys,
   onDelete,
   onUndelete,
   scale,
@@ -201,6 +204,15 @@ export function Sidebar({
                   }}
                 >
                   {FLAVOUR.shortcutsTitle}
+                </MenuItem>
+                <MenuItem
+                  icon={<KeyRound size={15} />}
+                  onClick={() => {
+                    onShowAgentKeys();
+                    close();
+                  }}
+                >
+                  {FLAVOUR.agentKeys}
                 </MenuItem>
                 <MenuDivider />
                 <MenuItem

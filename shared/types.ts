@@ -67,6 +67,26 @@ export interface ApiOk<T> {
   data: T;
 }
 
+/** A personal access token ("key to the demiplane") without its secret. */
+export interface ApiToken {
+  id: string;
+  name: string;
+  folder: string | null;
+  createdAt: number;
+  lastUsedAt: number | null;
+  revokedAt: number | null;
+}
+
+/** A freshly forged key, carrying the plaintext token that is shown only once. */
+export interface ApiTokenCreated extends ApiToken {
+  token: string;
+}
+
+export interface ApiTokenInput {
+  name: string;
+  folder: string | null;
+}
+
 export interface Attachment {
   id: string;
   noteId: string;

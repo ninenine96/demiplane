@@ -15,6 +15,7 @@ import {
   Code,
   Download,
   Focus,
+  KeyRound,
   Keyboard,
   ListChecks,
   LogOut,
@@ -28,6 +29,7 @@ import {
   Table,
 } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
+import { AgentKeysDialog } from "./components/AgentKeysDialog";
 import { AuthScreen } from "./components/AuthScreen";
 import {
   CommandPalette,
@@ -85,6 +87,7 @@ export function App() {
   const [sidebarWidth, setSidebarWidth] = useState(initialSidebarWidth);
   const [scale, setScale] = useState(initialScale);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showAgentKeys, setShowAgentKeys] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [typewriterMode, setTypewriterMode] = useState(false);
@@ -293,6 +296,13 @@ export function App() {
         run: () => setShowShortcuts(true),
       },
       {
+        id: "agent-keys",
+        label: FLAVOUR.agentKeys,
+        group: FLAVOUR.paletteWorkings,
+        icon: <KeyRound size={15} />,
+        run: () => setShowAgentKeys(true),
+      },
+      {
         id: "logout",
         label: FLAVOUR.logout,
         group: FLAVOUR.paletteWorkings,
@@ -427,6 +437,7 @@ export function App() {
           onImport={(file) => void handleImport(file)}
           onCollapse={() => setSidebarOpen(false)}
           onShowShortcuts={() => setShowShortcuts(true)}
+          onShowAgentKeys={() => setShowAgentKeys(true)}
           onDelete={(id) => void store.deleteNote(id)}
           onUndelete={(id) => void store.undeleteNote(id)}
           scale={scale}
@@ -478,6 +489,10 @@ export function App() {
 
       {showShortcuts ? (
         <ShortcutsDialog onClose={() => setShowShortcuts(false)} />
+      ) : null}
+
+      {showAgentKeys ? (
+        <AgentKeysDialog onClose={() => setShowAgentKeys(false)} />
       ) : null}
 
       {showPalette ? (

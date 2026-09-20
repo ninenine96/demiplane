@@ -15,6 +15,11 @@ export const authVerifySchema = z.object({
   remember: z.boolean().optional().default(true),
 });
 
+export const apiTokenInputSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  folder: z.string().trim().max(300).nullable().default(null),
+});
+
 export const noteInputSchema = z.object({
   title: z.string().max(500),
   body: z.string().max(MAX_NOTE_BYTES),

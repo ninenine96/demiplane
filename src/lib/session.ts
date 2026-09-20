@@ -16,6 +16,10 @@ export interface ActiveSession {
   token: string;
   /** True when the expiry was just slid forward and the cookie must update. */
   renew: boolean;
+  /** True when the request authenticated with a personal access token. */
+  viaToken?: boolean;
+  /** Default satchel for a bearer key; applied when a write omits a folder. */
+  defaultFolder?: string | null;
 }
 
 export function isSecureRequest(url: URL): boolean {
@@ -45,6 +49,9 @@ export async function readSession(
   env: Env,
   request: Request,
 ): Promise<ActiveSession | null> {
+  const bearer = readBearer(request);
+  if (bearer) return readApiTokenSession(env, bearer);
+
   const token = readCookie(request, COOKIE_NAME);
   if (!token) return null;
 
@@ -73,6 +80,38 @@ export async function readSession(
   }
 
   return { email: row.email, expiresAt, token, renew };
+}
+
+async function readApiTokenSession(
+  env: Env,
+  token: string,
+): Promise<ActiveSession | null> {
+  const tokenHash = await sha256Hex(token);
+  const row = await env.DB.prepare(
+    "SELECT id, email, folder, revoked_at FROM api_tokens WHERE token_hash = ?1",
+  )
+    .bind(tokenHash)
+    .first<{
+      id: string;
+      email: string;
+      folder: string | null;
+      revoked_at: number | null;
+    }>();
+
+  if (!row || row.revoked_at !== null) return null;
+
+  await env.DB.prepare("UPDATE api_tokens SET last_used_at = ?1 WHERE id = ?2")
+    .bind(nowSeconds(), row.id)
+    .run();
+
+  return {
+    email: row.email,
+    expiresAt: Number.MAX_SAFE_INTEGER,
+    token,
+    renew: false,
+    viaToken: true,
+    defaultFolder: row.folder,
+  };
 }
 
 export async function revokeSession(
@@ -114,6 +153,13 @@ export function sessionCookie(
 
 export function clearedSessionCookie(secure: boolean): string {
   return sessionCookie("", secure, 0);
+}
+
+function readBearer(request: Request): string | null {
+  const header = request.headers.get("authorization");
+  if (!header) return null;
+  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+  return match?.[1]?.trim() || null;
 }
 
 function readCookie(request: Request, name: string): string | null {

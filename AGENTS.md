@@ -60,6 +60,7 @@ frontend/     React SPA: components, db (dexie), sync engine, lib
 shared/       Types + flavour lexicon shared by Worker and frontend
 migrations/   D1 SQL migrations (numbered, append-only)
 scripts/      provision.sh (D1 + R2 setup, remote migrations)
+cli/          demiplane.mjs — reference agent/CLI client (bearer key)
 docs/PLAN.md  living build plan + deployment log + risks
 README.md     public-facing overview
 ```
@@ -74,6 +75,9 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
 - CodeMirror editor, preview, satchel/sigil, search, Void (soft delete)
 - Attachments (Haversack) and zip export/import (grimoire)
 - 14-day remembered sessions with sliding renewal
+- Agent access: personal access tokens ("keys to the demiplane") minted in the
+  app, `Authorization: Bearer` auth, and the `demiplane` CLI. A key's default
+  satchel (Agent Memory) catches notes written without an explicit folder.
 - Content-first UX: a single CodeMirror 6 canvas (Inter, no toolbar), a
   centred inline title, a nearly empty top bar, metadata behind a page menu,
   and a summonable, **resizable** sidebar — see [`docs/UX.md`](docs/UX.md).
@@ -186,6 +190,11 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Export done | Your grimoire is copied. Keep it somewhere safe. |
 | Import confirm | Restoring will merge another grimoire into this demiplane. |
 | Import done | The fallen timeline has been folded in. |
+| Agent keys dialog | Keys to the demiplane |
+| Forge an agent key | Forge a key |
+| Agent key created | The key is forged. Copy it now — it will not be shown again. |
+| Agent key revoked | The key is broken. It opens nothing now. |
+| Key cannot mint keys | A key cannot forge another key. Use the portal itself. |
 | Generic error | A wild surge in the weave. Nothing was lost — try again. |
 
 Extend this table as new moments appear; keep it in one place so the voice
@@ -212,6 +221,12 @@ note explaining why.
 - Sessions: hashed tokens only, in D1; HttpOnly + Secure + SameSite=Lax cookie.
   A remembered location lasts 14 days and slides forward on activity; unchecking
   "remember" yields a browser-session cookie instead.
+- Agents and CLI tools authenticate with a **personal access token** ("key to
+  the demiplane"): forged in the app, stored only as a SHA-256 hash in
+  `api_tokens`, sent as `Authorization: Bearer …`. A key may carry a default
+  satchel (default **Agent Memory**) applied to notes written without an
+  explicit folder. Keys are revocable; a key cannot mint or revoke keys. The
+  reference client is the `demiplane` CLI (`cli/demiplane.mjs`).
 - Login is a hashed, single-use **six-digit code** (a "sigil"), 10-minute TTL,
   emailed via Resend. Verify is rate-limited per email and locks out after 10
   failed attempts in 15 minutes. No link is ever followed, so mail scanners

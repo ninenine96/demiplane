@@ -14,10 +14,10 @@ in.
 
 ## Features
 
-- **Passwordless magic-link sign-in** — self-hosted on your own origin, so no
-  third-party auth domain to get blocked. Scanner-safe confirm step, and a
-  "remember this location for a fortnight" session that slides forward as you use
-  it.
+- **Passwordless sigil sign-in** — a single-use six-digit code emailed to you,
+  self-hosted on your own origin so no third-party auth domain gets blocked. No
+  link to follow, so mail scanners cannot consume it, plus a "remember this
+  location for a fortnight" session that slides forward as you use it.
 - **A CodeMirror 6 markdown canvas with live preview** — autocomplete (`/`,
   `[[`, `#`), a floating selection toolbar, wikilinks with backlinks, callouts,
   and a sanitized preview via `marked` + DOMPurify.
@@ -31,6 +31,10 @@ in.
   authenticated.
 - **Copy your grimoire** — export everything as a portable zip of markdown +
   attachments, and restore it back.
+- **Keys to the demiplane** — forge a personal access token in the app so an
+  agent or a command-line tool can read and write notes over the API
+  (`Authorization: Bearer …`). Keys are hashed at rest, revocable, and carry a
+  default satchel.
 - **Personality** — every user-facing string carries the flavour. See the
   Flavour Charter in [`AGENTS.md`](AGENTS.md).
 
@@ -47,7 +51,7 @@ in.
 | Search | MiniSearch (client-side, offline) |
 | PWA | `vite-plugin-pwa` (Workbox) |
 | Storage | R2 (notes + attachments), D1 (metadata/sessions/sync) |
-| Email | Resend (magic link) |
+| Email | Resend (six-digit login code) |
 | Validation | Zod |
 | Tests | Vitest |
 
@@ -62,9 +66,9 @@ npm run db:migrate:local         # apply D1 migrations to the local database
 npm run dev                      # http://localhost:5173
 ```
 
-With `AUTH_DEV_MODE=true` (the default in the example file) the magic link is
-logged to the console and returned as `devLink` in the response, so you can sign
-in without configuring email. Open the link, then press **Seal the portal**.
+With `AUTH_DEV_MODE=true` (the default in the example file) the six-digit sign-in
+code is returned as `devCode` in the response, so you can sign in without
+configuring email: enter the sigil and press **Seal the portal**.
 
 ## Commands
 
@@ -77,6 +81,68 @@ npm run typecheck          # tsc --noEmit
 npm run db:migrate:local   # apply D1 migrations locally
 npm run db:migrate:remote  # apply D1 migrations to the deployed database
 ```
+
+## Agent access (keys to the demiplane)
+
+Demiplane speaks a plain REST API, so an agent, a script, or a command-line tool
+can read and write your notes without a browser. Forge a personal access key in
+the app — sidebar **More** menu → **Keys to the demiplane** — and copy it once.
+
+<p align="center">
+  <img src="docs/assets/demiplane-agent-keys-menu.png" alt="The sidebar More menu on a phone, with Keys to the demiplane highlighted above Grimoire of keys" width="300">
+</p>
+
+Every key is stored only as a SHA-256 hash, is labelled and bound to a satchel,
+and can be broken at any time. The dialog shows when each key was forged and
+last used.
+
+![The Keys to the demiplane dialog: name a key, bind it to a satchel, forge it, and see every key with its last-used time](docs/assets/demiplane-agent-keys.png)
+
+A key carries a **default satchel**. Writes that omit a folder land there — by
+default **Agent Memory** — so an agent's notes collect in their own corner of
+the archive instead of scattering across your pages.
+
+![The archive filtered to the Agent Memory satchel, holding two notes written by an agent](docs/assets/demiplane-agent-memory.png)
+
+### The `demiplane` CLI
+
+`cli/demiplane.mjs` is the reference client (Node 20+, no dependencies). From a
+checkout use `npm run demiplane --`, or symlink `cli/demiplane.mjs` onto your
+`PATH`:
+
+```bash
+demiplane config --token dmp_... --url https://demiplane.prohan.workers.dev
+# → writes ~/.config/demiplane/config.json (mode 600)
+
+demiplane save "Note for the archive"     # lands in the Agent Memory satchel
+echo "piped thought" | demiplane save      # or pipe longer content on stdin
+demiplane search "portal"                  # titles, folders, tags, and bodies
+demiplane list --folder "Agent Memory"
+demiplane get <id>
+demiplane rm <id>                          # soft delete — recoverable from the Void
+```
+
+`DEMIPLANE_TOKEN` (and optional `DEMIPLANE_URL`) override the stored config, so a
+tool can call the REST API directly instead:
+
+```bash
+export DEMIPLANE_TOKEN=dmp_...
+curl -s https://demiplane.prohan.workers.dev/api/notes \
+  -H "Authorization: Bearer $DEMIPLANE_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"title":"From an agent","body":"Hello.","folder":null,"tags":[]}'
+```
+
+A key may read and write notes but **cannot mint or revoke keys** — only the
+signed-in app can do that.
+
+### Teaching an agent to use it
+
+A global opencode skill (`~/.config/opencode/skills/demiplane/SKILL.md`)
+triggers on phrases like *"save it to my notebook"*, *"send it to the
+demiplane"*, or *"save it to my personal diary"* and writes the content into
+**Agent Memory** through the CLI. Point any other agent framework at the same
+CLI or API.
 
 ## Deploy
 
@@ -104,7 +170,7 @@ inside the free tier is $0. Full walkthrough and account requirements live in
             │  HTTPS /api/*
             ▼
  Cloudflare Worker
- ├─ Static assets, /api/auth, /api/notes, /api/sync,
+ ├─ Static assets, /api/auth, /api/notes, /api/sync, /api/tokens,
  │  /api/attachments, /api/export, /api/import
         │                    │
         ▼                    ▼
@@ -116,8 +182,9 @@ inside the free tier is $0. Full walkthrough and account requirements live in
   self-describing.
 - **Sync:** monotonic `change_log.seq` cursor — never client clocks. Stale
   writers produce a conflict copy instead of losing data.
-- **Auth:** hashed single-use magic-link tokens (10 min), hashed session tokens
-  in D1, `HttpOnly; Secure; SameSite=Lax` cookie.
+- **Auth:** hashed single-use login codes (10 min), hashed session tokens in D1,
+  `HttpOnly; Secure; SameSite=Lax` cookie. Agents use hashed personal access
+  tokens in `api_tokens` via `Authorization: Bearer`.
 
 ## Project layout
 
@@ -127,6 +194,7 @@ frontend/     React SPA: components, db (Dexie), sync engine, lib
 shared/       Types + the flavour lexicon (single source of both)
 migrations/   D1 SQL migrations (numbered, append-only)
 scripts/      provision.sh — D1 + R2 setup and remote migrations
+cli/          demiplane.mjs — reference agent/CLI client (bearer key)
 docs/PLAN.md  Living build plan, deployment log, and risks
 AGENTS.md     Agent guide + Flavour Charter (hard requirement)
 ```

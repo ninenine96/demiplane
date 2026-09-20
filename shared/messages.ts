@@ -151,6 +151,32 @@ export const FLAVOUR = {
     "Restoring will merge another grimoire into this demiplane. Existing pages with the same name are kept as conflicts.",
   importDone: "The fallen timeline has been folded in.",
 
+  // --- Agent keys (personal access tokens) --------------------------------
+  agentKeys: "Keys to the demiplane",
+  agentKeysHint:
+    "Forge a key so an agent or a command-line tool can reach your archive. Only the key's shadow is kept — the key itself is shown once.",
+  agentKeyNew: "Forge a key",
+  agentKeyName: "Name this key",
+  agentKeyNamePlaceholder: "e.g. Laptop familiar",
+  agentKeyFolder: "Bind it to a satchel",
+  agentKeyFolderDefault: "Agent Memory",
+  agentKeyFolderHint: "Notes this key inscribes without a satchel land here.",
+  agentKeyForge: "Forge the key",
+  agentKeyCreated:
+    "The key is forged. Copy it now — it will not be shown again.",
+  agentKeyCopy: "Copy the key",
+  agentKeyCopied: "Key copied to your keeping.",
+  agentKeyNone: "No keys have been forged.",
+  agentKeyForgedAt: "Forged",
+  agentKeyLastUsed: "Last used",
+  agentKeyNever: "never",
+  agentKeyRevoke: "Break this key",
+  agentKeyRevokeConfirm:
+    "Break this key? Anything using it is locked out of the archive.",
+  agentKeyRevoked: "The key is broken. It opens nothing now.",
+  agentKeyBroken: "Broken",
+  agentKeySelfMint: "A key cannot forge another key. Use the portal itself.",
+
   // --- Errors / status ----------------------------------------------------
   notFound: "This page has drifted into the Astral Plane.",
   errorGeneric: "A wild surge in the weave. Nothing was lost — try again.",
@@ -182,6 +208,11 @@ export const PLAIN = {
   attachmentUploading: "Uploading attachment.",
   attachmentUploaded: "Attachment uploaded.",
   attachmentError: "Attachment upload failed.",
+  keysLoading: "Loading keys.",
+  keyCreated: "Key created.",
+  keyRevoked: "Key revoked.",
+  keyError: "Key operation failed.",
+  keyCopied: "Key copied.",
   error: "Something went wrong.",
 } as const;
 

@@ -14,7 +14,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:migrate:local": "wrangler d1 migrations apply demiplane-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply demiplane-db --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply demiplane-db --remote",
+    "demiplane": "node cli/demiplane.mjs"
+  },
+  "bin": {
+    "demiplane": "cli/demiplane.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

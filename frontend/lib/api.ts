@@ -1,4 +1,7 @@
 import type {
+  ApiToken,
+  ApiTokenCreated,
+  ApiTokenInput,
   Attachment,
   Note,
   NoteInput,
@@ -93,6 +96,23 @@ export const api = {
 
   async logout(): Promise<void> {
     await request("/api/auth/logout", { method: "POST" });
+  },
+
+  async listTokens(): Promise<ApiToken[]> {
+    const body = await request<{ data: ApiToken[] }>("/api/tokens");
+    return body.data;
+  },
+
+  async createToken(input: ApiTokenInput): Promise<ApiTokenCreated> {
+    const body = await request<{ data: ApiTokenCreated }>("/api/tokens", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    return body.data;
+  },
+
+  async revokeToken(id: string): Promise<void> {
+    await request(`/api/tokens/${encodeURIComponent(id)}`, { method: "DELETE" });
   },
 
   async listNotes(): Promise<NoteMeta[]> {

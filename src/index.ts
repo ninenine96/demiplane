@@ -22,6 +22,11 @@ import {
 } from "./api/attachments";
 import { handleExport, handleImport } from "./api/export";
 import { handleSyncPull, handleSyncPush } from "./api/sync";
+import {
+  createApiToken,
+  listApiTokens,
+  revokeApiToken,
+} from "./api/tokens";
 import { apiError, ok, withCookie } from "./lib/responses";
 import {
   isSecureRequest,
@@ -30,9 +35,14 @@ import {
   SESSION_TTL_SECONDS,
   type ActiveSession,
 } from "./lib/session";
-import { noteInputSchema, syncPushSchema } from "./lib/validation";
+import {
+  apiTokenInputSchema,
+  noteInputSchema,
+  syncPushSchema,
+} from "./lib/validation";
 
 const NOTE_PATH = /^\/api\/notes\/([A-Za-z0-9-]+)$/;
+const API_TOKEN_PATH = /^\/api\/tokens\/([A-Za-z0-9-]+)$/;
 const NOTE_UNDELETE_PATH = /^\/api\/notes\/([A-Za-z0-9-]+)\/undelete$/;
 const NOTE_ATTACHMENTS_PATH = /^\/api\/notes\/([A-Za-z0-9-]+)\/attachments$/;
 const ATTACHMENT_PATH = /^\/api\/attachments\/([A-Za-z0-9-]+)$/;
@@ -100,6 +110,35 @@ async function handleApi(
     return handleMe(session.email, env);
   }
 
+  if (pathname === "/api/tokens") {
+    if (session.viaToken) {
+      return apiError(403, FLAVOUR.agentKeySelfMint, "API tokens cannot mint tokens.");
+    }
+    if (method === "GET") {
+      return ok(await listApiTokens(env, session.email));
+    }
+    if (method === "POST") {
+      const parsed = await parseBody(request, apiTokenInputSchema);
+      if (!parsed.ok) return parsed.response;
+      return ok(await createApiToken(env, session.email, parsed.data), {
+        status: 201,
+      });
+    }
+  }
+
+  const tokenMatch = API_TOKEN_PATH.exec(pathname);
+  if (tokenMatch && method === "DELETE") {
+    if (session.viaToken) {
+      return apiError(403, FLAVOUR.agentKeySelfMint, "API tokens cannot revoke tokens.");
+    }
+    const id = tokenMatch[1];
+    if (!id) return apiError(404, FLAVOUR.notFound, "Not found.");
+    const revoked = await revokeApiToken(env, session.email, id);
+    return revoked
+      ? ok({ id, revoked: true })
+      : apiError(404, FLAVOUR.notFound, "API token not found.");
+  }
+
   if (pathname === "/api/notes") {
     if (method === "GET") {
       return ok(await listNotes(env));
@@ -107,7 +146,9 @@ async function handleApi(
     if (method === "POST") {
       const parsed = await parseBody(request, noteInputSchema);
       if (!parsed.ok) return parsed.response;
-      return ok(await createNote(env, parsed.data), { status: 201 });
+      return ok(await createNote(env, withTokenFolder(parsed.data, session)), {
+        status: 201,
+      });
     }
   }
 
@@ -125,7 +166,7 @@ async function handleApi(
     if (method === "PUT") {
       const parsed = await parseBody(request, noteInputSchema);
       if (!parsed.ok) return parsed.response;
-      const note = await updateNote(env, id, parsed.data);
+      const note = await updateNote(env, id, withTokenFolder(parsed.data, session));
       return note
         ? ok(note)
         : apiError(404, FLAVOUR.notFound, "Note not found.");
@@ -189,6 +230,16 @@ async function handleApi(
   }
 
   return apiError(404, FLAVOUR.notFound, "API route not found.");
+}
+
+function withTokenFolder<T extends { folder: string | null }>(
+  input: T,
+  session: ActiveSession,
+): T {
+  if (input.folder === null && session.defaultFolder) {
+    return { ...input, folder: session.defaultFolder };
+  }
+  return input;
 }
 
 type ParseResult<T> =

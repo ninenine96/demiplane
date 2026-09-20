@@ -1,4 +1,5 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cx } from "./ui";
 
 export interface ContextMenuItem {
@@ -66,7 +67,7 @@ export function ContextMenu({
   const x = Math.max(8, Math.min(state.x, window.innerWidth - width - 8));
   const y = Math.max(8, Math.min(state.y, window.innerHeight - height - 8));
 
-  return (
+  return createPortal(
     <div
       role="menu"
       aria-label="Context menu"
@@ -85,20 +86,21 @@ export function ContextMenu({
             onClose();
           }}
           className={cx(
-            "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+            "flex w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-colors",
             item.danger
               ? "text-ember-400 hover:bg-ember-400/10"
               : "text-parchment-300 hover:bg-white/[0.06] hover:text-parchment-100",
           )}
         >
           {item.icon ? (
-            <span aria-hidden="true" className="text-parchment-500">
+            <span aria-hidden="true" className="shrink-0 text-parchment-500">
               {item.icon}
             </span>
           ) : null}
           {item.label}
         </button>
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }

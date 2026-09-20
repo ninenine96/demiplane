@@ -368,7 +368,7 @@ export function Sidebar({
 
       <footer
         ref={scaleRef}
-        className="gild-rule relative border-t border-[var(--color-void-700)] px-3 pt-1.5"
+        className="relative px-3 pt-1.5"
         style={{ paddingBottom: "calc(0.5rem + var(--safe-bottom))" }}
       >
         <button
@@ -378,11 +378,11 @@ export function Sidebar({
           aria-label={FLAVOUR.enlarge}
           title={FLAVOUR.enlarge}
           className={cx(
-            "grid h-7 w-7 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
+            "grid h-9 w-9 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
             scaleOpen && "bg-white/[0.05] text-parchment-100",
           )}
         >
-          <ZoomIn size={15} aria-hidden="true" />
+          <ZoomIn size={20} aria-hidden="true" />
         </button>
 
         {scaleOpen ? (

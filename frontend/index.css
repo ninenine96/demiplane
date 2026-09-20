@@ -236,6 +236,50 @@ body {
   padding: 0.05em 0.2em;
   border-radius: 4px;
 }
+/* Obsidian-style checklists: a gilded box, ticked without leaving the page. */
+.prose-arcane li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.15em;
+}
+.prose-arcane li:has(> input[type="checkbox"]:checked) {
+  color: var(--color-parchment-500);
+  text-decoration: line-through;
+  text-decoration-color: rgba(164, 153, 138, 0.45);
+}
+.prose-arcane input[type="checkbox"].task-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.5em 0 0;
+  vertical-align: -0.15em;
+  border: 1px solid var(--color-parchment-500);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+.prose-arcane input[type="checkbox"].task-checkbox:hover {
+  border-color: var(--color-gold-400);
+}
+.prose-arcane input[type="checkbox"].task-checkbox:checked {
+  border-color: var(--color-gold-400);
+  background: rgba(195, 161, 92, 0.22);
+}
+.prose-arcane input[type="checkbox"].task-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 0.28em;
+  top: 0.06em;
+  width: 0.28em;
+  height: 0.55em;
+  border: solid var(--color-gold-300);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
 .prose-arcane a.wikilink {
   color: var(--color-arcane-300);
   text-decoration-color: rgba(163, 150, 201, 0.45);

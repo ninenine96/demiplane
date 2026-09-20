@@ -16,6 +16,8 @@ export const SHORTCUTS: Shortcut[] = [
   { group: "The page", keys: "Mod+B", label: "Bind the selection in bold" },
   { group: "The page", keys: "Mod+I", label: "Slant the selection (italic)" },
   { group: "The page", keys: "Mod+K", label: "Forge a link from the selection" },
+  { group: "The page", keys: "Mod+Enter", label: "Flip the task under the caret" },
+  { group: "The page", keys: "Enter", label: "Continue a list or checklist" },
   { group: "The page", keys: "/", label: "Open the workings menu on a fresh line" },
   { group: "The page", keys: "[[", label: "Summon a page by name (wikilink)" },
   { group: "The page", keys: "Mod+Shift+F", label: "Focus the page" },

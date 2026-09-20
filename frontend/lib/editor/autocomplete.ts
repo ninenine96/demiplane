@@ -4,8 +4,10 @@ import {
   type CompletionContext,
   type CompletionResult,
 } from "@codemirror/autocomplete";
-import type { Extension } from "@codemirror/state";
+import { EditorSelection, type Extension } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { FLAVOUR } from "../../../shared/messages";
+import { formatStamp, type StampMode } from "./format";
 
 export interface EditorCompletionData {
   noteTitles: string[];
@@ -57,24 +59,48 @@ function tagSource(get: CompletionDataGetter) {
 }
 
 const SLASH_OPTIONS: Completion[] = [
-  snippetCompletion("# ${}", { label: "Heading 1", type: "keyword" }),
-  snippetCompletion("## ${}", { label: "Heading 2", type: "keyword" }),
-  snippetCompletion("### ${}", { label: "Heading 3", type: "keyword" }),
-  snippetCompletion("- ${}", { label: "Bullet list", type: "keyword" }),
-  snippetCompletion("1. ${}", { label: "Numbered list", type: "keyword" }),
-  snippetCompletion("- [ ] ${}", { label: "Task", type: "keyword" }),
-  snippetCompletion("> ${}", { label: "Quote", type: "keyword" }),
-  snippetCompletion("```\n${}\n```", { label: "Code block", type: "keyword" }),
-  snippetCompletion("![${}](url)", { label: "Image", type: "keyword" }),
-  snippetCompletion("[[${}]]", { label: "Wikilink", type: "class" }),
-  snippetCompletion("> [!note] ${}", { label: "Callout", type: "keyword" }),
-  snippetCompletion("| ${} |  |\n| --- | --- |\n|  |  |", {
-    label: "Table",
+  snippetCompletion("# ${}", { label: FLAVOUR.fmtTitle, type: "keyword" }),
+  snippetCompletion("## ${}", { label: FLAVOUR.fmtHeading, type: "keyword" }),
+  snippetCompletion("### ${}", { label: FLAVOUR.fmtSubheading, type: "keyword" }),
+  snippetCompletion("- ${}", { label: FLAVOUR.fmtList, type: "keyword" }),
+  snippetCompletion("1. ${}", { label: FLAVOUR.fmtNumbered, type: "keyword" }),
+  snippetCompletion("- [ ] ${}", { label: FLAVOUR.fmtTask, type: "keyword" }),
+  snippetCompletion("> ${}", { label: FLAVOUR.fmtQuote, type: "keyword" }),
+  snippetCompletion("```\n${}\n```", {
+    label: FLAVOUR.fmtCodeBlock,
     type: "keyword",
   }),
-  { label: "Divider", type: "keyword", apply: "---\n" },
-  snippetCompletion("`${}`", { label: "Inline code", type: "keyword" }),
+  snippetCompletion("![${}](url)", { label: FLAVOUR.fmtImage, type: "keyword" }),
+  snippetCompletion("[[${}]]", { label: FLAVOUR.fmtWikilink, type: "class" }),
+  snippetCompletion("> [!note] ${}", {
+    label: FLAVOUR.fmtCallout,
+    type: "keyword",
+  }),
+  snippetCompletion("| ${} |  |\n| --- | --- |\n|  |  |", {
+    label: FLAVOUR.fmtTable,
+    type: "keyword",
+  }),
+  { label: FLAVOUR.fmtDivider, type: "keyword", apply: "---\n" },
+  snippetCompletion("`${}`", { label: FLAVOUR.fmtCode, type: "keyword" }),
+  stampOption(FLAVOUR.insertDate, "date"),
+  stampOption(FLAVOUR.insertTime, "time"),
+  stampOption(FLAVOUR.insertDateTime, "datetime"),
 ];
+
+/** A workings entry that inscribes the moment it is chosen. */
+function stampOption(label: string, mode: StampMode): Completion {
+  return {
+    label,
+    type: "keyword",
+    apply: (view, _completion, from, to) => {
+      const text = formatStamp(mode);
+      view.dispatch({
+        changes: { from, to, insert: text },
+        selection: EditorSelection.cursor(from + text.length),
+      });
+    },
+  };
+}
 
 /** The `/` menu, offered at the start of a line. */
 function slashSource(context: CompletionContext): CompletionResult | null {

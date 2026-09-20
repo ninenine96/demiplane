@@ -48,20 +48,27 @@ body, and the rune count at the foot](assets/demiplane-ui.png)
   canvas — no title in the top bar. `Enter` moves the caret into the body.
 - **Authoring aids appear as you write, then vanish:**
   - `/` at the start of a line opens the **workings menu** (headings, lists,
-    tasks, quote, code, table, divider, image, callout).
+    tasks, quote, code, table, divider, image, callout, and the current date /
+    hour).
   - `[[` summons a page by name — a wikilink; `#` away from a line start
     suggests existing sigils.
   - Brackets, quotes and backticks pair; `[` is left alone so `[[` survives.
     Lists, checkboxes and quotes continue on `Enter`; `Tab` indents.
   - Pasting a URL over a selection turns it into a link.
+- **Checklists are Obsidian-style.** `- [ ]` / `- [x]` are first-class: the
+  marker renders as a gilded box that is clickable in *both* the canvas and the
+  preview, `Enter` carries the list on to the next open box, and `Mod+Enter`
+  flips the task under the caret (or turns the line into one).
 - **A floating selection toolbar** rises above any non-empty selection with the
   formatting that matters: bold, italic, strike, `==highlight==`, code, link,
   heading, quote, list, task. Keyboard selections summon it too.
 - **Formatting also has shortcut keys:** `Mod+B` bold, `Mod+I` italic,
-  `Mod+K` link, `Mod+Shift+X` strike, `Mod+Shift+H` highlight.
+  `Mod+K` link, `Mod+Shift+X` strike, `Mod+Shift+H` highlight, `Mod+Enter`
+  toggle task.
 - **Preview is a mode, not a pane.** `Mod+E` renders the sanitized `marked` +
   DOMPurify output; toggle back to edit. Never side-by-side. Wikilinks resolve
-  and click through, `==highlight==` and `> [!note]` callouts render.
+  and click through, `==highlight==` and `> [!note]` callouts render, and
+  checkboxes are live — ticking one rewrites its line.
 - **The foot of the page** carries a quiet status line: word count and reading
   time on the left, a **Linked mentions** (backlinks) toggle on the right when
   anything points here.
@@ -156,8 +163,8 @@ Right-click (and long-press where it maps to `contextmenu`) is a first-class
 surface, not an afterthought:
 
 - **On a page row** — Open, Banish / Recover.
-- **On the canvas** — Reveal / Veil the page, Tuck into the Haversack,
-  Banish / Recover.
+- **On the canvas** — Reveal / Veil the page, toggle task, inscribe the date /
+  hour, Banish / Recover.
 
 Menus are cursor-positioned, clamped to the viewport, and close on outside
 click, Escape, scroll, resize, or another right-click.
@@ -177,6 +184,8 @@ the **Grimoire of keys**, generated from a single registry in
 | `Cmd/Ctrl+B` / `I` | Bold / italic the selection (while writing) |
 | `Cmd/Ctrl+K` | Forge a link from the selection (while writing) |
 | `Cmd/Ctrl+Shift+X` / `H` | Strike / highlight the selection (while writing) |
+| `Cmd/Ctrl+Enter` | Flip the task under the caret (while writing) |
+| `Enter` | Continue a list or checklist (while writing) |
 | `Cmd/Ctrl+Shift+F` | Focus the page |
 | `/` | Open the workings menu on a fresh line |
 | `[[` | Summon a page by name (wikilink) |
@@ -286,8 +295,9 @@ Self-hosted via `@fontsource` (offline, no CDN). Everything scales from
 2. Content-first rework ✅ single-canvas serif editor (no toolbar), nearly empty
    top bar, page menu for metadata, summonable sidebar, quiet empty states.
 3. Authoring ✅ CodeMirror 6 canvas, inline title, autocomplete (`/`, `[[`,
-   `#`), selection toolbar, callouts, wikilinks + backlinks, command palette
-   (`Mod+P`), focus / typewriter modes, word count, tucked-away scale.
+   `#`), selection toolbar, checklists (live preview boxes, `Mod+Enter`),
+   timestamps, callouts, wikilinks + backlinks, command palette (`Mod+P`),
+   focus / typewriter modes, word count, tucked-away scale.
 4. Components ⏳ Radix Dialog/Sheet/Toast/Tooltip, replace `window.confirm`.
 5. Polish ⏳ motion, light theme.
 

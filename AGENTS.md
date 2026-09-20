@@ -79,7 +79,11 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
   and a summonable, **resizable** sidebar — see [`docs/UX.md`](docs/UX.md).
   Authoring aids live in `frontend/lib/editor/`: `/` opens a workings menu, `[[`
   summons a page by name (wikilinks), `#` suggests existing sigils, and a
-  floating selection toolbar appears over any selection. Shortcuts (`?` opens
+  floating selection toolbar appears over any selection. Obsidian-style
+  **checklists** (`- [ ]` / `- [x]`) render as gilded boxes clickable in the
+  canvas and preview, continue on `Enter`, and flip with `Mod+Enter`; timestamps
+  and other blocks can be inserted from the workings menu, canvas context menu,
+  or palette. Shortcuts (`?` opens
   the Grimoire of keys, registry in `frontend/lib/shortcuts.ts`): `Mod+B` fold
   archive, `Mod+K` find, `Mod+P` command palette, `Mod+E` preview, `Mod+N` new
   page, `Mod+Shift+F` focus mode, and `B`/`I`/`K` format while writing
@@ -159,11 +163,15 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Bold / italic / strike / highlight | Bind in bold · Slant the text · Strike the text through · Mark the text |
 | Code / link | Inscribe as code · Forge a link |
 | Heading / quote / list / task | Raise to a heading · Lower to a subheading · Set as a quotation · Set as a list · Set as a task |
+| Toggle task | Flip the task's mark |
+| Task checkbox (aria) | Task open · Task complete |
+| Workings menu labels | Inscribe a title · Raise to a heading · Lower to a subheading · Set as a list · Set as a tally · Set as a task · Set as a quotation · Open a code block · Tuck in an image · Summon a page by name · Open a callout · Raise a table · Draw a divider · Inscribe as code |
+| Insert timestamp | Inscribe today's date · Inscribe the current hour · Inscribe the date and the hour |
 | Backlinks heading | Linked mentions |
 | Missing wikilink | No page bears that name yet. Inscribe it, and the link will hold. |
 | Word count / reading time | `N runes · M min read` (plain `aria` text: "N words, M minute read") |
 | Command palette | Speak a working |
-| Palette groups | Workings · Pages |
+| Palette groups | Workings · The page · Pages |
 | Palette empty | No working answers to that name. |
 | Focus mode | Focus the page |
 | Typewriter mode | Centre the quill |

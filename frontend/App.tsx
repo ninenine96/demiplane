@@ -8,16 +8,24 @@ import {
 } from "react";
 import {
   AlignCenter,
+  Calendar,
+  CalendarClock,
   ChevronsRight,
+  Clock,
+  Code,
   Download,
   Focus,
   Keyboard,
+  ListChecks,
   LogOut,
+  MessageSquare,
+  Minus,
   PanelLeft,
   Plus,
   RefreshCw,
   RotateCcw,
   Search,
+  Table,
 } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
 import { AuthScreen } from "./components/AuthScreen";
@@ -29,6 +37,15 @@ import { EditorPane } from "./components/EditorPane";
 import { ShortcutsDialog } from "./components/ShortcutsDialog";
 import { Sidebar } from "./components/Sidebar";
 import { cx, StatusLine } from "./components/ui";
+import {
+  formatTask,
+  insertCallout,
+  insertCodeBlock,
+  insertDivider,
+  insertStamp,
+  insertTable,
+} from "./lib/editor/format";
+import { withEditor } from "./lib/editor/bridge";
 import { useDemiplane } from "./useDemiplane";
 
 function initialSidebarState(): boolean {
@@ -282,6 +299,88 @@ export function App() {
         icon: <LogOut size={15} />,
         run: () => void store.logout(),
       },
+      ...(store.activeId
+        ? ([
+            {
+              id: "task",
+              label: FLAVOUR.fmtToggleTask,
+              group: FLAVOUR.palettePage,
+              icon: <ListChecks size={15} />,
+              run: () => {
+                withEditor(formatTask);
+              },
+            },
+            {
+              id: "stamp-date",
+              label: FLAVOUR.insertDate,
+              group: FLAVOUR.palettePage,
+              icon: <Calendar size={15} />,
+              run: () => {
+                withEditor((view) => {
+                  insertStamp(view, "date");
+                });
+              },
+            },
+            {
+              id: "stamp-time",
+              label: FLAVOUR.insertTime,
+              group: FLAVOUR.palettePage,
+              icon: <Clock size={15} />,
+              run: () => {
+                withEditor((view) => {
+                  insertStamp(view, "time");
+                });
+              },
+            },
+            {
+              id: "stamp-datetime",
+              label: FLAVOUR.insertDateTime,
+              group: FLAVOUR.palettePage,
+              icon: <CalendarClock size={15} />,
+              run: () => {
+                withEditor((view) => {
+                  insertStamp(view, "datetime");
+                });
+              },
+            },
+            {
+              id: "divider",
+              label: FLAVOUR.fmtDivider,
+              group: FLAVOUR.palettePage,
+              icon: <Minus size={15} />,
+              run: () => {
+                withEditor(insertDivider);
+              },
+            },
+            {
+              id: "callout",
+              label: FLAVOUR.fmtCallout,
+              group: FLAVOUR.palettePage,
+              icon: <MessageSquare size={15} />,
+              run: () => {
+                withEditor(insertCallout);
+              },
+            },
+            {
+              id: "code-block",
+              label: FLAVOUR.fmtCodeBlock,
+              group: FLAVOUR.palettePage,
+              icon: <Code size={15} />,
+              run: () => {
+                withEditor(insertCodeBlock);
+              },
+            },
+            {
+              id: "table",
+              label: FLAVOUR.fmtTable,
+              group: FLAVOUR.palettePage,
+              icon: <Table size={15} />,
+              run: () => {
+                withEditor(insertTable);
+              },
+            },
+          ] satisfies PaletteCommand[])
+        : []),
     ],
     [store, focusScry, handleExport],
   );

@@ -116,6 +116,13 @@ const calloutExtension: TokenizerAndRendererExtension = {
 
 marked.use({
   extensions: [highlightExtension, wikilinkExtension, calloutExtension],
+  renderer: {
+    // Obsidian-style checkboxes: live, not the inert GFM default, so a click in
+    // the preview can tick the matching source line.
+    checkbox(token: Tokens.Checkbox) {
+      return `<input type="checkbox" class="task-checkbox"${token.checked ? " checked" : ""}>`;
+    },
+  },
 });
 
 /** Renders markdown to sanitized HTML for the live preview. */

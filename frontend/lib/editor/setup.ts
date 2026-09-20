@@ -17,6 +17,7 @@ import { FLAVOUR } from "../../../shared/messages";
 import { markdownEditing, type CompletionDataGetter } from "./autocomplete";
 import { focusModeExtension, typewriterModeExtension } from "./focus";
 import { markdownFormatKeymap } from "./format";
+import { taskCheckboxExtension } from "./tasks";
 import { arcaneTheme } from "./theme";
 
 export interface EditorSetupOptions {
@@ -62,6 +63,7 @@ export function buildEditorExtensions({
     Prec.high(keymap.of(completionKeymap)),
     keymap.of(editorKeymap),
     arcaneTheme,
+    taskCheckboxExtension,
     focusMode ? focusModeExtension : [],
     typewriterMode ? typewriterModeExtension : [],
   ];

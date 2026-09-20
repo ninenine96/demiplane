@@ -46,6 +46,20 @@ export const FLAVOUR = {
   fmtQuote: "Set as a quotation",
   fmtList: "Set as a list",
   fmtTask: "Set as a task",
+  fmtToggleTask: "Flip the task's mark",
+  fmtTitle: "Inscribe a title",
+  fmtNumbered: "Set as a tally",
+  fmtCodeBlock: "Open a code block",
+  fmtImage: "Tuck in an image",
+  fmtWikilink: "Summon a page by name",
+  fmtCallout: "Open a callout",
+  fmtTable: "Raise a table",
+  fmtDivider: "Draw a divider",
+  insertDate: "Inscribe today's date",
+  insertTime: "Inscribe the current hour",
+  insertDateTime: "Inscribe the date and the hour",
+  taskOpen: "Task open",
+  taskDone: "Task complete",
 
   // --- Wikilinks / backlinks ---------------------------------------------
   linkedMentions: "Linked mentions",
@@ -61,6 +75,7 @@ export const FLAVOUR = {
   paletteTitle: "Speak a working",
   palettePlaceholder: "Speak a working...",
   paletteWorkings: "Workings",
+  palettePage: "The page",
   palettePages: "Pages",
   paletteEmpty: "No working answers to that name.",
 

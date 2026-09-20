@@ -33,4 +33,11 @@ describe("renderMarkdown extensions", () => {
     expect(html).toContain('class="callout-title">Mind the gap');
     expect(html).toContain("The bridge is out.");
   });
+
+  it("renders checklists as live, tickable boxes", () => {
+    const html = renderMarkdown("- [ ] open\n- [x] done");
+    expect(html).toContain('type="checkbox"');
+    expect(html).not.toContain("disabled");
+    expect(html).toContain("checked");
+  });
 });

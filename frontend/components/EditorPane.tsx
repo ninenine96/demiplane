@@ -12,9 +12,13 @@ import { EditorView } from "@codemirror/view";
 import { EditorSelection } from "@codemirror/state";
 import {
   ArrowLeft,
+  Calendar,
+  CalendarClock,
+  Clock,
   Eye,
   EyeOff,
   Link2,
+  ListChecks,
   MoreHorizontal,
   Plus,
   Trash2,
@@ -26,9 +30,12 @@ import type { LocalNote } from "../db/dexie";
 import type { SyncStatus } from "../sync/engine";
 import { api } from "../lib/api";
 import { renderMarkdown } from "../lib/markdown";
+import { toggleTaskAt } from "../lib/checklist";
 import { backlinksFor, resolveWikiLink } from "../lib/wikilinks";
 import { countWords, readingMinutes } from "../lib/stats";
 import { buildEditorExtensions } from "../lib/editor/setup";
+import { formatStamp, formatTask } from "../lib/editor/format";
+import { clearEditorBridge, setEditorBridge } from "../lib/editor/bridge";
 import { ContextMenu, useContextMenu } from "./ContextMenu";
 import { SelectionToolbar } from "./SelectionToolbar";
 import { SyncDot } from "./SyncBadge";
@@ -93,6 +100,14 @@ export function EditorPane({
     Pick<LocalNote, "title" | "body" | "folder" | "tags">
   > | null>(null);
   const contextMenu = useContextMenu();
+
+  // Keep the app-level command palette able to reach this canvas.
+  useEffect(() => {
+    if (!note?.id) return;
+    const bridge = { getView: () => viewRef.current };
+    setEditorBridge(bridge);
+    return () => clearEditorBridge(bridge);
+  }, [note?.id]);
 
   useEffect(() => {
     if (!note) return;
@@ -288,14 +303,32 @@ export function EditorPane({
     }
   }
 
-  function openWikilink(event: MouseEvent<HTMLDivElement>) {
-    const anchor = (event.target as HTMLElement).closest("[data-wikilink]");
+  /** Preview clicks either tick a checkbox or follow a wikilink. */
+  function handlePreviewClick(event: MouseEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
+
+    if (target instanceof HTMLInputElement && target.type === "checkbox") {
+      event.preventDefault();
+      const container = event.currentTarget;
+      const boxes = Array.from(
+        container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
+      );
+      const index = boxes.indexOf(target);
+      if (index >= 0) {
+        const next = toggleTaskAt(body, index);
+        setBody(next);
+        scheduleSave({ body: next });
+      }
+      return;
+    }
+
+    const anchor = target.closest("[data-wikilink]");
     if (!anchor) return;
     event.preventDefault();
-    const target = anchor.getAttribute("data-wikilink") ?? "";
-    const resolved = resolveWikiLink(target, notes);
+    const link = anchor.getAttribute("data-wikilink") ?? "";
+    const resolved = resolveWikiLink(link, notes);
     if (resolved) onSelectNote(resolved.id);
-    else setMissingLink(target);
+    else setMissingLink(link);
   }
 
   if (!note) {
@@ -343,6 +376,29 @@ export function EditorPane({
             label: showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow,
             icon: showPreview ? <EyeOff size={15} /> : <Eye size={15} />,
             onSelect: () => setShowPreview((value) => !value),
+          },
+          {
+            label: FLAVOUR.fmtToggleTask,
+            icon: <ListChecks size={15} />,
+            onSelect: () => {
+              const editor = viewRef.current;
+              if (editor) formatTask(editor);
+            },
+          },
+          {
+            label: FLAVOUR.insertDate,
+            icon: <Calendar size={15} />,
+            onSelect: () => insertAtCursor(formatStamp("date")),
+          },
+          {
+            label: FLAVOUR.insertTime,
+            icon: <Clock size={15} />,
+            onSelect: () => insertAtCursor(formatStamp("time")),
+          },
+          {
+            label: FLAVOUR.insertDateTime,
+            icon: <CalendarClock size={15} />,
+            onSelect: () => insertAtCursor(formatStamp("datetime")),
           },
           note.deleted
             ? {
@@ -569,7 +625,7 @@ export function EditorPane({
               <div className="py-4 sm:py-8">
                 <div
                   className="prose-arcane"
-                  onClick={openWikilink}
+                  onClick={handlePreviewClick}
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
                 />
                 {body.trim() === "" ? (

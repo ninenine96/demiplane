@@ -57,15 +57,18 @@ function initialSidebarState(): boolean {
 
 const MIN_SCALE = 0.85;
 const MAX_SCALE = 1.35;
+const DEFAULT_SCALE = 1.35;
 
 const MIN_SIDEBAR = 220;
 const MAX_SIDEBAR = 460;
 const DEFAULT_SIDEBAR = 288;
 
 function initialScale(): number {
-  if (typeof window === "undefined") return 1;
+  if (typeof window === "undefined") return DEFAULT_SCALE;
   const raw = Number(window.localStorage.getItem("demiplane.scale"));
-  return Number.isFinite(raw) && raw >= MIN_SCALE && raw <= MAX_SCALE ? raw : 1;
+  return Number.isFinite(raw) && raw >= MIN_SCALE && raw <= MAX_SCALE
+    ? raw
+    : DEFAULT_SCALE;
 }
 
 function clampScale(value: number): number {

@@ -375,15 +375,14 @@ export function Sidebar({
           type="button"
           onClick={() => setScaleOpen((value) => !value)}
           aria-expanded={scaleOpen}
+          aria-label={FLAVOUR.enlarge}
+          title={FLAVOUR.enlarge}
           className={cx(
-            "flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
+            "grid h-7 w-7 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
             scaleOpen && "bg-white/[0.05] text-parchment-100",
           )}
         >
-          <span>{FLAVOUR.enlarge}</span>
-          <span className="tabular-nums tracking-normal">
-            {Math.round(scale * 100)}%
-          </span>
+          <ZoomIn size={15} aria-hidden="true" />
         </button>
 
         {scaleOpen ? (

@@ -121,7 +121,7 @@ export function Sidebar({
   }, [notes, showTrash, folder, matchedIds]);
 
   return (
-    <aside className="animate-archive-in flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:w-72 lg:flex-none">
+    <aside className="animate-archive-in flex h-full w-full flex-col border-r border-[var(--color-void-700)] bg-void-900 lg:flex-none">
       <header
         className="px-4 pb-3"
         style={{ paddingTop: "calc(1rem + var(--safe-top))" }}

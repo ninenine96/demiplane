@@ -59,7 +59,7 @@ export function CommandPalette({
         group: FLAVOUR.palettePages,
         run: () => onSelectNote(note.id),
       })),
-    ].slice(0, 16);
+    ].slice(0, 40);
   }, [commands, notes, query, onSelectNote]);
 
   useEffect(() => setActive(0), [query]);

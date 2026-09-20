@@ -5,6 +5,7 @@ import {
   Keyboard,
   LogOut,
   MoreHorizontal,
+  Palette,
   PanelLeftClose,
   Plus,
   RefreshCw,
@@ -22,6 +23,7 @@ import type { LocalNote } from "../db/dexie";
 import { excerpt } from "../lib/markdown";
 import { buildSearchIndex, searchNoteIds } from "../lib/search";
 import { ContextMenu, useContextMenu } from "./ContextMenu";
+import { ThemeList } from "./ThemePicker";
 import {
   Chip,
   EmptyState,
@@ -50,6 +52,8 @@ interface SidebarProps {
   scale: number;
   onScaleChange: (value: number) => void;
   onZoomReset: () => void;
+  themeId: string;
+  onThemeChange: (id: string) => void;
 }
 
 export function Sidebar({
@@ -70,23 +74,32 @@ export function Sidebar({
   scale,
   onScaleChange,
   onZoomReset,
+  themeId,
+  onThemeChange,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [scaleOpen, setScaleOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [folder, setFolder] = useState<string>("all");
   const importInput = useRef<HTMLInputElement | null>(null);
   const scaleRef = useRef<HTMLElement | null>(null);
   const contextMenu = useContextMenu();
 
   useEffect(() => {
-    if (!scaleOpen) return;
+    if (!scaleOpen && !themeOpen) return;
     const onPointer = (event: globalThis.MouseEvent) => {
-      if (!scaleRef.current?.contains(event.target as Node)) setScaleOpen(false);
+      if (!scaleRef.current?.contains(event.target as Node)) {
+        setScaleOpen(false);
+        setThemeOpen(false);
+      }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setScaleOpen(false);
+      if (event.key === "Escape") {
+        setScaleOpen(false);
+        setThemeOpen(false);
+      }
     };
     document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -94,7 +107,7 @@ export function Sidebar({
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [scaleOpen]);
+  }, [scaleOpen, themeOpen]);
 
   const folders = useMemo(() => {
     const set = new Set<string>();
@@ -371,19 +384,40 @@ export function Sidebar({
         className="relative px-3 pt-1.5"
         style={{ paddingBottom: "calc(0.5rem + var(--safe-bottom))" }}
       >
-        <button
-          type="button"
-          onClick={() => setScaleOpen((value) => !value)}
-          aria-expanded={scaleOpen}
-          aria-label={FLAVOUR.enlarge}
-          title={FLAVOUR.enlarge}
-          className={cx(
-            "grid h-9 w-9 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
-            scaleOpen && "bg-white/[0.05] text-parchment-100",
-          )}
-        >
-          <ZoomIn size={20} aria-hidden="true" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              setScaleOpen((value) => !value);
+              setThemeOpen(false);
+            }}
+            aria-expanded={scaleOpen}
+            aria-label={FLAVOUR.enlarge}
+            title={FLAVOUR.enlarge}
+            className={cx(
+              "grid h-9 w-9 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
+              scaleOpen && "bg-white/[0.05] text-parchment-100",
+            )}
+          >
+            <ZoomIn size={20} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setThemeOpen((value) => !value);
+              setScaleOpen(false);
+            }}
+            aria-expanded={themeOpen}
+            aria-label={FLAVOUR.themeLabel}
+            title={FLAVOUR.themeLabel}
+            className={cx(
+              "grid h-9 w-9 place-items-center rounded-lg text-parchment-500 transition-colors hover:bg-white/[0.05] hover:text-parchment-100",
+              themeOpen && "bg-white/[0.05] text-parchment-100",
+            )}
+          >
+            <Palette size={20} aria-hidden="true" />
+          </button>
+        </div>
 
         {scaleOpen ? (
           <div className="animate-pop-in absolute bottom-full left-3 right-3 z-50 mb-2 rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-3 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
@@ -445,6 +479,12 @@ export function Sidebar({
                 </Chip>
               ))}
             </div>
+          </div>
+        ) : null}
+
+        {themeOpen ? (
+          <div className="animate-pop-in absolute bottom-full left-3 right-3 z-50 mb-2 max-h-[70dvh] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+            <ThemeList activeId={themeId} onSelect={onThemeChange} />
           </div>
         ) : null}
       </footer>

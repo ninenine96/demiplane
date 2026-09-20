@@ -133,6 +133,13 @@ export const FLAVOUR = {
   enlargeDown: "Reduce the archive",
   trueSight: "Return to true sight",
 
+  // --- Dynamic theming ----------------------------------------------------
+  themeTitle: "The palette of the plane",
+  themeLabel: "Recolour the demiplane",
+  themeHint: "Each palette keeps its old name in the parentheses.",
+  themeRandom: "Let fate recolour the plane",
+  themeGroup: "Palettes",
+
   // --- Keys ---------------------------------------------------------------
   shortcutsTitle: "Grimoire of keys",
   shortcutsHint: "Every working of this demiplane, inscribed for the swift.",

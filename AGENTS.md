@@ -95,7 +95,9 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
   pages and the canvas. Wikilinks resolve in the preview with a **Linked
   mentions** (backlinks) panel, `==highlight==` and `> [!note]` callouts render,
   word count and reading time sit at the foot of the page, and UI scale
-  (*Enlarge / Reduce*) is tucked into a sidebar-footer popover.
+  (*Enlarge / Reduce*) is tucked into a sidebar-footer popover. Dynamic
+  theming (Monkeytype style) offers a gallery of arcane-named palettes, worn
+  live from the sidebar footer or the command palette.
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
@@ -196,6 +198,12 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Agent key revoked | The key is broken. It opens nothing now. |
 | Key cannot mint keys | A key cannot forge another key. Use the portal itself. |
 | Generic error | A wild surge in the weave. Nothing was lost — try again. |
+| Theme picker heading | The palette of the plane |
+| Theme picker button | Recolour the demiplane |
+| Random theme | Let fate recolour the plane |
+| Palette command group | Palettes |
+| Theme name format | `Arcane name (Monkeytype name)` |
+| Theme hint | Each palette keeps its old name in the parentheses. |
 
 Extend this table as new moments appear; keep it in one place so the voice
 stays consistent. If a string needs to be plain for safety, add it here with a

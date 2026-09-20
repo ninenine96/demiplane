@@ -37,7 +37,8 @@ export const arcaneTheme = [
       },
       "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
         {
-          background: "rgba(195, 161, 92, 0.24)",
+          background:
+            "color-mix(in srgb, var(--color-gold-400) 24%, transparent)",
         },
       ".cm-activeLine": {
         backgroundColor: "rgba(255, 255, 255, 0.025)",
@@ -46,7 +47,7 @@ export const arcaneTheme = [
         display: "none",
       },
       ".cm-placeholder": {
-        color: "rgba(164, 153, 138, 0.7)",
+        color: "color-mix(in srgb, var(--color-parchment-500) 70%, transparent)",
         fontStyle: "normal",
       },
       ".cm-tooltip": {
@@ -66,7 +67,8 @@ export const arcaneTheme = [
         color: "var(--color-parchment-300)",
       },
       ".cm-tooltip-autocomplete ul li[aria-selected]": {
-        background: "rgba(95, 77, 146, 0.32)",
+        background:
+          "color-mix(in srgb, var(--color-arcane-400) 32%, transparent)",
         color: "var(--color-parchment-100)",
       },
       ".cm-completionLabel": {
@@ -89,7 +91,8 @@ export const arcaneTheme = [
       ".cm-wikilink": {
         color: "var(--color-arcane-300)",
         textDecoration: "underline",
-        textDecorationColor: "rgba(163, 150, 201, 0.4)",
+        textDecorationColor:
+          "color-mix(in srgb, var(--color-arcane-300) 40%, transparent)",
         textUnderlineOffset: "2px",
       },
       ".cm-task-checkbox": {
@@ -109,7 +112,8 @@ export const arcaneTheme = [
       },
       ".cm-task-checkbox--done": {
         borderColor: "var(--color-gold-400)",
-        backgroundColor: "rgba(195, 161, 92, 0.22)",
+        backgroundColor:
+          "color-mix(in srgb, var(--color-gold-400) 22%, transparent)",
       },
       ".cm-task-checkbox--done::after": {
         content: '""',

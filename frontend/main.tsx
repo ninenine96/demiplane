@@ -6,9 +6,12 @@ import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
 import "@fontsource-variable/inter";
 import { App } from "./App";
+import { applyTheme, initialThemeId } from "./lib/themes";
 import "./index.css";
 
 registerSW({ immediate: true });
+
+applyTheme(initialThemeId());
 
 const container = document.getElementById("root");
 if (!container) throw new Error("The demiplane has no root to anchor to.");

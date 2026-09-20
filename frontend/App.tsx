@@ -21,11 +21,13 @@ import {
   LogOut,
   MessageSquare,
   Minus,
+  Palette,
   PanelLeft,
   Plus,
   RefreshCw,
   RotateCcw,
   Search,
+  Shuffle,
   Table,
 } from "lucide-react";
 import { FLAVOUR, PLAIN } from "../shared/messages";
@@ -38,6 +40,7 @@ import {
 import { EditorPane } from "./components/EditorPane";
 import { ShortcutsDialog } from "./components/ShortcutsDialog";
 import { Sidebar } from "./components/Sidebar";
+import { ThemeSwatch } from "./components/ThemePicker";
 import { cx, StatusLine } from "./components/ui";
 import {
   formatTask,
@@ -48,6 +51,14 @@ import {
   insertTable,
 } from "./lib/editor/format";
 import { withEditor } from "./lib/editor/bridge";
+import {
+  THEMES,
+  THEME_STORAGE_KEY,
+  applyTheme,
+  initialThemeId,
+  randomThemeId,
+  themeLabel,
+} from "./lib/themes";
 import { useDemiplane } from "./useDemiplane";
 
 function initialSidebarState(): boolean {
@@ -89,6 +100,7 @@ export function App() {
   const [sidebarOpen, setSidebarOpen] = useState(initialSidebarState);
   const [sidebarWidth, setSidebarWidth] = useState(initialSidebarWidth);
   const [scale, setScale] = useState(initialScale);
+  const [themeId, setThemeId] = useState(initialThemeId);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showAgentKeys, setShowAgentKeys] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
@@ -113,6 +125,11 @@ export function App() {
     document.documentElement.style.setProperty("--ui-scale", String(scale));
     window.localStorage.setItem("demiplane.scale", String(scale));
   }, [scale]);
+
+  useEffect(() => {
+    applyTheme(themeId);
+    window.localStorage.setItem(THEME_STORAGE_KEY, themeId);
+  }, [themeId]);
 
   const focusScry = useCallback(() => {
     setSidebarOpen(true);
@@ -312,6 +329,20 @@ export function App() {
         icon: <LogOut size={15} />,
         run: () => void store.logout(),
       },
+      ...THEMES.map((theme) => ({
+        id: `theme:${theme.id}`,
+        label: themeLabel(theme),
+        group: FLAVOUR.themeGroup,
+        icon: <ThemeSwatch theme={theme} />,
+        run: () => setThemeId(theme.id),
+      })),
+      {
+        id: "theme:random",
+        label: FLAVOUR.themeRandom,
+        group: FLAVOUR.themeGroup,
+        icon: <Shuffle size={15} />,
+        run: () => setThemeId((current) => randomThemeId(current)),
+      },
       ...(store.activeId
         ? ([
             {
@@ -446,6 +477,8 @@ export function App() {
           scale={scale}
           onScaleChange={(value) => setScale(clampScale(value))}
           onZoomReset={() => setScale(1)}
+          themeId={themeId}
+          onThemeChange={setThemeId}
         />
         <div
           role="separator"

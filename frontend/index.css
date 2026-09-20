@@ -36,8 +36,10 @@
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --gild: rgba(195, 161, 92, 0.5);
-  --gild-faint: rgba(195, 161, 92, 0.16);
+  --gild: color-mix(in srgb, var(--color-gold-400) 50%, transparent);
+  --gild-faint: color-mix(in srgb, var(--color-gold-400) 16%, transparent);
+  --glow-arcane: color-mix(in srgb, var(--color-arcane-500) 16%, transparent);
+  --glow-gold: color-mix(in srgb, var(--color-gold-400) 9%, transparent);
 }
 
 html {
@@ -56,15 +58,15 @@ body {
   background:
     radial-gradient(
       1000px 700px at 85% -15%,
-      rgba(95, 77, 146, 0.16),
+      var(--glow-arcane),
       transparent 60%
     ),
     radial-gradient(
       820px 600px at -5% 110%,
-      rgba(147, 116, 58, 0.09),
+      var(--glow-gold),
       transparent 56%
     ),
-    #131110;
+    var(--color-void-950);
   color: var(--color-parchment-100);
   font-family: var(--font-sans);
   font-size: 0.9375rem;
@@ -75,7 +77,7 @@ body {
 }
 
 ::selection {
-  background: rgba(195, 161, 92, 0.24);
+  background: color-mix(in srgb, var(--color-gold-400) 24%, transparent);
 }
 
 *:focus-visible {
@@ -89,11 +91,11 @@ body {
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(195, 161, 92, 0.2);
+  background: color-mix(in srgb, var(--color-gold-400) 20%, transparent);
   border-radius: 999px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(195, 161, 92, 0.32);
+  background: color-mix(in srgb, var(--color-gold-400) 32%, transparent);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -114,7 +116,7 @@ body {
       100deg,
       var(--color-gold-500) 0%,
       var(--color-gold-400) 38%,
-      #f4e3b6 50%,
+      var(--color-gold-300) 50%,
       var(--color-gold-400) 62%,
       var(--color-gold-500) 100%
     );
@@ -180,14 +182,14 @@ body {
 }
 .prose-arcane code {
   font-family: var(--font-mono);
-  background: rgba(195, 161, 92, 0.1);
+  background: color-mix(in srgb, var(--color-gold-400) 10%, transparent);
   color: var(--color-parchment-100);
   padding: 0.12em 0.38em;
   border-radius: 6px;
   font-size: 0.88em;
 }
 .prose-arcane pre {
-  background: #171412;
+  background: var(--color-void-950);
   border: 1px solid var(--color-void-700);
   padding: 16px;
   border-radius: var(--radius-control);
@@ -227,11 +229,11 @@ body {
   text-align: left;
 }
 .prose-arcane th {
-  background: rgba(195, 161, 92, 0.07);
+  background: color-mix(in srgb, var(--color-gold-400) 7%, transparent);
   color: var(--color-gold-300);
 }
 .prose-arcane mark {
-  background: rgba(195, 161, 92, 0.22);
+  background: color-mix(in srgb, var(--color-gold-400) 22%, transparent);
   color: var(--color-parchment-100);
   padding: 0.05em 0.2em;
   border-radius: 4px;
@@ -244,7 +246,11 @@ body {
 .prose-arcane li:has(> input[type="checkbox"]:checked) {
   color: var(--color-parchment-500);
   text-decoration: line-through;
-  text-decoration-color: rgba(164, 153, 138, 0.45);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--color-parchment-500) 45%,
+    transparent
+  );
 }
 .prose-arcane input[type="checkbox"].task-checkbox {
   appearance: none;
@@ -267,7 +273,7 @@ body {
 }
 .prose-arcane input[type="checkbox"].task-checkbox:checked {
   border-color: var(--color-gold-400);
-  background: rgba(195, 161, 92, 0.22);
+  background: color-mix(in srgb, var(--color-gold-400) 22%, transparent);
 }
 .prose-arcane input[type="checkbox"].task-checkbox:checked::after {
   content: "";
@@ -282,7 +288,11 @@ body {
 }
 .prose-arcane a.wikilink {
   color: var(--color-arcane-300);
-  text-decoration-color: rgba(163, 150, 201, 0.45);
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--color-arcane-300) 45%,
+    transparent
+  );
   cursor: pointer;
 }
 .prose-arcane a.wikilink:hover {
@@ -292,7 +302,7 @@ body {
   margin: 1.4em 0;
   border-left: 2px solid var(--color-gold-500);
   border-radius: 0 var(--radius-control) var(--radius-control) 0;
-  background: rgba(195, 161, 92, 0.05);
+  background: color-mix(in srgb, var(--color-gold-400) 5%, transparent);
   padding: 0.75em 1em;
 }
 .prose-arcane .callout-title {
@@ -307,7 +317,7 @@ body {
 }
 .prose-arcane .callout-tip {
   border-left-color: var(--color-sage-400);
-  background: rgba(134, 169, 140, 0.06);
+  background: color-mix(in srgb, var(--color-sage-400) 6%, transparent);
 }
 .prose-arcane .callout-tip .callout-title {
   color: var(--color-sage-400);
@@ -317,7 +327,7 @@ body {
 }
 .prose-arcane .callout-danger {
   border-left-color: var(--color-ember-400);
-  background: rgba(199, 111, 102, 0.06);
+  background: color-mix(in srgb, var(--color-ember-400) 6%, transparent);
 }
 .prose-arcane .callout-danger .callout-title {
   color: var(--color-ember-400);
@@ -545,8 +555,8 @@ svg.lucide {
   border-radius: 9999px;
   background: radial-gradient(
     circle at 50% 40%,
-    rgba(124, 108, 255, 0.42),
-    rgba(95, 77, 146, 0.14) 55%,
+    color-mix(in srgb, var(--color-arcane-300) 42%, transparent),
+    color-mix(in srgb, var(--color-arcane-500) 14%, transparent) 55%,
     transparent 72%
   );
   animation: portal-pulse 5.5s ease-in-out infinite;
@@ -555,14 +565,16 @@ svg.lucide {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  border: 1px dashed rgba(195, 161, 92, 0.34);
+  border: 1px dashed
+    color-mix(in srgb, var(--color-gold-400) 34%, transparent);
   animation: spin-slow 52s linear infinite;
 }
 .portal-ring-inner {
   position: absolute;
   inset: 0.8rem;
   border-radius: 9999px;
-  border: 1px solid rgba(124, 108, 255, 0.3);
+  border: 1px solid
+    color-mix(in srgb, var(--color-arcane-300) 30%, transparent);
   animation: spin-reverse 34s linear infinite;
 }
 
@@ -574,7 +586,8 @@ svg.lucide {
     border-color 150ms ease;
 }
 .btn-bloom:hover {
-  box-shadow: 0 0 26px rgba(95, 77, 146, 0.5);
+  box-shadow: 0 0 26px
+    color-mix(in srgb, var(--color-arcane-500) 50%, transparent);
 }
 
 /* Phone ergonomics: no tap flash, no double-tap zoom delay. */

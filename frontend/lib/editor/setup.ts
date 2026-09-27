@@ -17,6 +17,7 @@ import { FLAVOUR } from "../../../shared/messages";
 import { markdownEditing, type CompletionDataGetter } from "./autocomplete";
 import { focusModeExtension, typewriterModeExtension } from "./focus";
 import { markdownFormatKeymap } from "./format";
+import { spellCheckExtension } from "./spellcheck";
 import { taskCheckboxExtension } from "./tasks";
 import { arcaneTheme } from "./theme";
 
@@ -59,11 +60,13 @@ export function buildEditorExtensions({
     drawSelection(),
     EditorView.lineWrapping,
     placeholder(FLAVOUR.editorPlaceholder),
-    EditorView.contentAttributes.of({ spellcheck: "true" }),
+    // Native spell check is off; the lexicon draws its own underlines.
+    EditorView.contentAttributes.of({ spellcheck: "false" }),
     Prec.high(keymap.of(completionKeymap)),
     keymap.of(editorKeymap),
     arcaneTheme,
     taskCheckboxExtension,
+    spellCheckExtension,
     focusMode ? focusModeExtension : [],
     typewriterMode ? typewriterModeExtension : [],
   ];

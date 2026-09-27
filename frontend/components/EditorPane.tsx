@@ -12,6 +12,7 @@ import { EditorView } from "@codemirror/view";
 import { EditorSelection } from "@codemirror/state";
 import {
   ArrowLeft,
+  BookPlus,
   Calendar,
   CalendarClock,
   Clock,
@@ -21,6 +22,7 @@ import {
   ListChecks,
   MoreHorizontal,
   Plus,
+  SpellCheck,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -33,10 +35,21 @@ import { renderMarkdown } from "../lib/markdown";
 import { toggleTaskAt } from "../lib/checklist";
 import { backlinksFor, resolveWikiLink } from "../lib/wikilinks";
 import { countWords, readingMinutes } from "../lib/stats";
+import {
+  addToLexicon,
+  isMisspelled,
+  isProtectedSpan,
+  protectedRanges,
+  suggestionsFor,
+  wikilinkAt,
+  wordAt,
+} from "../lib/spellcheck";
+import type { WordSpan } from "../lib/spellcheck";
 import { buildEditorExtensions } from "../lib/editor/setup";
 import { formatStamp, formatTask } from "../lib/editor/format";
+import { TASK_LINE } from "../lib/editor/tasks";
 import { clearEditorBridge, setEditorBridge } from "../lib/editor/bridge";
-import { ContextMenu, useContextMenu } from "./ContextMenu";
+import { ContextMenu, useContextMenu, type ContextMenuEntry } from "./ContextMenu";
 import { SelectionToolbar } from "./SelectionToolbar";
 import { SyncDot } from "./SyncBadge";
 import {
@@ -353,6 +366,146 @@ export function EditorPane({
     );
   }
 
+  /** The canvas menu reads the word and line under the cursor before it opens. */
+  function openCanvasMenu(event: MouseEvent<HTMLElement>) {
+    if (!note) return;
+    const editor = viewRef.current;
+    const entries: ContextMenuEntry[] = [];
+
+    let taskLine = false;
+    let wiki: string | null = null;
+    let doubtful: WordSpan | null = null;
+    let lineFrom = 0;
+
+    if (editor && !showPreview) {
+      const pos = editor.posAtCoords({ x: event.clientX, y: event.clientY });
+      if (pos !== null) {
+        const selection = editor.state.selection.main;
+        const insideSelection =
+          !selection.empty && pos >= selection.from && pos <= selection.to;
+        if (!insideSelection) {
+          editor.dispatch({ selection: EditorSelection.cursor(pos) });
+        }
+        const line = editor.state.doc.lineAt(pos);
+        lineFrom = line.from;
+        const offset = pos - line.from;
+        wiki = wikilinkAt(line.text, offset);
+        taskLine = TASK_LINE.test(line.text);
+        const span = wordAt(line.text, offset);
+        if (
+          span &&
+          !isProtectedSpan(protectedRanges(line.text), span.from, span.to) &&
+          isMisspelled(span.text)
+        ) {
+          doubtful = span;
+        }
+      }
+    }
+
+    if (doubtful) {
+      const word = doubtful;
+      const anchor = lineFrom;
+      entries.push({ heading: FLAVOUR.spellSuggest });
+      const options = suggestionsFor(word.text);
+      if (options.length === 0) {
+        entries.push({ label: FLAVOUR.spellNone, disabled: true });
+      } else {
+        for (const option of options) {
+          entries.push({
+            label: option,
+            icon: <SpellCheck size={15} />,
+            onSelect: () => {
+              if (!editor) return;
+              const from = anchor + word.from;
+              const to = anchor + word.to;
+              editor.dispatch({
+                changes: { from, to, insert: option },
+                selection: EditorSelection.cursor(from + option.length),
+              });
+              editor.focus();
+            },
+          });
+        }
+      }
+      entries.push({
+        label: FLAVOUR.spellAdd,
+        icon: <BookPlus size={15} />,
+        onSelect: () => addToLexicon(word.text),
+      });
+      entries.push({ separator: true });
+    }
+
+    if (wiki) {
+      const target = wiki;
+      entries.push({
+        label: FLAVOUR.wikilinkOpen,
+        icon: <Link2 size={15} />,
+        onSelect: () => {
+          const resolved = resolveWikiLink(target, notes);
+          if (resolved) onSelectNote(resolved.id);
+          else setMissingLink(target);
+        },
+      });
+    }
+
+    if (taskLine) {
+      entries.push({
+        label: FLAVOUR.fmtToggleTask,
+        icon: <ListChecks size={15} />,
+        onSelect: () => {
+          if (editor) formatTask(editor);
+        },
+      });
+    }
+
+    entries.push({
+      label: showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow,
+      icon: showPreview ? <EyeOff size={15} /> : <Eye size={15} />,
+      onSelect: () => setShowPreview((value) => !value),
+    });
+    entries.push({
+      label: FLAVOUR.insertDate,
+      icon: <Calendar size={15} />,
+      onSelect: () => insertAtCursor(formatStamp("date")),
+    });
+    entries.push({
+      label: FLAVOUR.insertTime,
+      icon: <Clock size={15} />,
+      onSelect: () => insertAtCursor(formatStamp("time")),
+    });
+    entries.push({
+      label: FLAVOUR.insertDateTime,
+      icon: <CalendarClock size={15} />,
+      onSelect: () => insertAtCursor(formatStamp("datetime")),
+    });
+    entries.push({ separator: true });
+
+    if (note.deleted) {
+      entries.push({
+        label: FLAVOUR.undelete,
+        icon: <Undo2 size={15} />,
+        onSelect: () => void onUndelete(note.id),
+      });
+    } else {
+      entries.push({
+        label: FLAVOUR.deleteConfirm,
+        icon: <Trash2 size={15} />,
+        danger: true,
+        onSelect: () => {
+          if (
+            window.confirm(
+              `${FLAVOUR.deleteConfirm}\n\n${FLAVOUR.deleteConfirmBody}`,
+            )
+          ) {
+            void onDelete(note.id);
+          }
+        },
+      });
+    }
+
+    contextMenu.open(event, entries);
+  }
+
   return (
     <section
       className={cx(
@@ -370,58 +523,7 @@ export function EditorPane({
         setDragging(false);
         void uploadImages(Array.from(event.dataTransfer.files));
       }}
-      onContextMenu={(event) =>
-        contextMenu.open(event, [
-          {
-            label: showPreview ? FLAVOUR.previewHide : FLAVOUR.previewShow,
-            icon: showPreview ? <EyeOff size={15} /> : <Eye size={15} />,
-            onSelect: () => setShowPreview((value) => !value),
-          },
-          {
-            label: FLAVOUR.fmtToggleTask,
-            icon: <ListChecks size={15} />,
-            onSelect: () => {
-              const editor = viewRef.current;
-              if (editor) formatTask(editor);
-            },
-          },
-          {
-            label: FLAVOUR.insertDate,
-            icon: <Calendar size={15} />,
-            onSelect: () => insertAtCursor(formatStamp("date")),
-          },
-          {
-            label: FLAVOUR.insertTime,
-            icon: <Clock size={15} />,
-            onSelect: () => insertAtCursor(formatStamp("time")),
-          },
-          {
-            label: FLAVOUR.insertDateTime,
-            icon: <CalendarClock size={15} />,
-            onSelect: () => insertAtCursor(formatStamp("datetime")),
-          },
-          note.deleted
-            ? {
-                label: FLAVOUR.undelete,
-                icon: <Undo2 size={15} />,
-                onSelect: () => void onUndelete(note.id),
-              }
-            : {
-                label: FLAVOUR.deleteConfirm,
-                icon: <Trash2 size={15} />,
-                danger: true,
-                onSelect: () => {
-                  if (
-                    window.confirm(
-                      `${FLAVOUR.deleteConfirm}\n\n${FLAVOUR.deleteConfirmBody}`,
-                    )
-                  ) {
-                    void onDelete(note.id);
-                  }
-                },
-              },
-        ])
-      }
+      onContextMenu={openCanvasMenu}
     >
       <header
         className="flex items-center gap-1 px-3 py-2 sm:px-5"

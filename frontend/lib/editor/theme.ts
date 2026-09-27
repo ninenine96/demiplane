@@ -95,6 +95,13 @@ export const arcaneTheme = [
           "color-mix(in srgb, var(--color-arcane-300) 40%, transparent)",
         textUnderlineOffset: "2px",
       },
+      ".cm-misspelled": {
+        textDecoration: "underline wavy",
+        textDecorationColor:
+          "color-mix(in srgb, var(--color-ember-400) 75%, transparent)",
+        textDecorationThickness: "1px",
+        textUnderlineOffset: "3px",
+      },
       ".cm-task-checkbox": {
         display: "inline-block",
         position: "relative",

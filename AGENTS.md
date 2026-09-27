@@ -171,6 +171,10 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Heading / quote / list / task | Raise to a heading · Lower to a subheading · Set as a quotation · Set as a list · Set as a task |
 | Toggle task | Flip the task's mark |
 | Task checkbox (aria) | Task open · Task complete |
+| Spell suggestions heading | The lexicon offers |
+| No spelling suggestion | No word in the lexicon answers to that spelling. |
+| Add to personal lexicon | Inscribe it in your lexicon |
+| Open wikilinked page (canvas menu) | Open the page it names |
 | Workings menu labels | Inscribe a title · Raise to a heading · Lower to a subheading · Set as a list · Set as a tally · Set as a task · Set as a quotation · Open a code block · Tuck in an image · Summon a page by name · Open a callout · Raise a table · Draw a divider · Inscribe as code |
 | Insert timestamp | Inscribe today's date · Inscribe the current hour · Inscribe the date and the hour |
 | Backlinks heading | Linked mentions |

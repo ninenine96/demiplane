@@ -42,8 +42,11 @@ body, and the rune count at the foot](assets/demiplane-ui.png)
   convenience.
 - **The editor is CodeMirror 6.** `frontend/lib/editor/` owns the theme, the
   completions, the formatting commands and the focus modes. Syntax fades into
-  the manuscript; there is no IDE chrome (no gutters, no line numbers). Spell
-  check is the browser's, on.
+  the manuscript; there is no IDE chrome (no gutters, no line numbers).
+- **Spell check is the demiplane's own lexicon.** An offline English dictionary
+  (`nspell`, loaded on demand) draws a wavy ember underline under words it
+  doubts — the browser's underlines are switched off so the two agree. A word
+  the keeper inscribes is remembered on the device and never questioned again.
 - **The title is inline.** A centred, auto-growing field sits at the top of the
   canvas — no title in the top bar. `Enter` moves the caret into the body.
 - **Authoring aids appear as you write, then vanish:**
@@ -163,8 +166,11 @@ Right-click (and long-press where it maps to `contextmenu`) is a first-class
 surface, not an afterthought:
 
 - **On a page row** — Open, Banish / Recover.
-- **On the canvas** — Reveal / Veil the page, toggle task, inscribe the date /
-  hour, Banish / Recover.
+- **On the canvas** — the menu reads what the cursor touched. A doubtful word
+  offers **The lexicon offers** (suggestions, each replacing the word) plus
+  *Inscribe it in your lexicon*; a task line offers *Flip the task's mark*; a
+  wikilink offers *Open the page it names*. Always: Reveal / Veil the page,
+  inscribe the date / hour, Banish / Recover.
 
 Menus are cursor-positioned, clamped to the viewport, and close on outside
 click, Escape, scroll, resize, or another right-click.

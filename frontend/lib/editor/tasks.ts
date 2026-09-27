@@ -10,7 +10,8 @@ import {
 import { toggleTaskMarker } from "../checklist";
 import { FLAVOUR } from "../../../shared/messages";
 
-const TASK_LINE = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/;
+/** A checklist line: `- [ ]`, `- [x]`, or a numbered equivalent. */
+export const TASK_LINE = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/;
 
 /** A gilded box that replaces the raw `[ ]` marker while writing. */
 class TaskCheckboxWidget extends WidgetType {

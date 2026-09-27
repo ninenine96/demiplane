@@ -61,9 +61,15 @@ export const FLAVOUR = {
   taskOpen: "Task open",
   taskDone: "Task complete",
 
+  // --- Lexicon (spell check) ---------------------------------------------
+  spellSuggest: "The lexicon offers",
+  spellNone: "No word in the lexicon answers to that spelling.",
+  spellAdd: "Inscribe it in your lexicon",
+
   // --- Wikilinks / backlinks ---------------------------------------------
   linkedMentions: "Linked mentions",
   linkedMentionsShort: "linked",
+  wikilinkOpen: "Open the page it names",
   wikilinkMissing:
     "No page bears that name yet. Inscribe it, and the link will hold.",
 

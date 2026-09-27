@@ -167,10 +167,10 @@ surface, not an afterthought:
 
 - **On a page row** — Open, Banish / Recover.
 - **On the canvas** — the menu reads what the cursor touched. A doubtful word
-  offers **The lexicon offers** (suggestions, each replacing the word) plus
-  *Inscribe it in your lexicon*; a task line offers *Flip the task's mark*; a
-  wikilink offers *Open the page it names*. Always: Reveal / Veil the page,
-  inscribe the date / hour, Banish / Recover.
+  offers **Suggestions** (each replacing the word) plus *Inscribe it in your
+  lexicon*; a task line offers *Flip the task's mark*; a wikilink offers *Open
+  the page it names*. Always: Reveal / Veil the page, inscribe the date / hour,
+  Banish / Recover.
 
 Menus are cursor-positioned, clamped to the viewport, and close on outside
 click, Escape, scroll, resize, or another right-click.

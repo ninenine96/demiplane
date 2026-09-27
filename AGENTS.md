@@ -171,7 +171,7 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Heading / quote / list / task | Raise to a heading · Lower to a subheading · Set as a quotation · Set as a list · Set as a task |
 | Toggle task | Flip the task's mark |
 | Task checkbox (aria) | Task open · Task complete |
-| Spell suggestions heading | The lexicon offers |
+| Spell suggestions heading | Suggestions |
 | No spelling suggestion | No word in the lexicon answers to that spelling. |
 | Add to personal lexicon | Inscribe it in your lexicon |
 | Open wikilinked page (canvas menu) | Open the page it names |

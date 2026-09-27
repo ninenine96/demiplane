@@ -62,7 +62,7 @@ export const FLAVOUR = {
   taskDone: "Task complete",
 
   // --- Lexicon (spell check) ---------------------------------------------
-  spellSuggest: "The lexicon offers",
+  spellSuggest: "Suggestions",
   spellNone: "No word in the lexicon answers to that spelling.",
   spellAdd: "Inscribe it in your lexicon",
 

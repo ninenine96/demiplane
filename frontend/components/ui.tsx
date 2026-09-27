@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -195,6 +195,20 @@ export function EmptyState({
   );
 }
 
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
+}
+
 /** A quiet popover anchored to a trigger. Children receive a close callback. */
 export function Menu({
   label,
@@ -211,9 +225,18 @@ export function Menu({
 }) {
   const [mounted, setMounted] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [placement, setPlacement] = useState<{
+    left: number;
+    top: number;
+    maxHeight: number;
+  } | null>(null);
+  const [resizeTick, setResizeTick] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const timer = useRef<number | null>(null);
+  const desktop = useMediaQuery("(min-width: 640px)");
   const open = mounted && !closing;
+  const bottomSheet = Boolean(sheet) && !desktop;
 
   const close = useCallback(() => {
     setClosing(true);
@@ -259,6 +282,36 @@ export function Menu({
     [],
   );
 
+  // Keep an anchored panel inside the viewport at any UI scale.
+  useLayoutEffect(() => {
+    if (!mounted || bottomSheet) {
+      setPlacement(null);
+      return;
+    }
+    const wrap = ref.current;
+    const panel = panelRef.current;
+    if (!wrap || !panel) return;
+    const margin = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const trigger = wrap.getBoundingClientRect();
+    const rect = panel.getBoundingClientRect();
+    const width = Math.min(rect.width, vw - margin * 2);
+    let left = trigger.right - width;
+    if (left < margin) left = margin;
+    if (left + width > vw - margin) left = vw - width - margin;
+    const top = trigger.bottom + 8;
+    const maxHeight = Math.max(160, vh - top - margin);
+    setPlacement({ left, top, maxHeight });
+  }, [mounted, bottomSheet, resizeTick]);
+
+  useEffect(() => {
+    if (!mounted || bottomSheet) return;
+    const onResize = () => setResizeTick((value) => value + 1);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [mounted, bottomSheet]);
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -277,19 +330,29 @@ export function Menu({
       </button>
       {mounted ? (
         <div
+          ref={panelRef}
           className={cx(
             "z-50 border border-[var(--color-void-700)] bg-void-800 shadow-[0_20px_50px_rgba(0,0,0,0.6)]",
-            sheet
+            bottomSheet
               ? "fixed inset-x-0 bottom-0 max-h-[80dvh] overflow-y-auto rounded-t-[var(--radius-card)] p-2 pb-[calc(0.75rem+var(--safe-bottom))]"
-              : "absolute right-0 mt-2 max-h-[70dvh] overflow-y-auto rounded-[var(--radius-card)] p-2",
-            sheet &&
-              "sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:mt-2 sm:max-h-[70dvh] sm:rounded-[var(--radius-card)] sm:pb-2",
+              : "fixed max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[var(--radius-card)] p-2",
             closing ? "animate-pop-out" : "animate-pop-in",
-            sheet && (closing ? "sheet-out" : "sheet-in"),
+            bottomSheet && (closing ? "sheet-out" : "sheet-in"),
             panelClassName,
           )}
+          style={
+            bottomSheet
+              ? undefined
+              : placement
+                ? {
+                    left: placement.left,
+                    top: placement.top,
+                    maxHeight: placement.maxHeight,
+                  }
+                : { visibility: "hidden" }
+          }
         >
-          {sheet ? (
+          {bottomSheet ? (
             <div
               aria-hidden="true"
               className="mx-auto mb-2 h-1 w-10 rounded-full bg-void-600 sm:hidden"

@@ -1,4 +1,11 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { cx } from "./ui";
 
@@ -47,12 +54,6 @@ export function useContextMenu() {
   return { open, close, state };
 }
 
-function entryHeight(entry: ContextMenuEntry): number {
-  if ("separator" in entry) return 9;
-  if ("heading" in entry) return 24;
-  return 38;
-}
-
 export function ContextMenu({
   state,
   onClose,
@@ -60,6 +61,13 @@ export function ContextMenu({
   state: MenuState | null;
   onClose: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{
+    state: MenuState;
+    left: number;
+    top: number;
+  } | null>(null);
+
   useEffect(() => {
     if (!state) return;
     const dismiss = () => onClose();
@@ -80,22 +88,44 @@ export function ContextMenu({
     };
   }, [state, onClose]);
 
+  // Measure the real box, then clamp it to the viewport so long labels or a
+  // large UI scale can never push the menu off-screen.
+  useLayoutEffect(() => {
+    if (!state) {
+      setPosition(null);
+      return;
+    }
+    const panel = panelRef.current;
+    if (!panel) return;
+    const margin = 8;
+    const rect = panel.getBoundingClientRect();
+    setPosition({
+      state,
+      left: Math.max(margin, Math.min(state.x, window.innerWidth - rect.width - margin)),
+      top: Math.max(
+        margin,
+        Math.min(state.y, window.innerHeight - rect.height - margin),
+      ),
+    });
+  }, [state]);
+
   if (!state) return null;
 
-  const width = 224;
-  const height =
-    state.items.reduce((sum, entry) => sum + entryHeight(entry), 0) + 12;
-  const x = Math.max(8, Math.min(state.x, window.innerWidth - width - 8));
-  const y = Math.max(8, Math.min(state.y, window.innerHeight - height - 8));
+  const active = position?.state === state ? position : null;
 
   return createPortal(
     <div
+      ref={panelRef}
       role="menu"
       aria-label="Context menu"
       onMouseDown={(event) => event.stopPropagation()}
       onContextMenu={(event) => event.preventDefault()}
-      style={{ left: x, top: y, width, transformOrigin: "top left" }}
-      className="animate-pop-in fixed z-[70] rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+      style={{
+        left: active?.left ?? state.x,
+        top: active?.top ?? state.y,
+        visibility: active ? "visible" : "hidden",
+      }}
+      className="animate-pop-in fixed z-[70] w-max max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
     >
       {state.items.map((entry, index) => {
         if ("separator" in entry) {
@@ -129,7 +159,7 @@ export function ContextMenu({
               onClose();
             }}
             className={cx(
-              "flex w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-colors disabled:pointer-events-none disabled:opacity-60",
+              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors disabled:pointer-events-none disabled:opacity-60",
               entry.danger
                 ? "text-ember-400 hover:bg-ember-400/10"
                 : "text-parchment-300 hover:bg-white/[0.06] hover:text-parchment-100",
@@ -140,7 +170,7 @@ export function ContextMenu({
                 {entry.icon}
               </span>
             ) : null}
-            {entry.label}
+            <span className="min-w-0">{entry.label}</span>
           </button>
         );
       })}

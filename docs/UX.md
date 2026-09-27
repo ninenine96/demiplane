@@ -43,10 +43,11 @@ body, and the rune count at the foot](assets/demiplane-ui.png)
 - **The editor is CodeMirror 6.** `frontend/lib/editor/` owns the theme, the
   completions, the formatting commands and the focus modes. Syntax fades into
   the manuscript; there is no IDE chrome (no gutters, no line numbers).
-- **Spell check is the demiplane's own lexicon.** An offline English dictionary
-  (`nspell`, loaded on demand) draws a wavy ember underline under words it
-  doubts — the browser's underlines are switched off so the two agree. A word
-  the keeper inscribes is remembered on the device and never questioned again.
+- **Spell check is the demiplane's own lexicon.** An offline British-English
+  dictionary (`nspell`, loaded on demand) draws a wavy ember underline under
+  words it doubts — the browser's underlines are switched off so the two agree.
+  A word the keeper inscribes is remembered on the device and never questioned
+  again.
 - **The title is inline.** A centred, auto-growing field sits at the top of the
   canvas — no title in the top bar. `Enter` moves the caret into the body.
 - **Authoring aids appear as you write, then vanish:**

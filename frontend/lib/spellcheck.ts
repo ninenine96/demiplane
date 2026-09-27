@@ -1,9 +1,9 @@
 import type { NSpell } from "nspell";
 
 /**
- * The demiplane's lexicon: an offline Hunspell dictionary loaded lazily so it
- * never weighs on first paint. Words the keeper inscribes are remembered in
- * `localStorage` and folded back in on the next visit.
+ * The demiplane's lexicon: an offline British-English Hunspell dictionary
+ * loaded lazily so it never weighs on first paint. Words the keeper inscribes
+ * are remembered in `localStorage` and folded back in on the next visit.
  *
  * The heavy dictionary chunk is imported on demand; every helper here is safe
  * to call before it resolves (they answer "no misspelling" until it is ready).
@@ -51,14 +51,15 @@ export function loadSpell(): Promise<NSpell | null> {
   if (loading) return loading;
   loading = (async () => {
     try {
-      // Vendored English Hunspell dictionary (`dictionary-en` v4, MIT AND BSD);
-      // see `spellcheck-dictionary/LICENSE`. The npm package loads its files
-      // through Node `fs`, so the raw files are copied here for the browser.
+      // Vendored British-English Hunspell dictionary (`dictionary-en-gb` v3,
+      // MIT AND BSD); see `spellcheck-dictionary/LICENSE`. The npm package
+      // loads its files through Node `fs`, so the raw files are copied here
+      // for the browser.
       const [{ default: nspell }, { default: aff }, { default: dic }] =
         await Promise.all([
           import("nspell"),
-          import("./spellcheck-dictionary/en.aff?raw"),
-          import("./spellcheck-dictionary/en.dic?raw"),
+          import("./spellcheck-dictionary/en-gb.aff?raw"),
+          import("./spellcheck-dictionary/en-gb.dic?raw"),
         ]);
       const instance = nspell(aff, dic);
       for (const word of readPersonal()) instance.add(word);

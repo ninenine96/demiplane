@@ -117,7 +117,9 @@ export const FLAVOUR = {
   codeInvalid: "That sigil is not recognised. Read the stone again.",
   codeLocked: "Too many wrong sigils. Request a fresh sending stone.",
   loginConfirmed: "The portal recognises you.",
-  loginPrompt: "Speak the keeper's email to unseal the portal.",
+  loginPrompt: "Ask for a sending stone; its sigil goes to the keeper.",
+  loginRequestHint:
+    "The sigil is sent to the keeper's address. Nothing to type but the code.",
   loginButton: "Send a sending stone",
   confirmLogin: "Unseal the portal",
   rememberLocation: "Remember this location for a fortnight.",

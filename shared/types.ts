@@ -57,12 +57,6 @@ export interface SyncPushResponse {
   cursor: number;
 }
 
-export interface ApiError {
-  error: string;
-  message: string;
-  messagePlain: string;
-}
-
 export interface ApiOk<T> {
   data: T;
 }

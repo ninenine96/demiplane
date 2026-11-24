@@ -74,22 +74,21 @@ export const api = {
     return body.data;
   },
 
-  async requestMagicCode(email: string): Promise<{ devCode?: string }> {
+  async requestMagicCode(): Promise<{ devCode?: string }> {
     const body = await request<{ data: { devCode?: string } }>(
       "/api/auth/request",
-      { method: "POST", body: JSON.stringify({ email }) },
+      { method: "POST", body: JSON.stringify({}) },
     );
     return body.data;
   },
 
   async verifyMagicCode(
-    email: string,
     code: string,
     remember: boolean,
   ): Promise<{ email: string }> {
     const body = await request<{ data: { email: string } }>(
       "/api/auth/verify",
-      { method: "POST", body: JSON.stringify({ email, code, remember }) },
+      { method: "POST", body: JSON.stringify({ code, remember }) },
     );
     return body.data;
   },

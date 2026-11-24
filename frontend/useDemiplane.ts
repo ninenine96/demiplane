@@ -36,12 +36,8 @@ export interface DemiplaneStore {
   undeleteNote: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
-  requestLoginCode: (email: string) => Promise<{ devCode?: string }>;
-  verifyLoginCode: (
-    email: string,
-    code: string,
-    remember: boolean,
-  ) => Promise<void>;
+  requestLoginCode: () => Promise<{ devCode?: string }>;
+  verifyLoginCode: (code: string, remember: boolean) => Promise<void>;
   clearConflicts: () => void;
   exportGrimoire: () => Promise<void>;
   importGrimoire: (
@@ -167,13 +163,13 @@ export function useDemiplane(): DemiplaneStore {
     await afterSync();
   }, [afterSync]);
 
-  const requestLoginCode = useCallback(async (address: string) => {
-    return api.requestMagicCode(address);
+  const requestLoginCode = useCallback(async () => {
+    return api.requestMagicCode();
   }, []);
 
   const verifyLoginCode = useCallback(
-    async (address: string, code: string, remember: boolean) => {
-      const result = await api.verifyMagicCode(address, code, remember);
+    async (code: string, remember: boolean) => {
+      const result = await api.verifyMagicCode(code, remember);
       setEmail(result.email);
       setAuth("authenticated");
       await afterSync();

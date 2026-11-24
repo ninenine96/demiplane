@@ -11,11 +11,13 @@ import {
   SESSION_TTL_SECONDS,
   SHORT_SESSION_TTL_SECONDS,
 } from "../lib/session";
-import { authRequestSchema, authVerifySchema } from "../lib/validation";
+import { authVerifySchema } from "../lib/validation";
 
 const CODE_TTL_SECONDS = 10 * 60;
 const MAX_REQUESTS_PER_WINDOW = 5;
+const MAX_PER_IP_PER_WINDOW = 3;
 const RATE_WINDOW_SECONDS = 15 * 60;
+const MIN_REQUEST_INTERVAL_SECONDS = 30;
 const MAX_VERIFY_ATTEMPTS = 10;
 const ATTEMPT_WINDOW_SECONDS = 15 * 60;
 const CODE_DIGITS = 6;
@@ -35,57 +37,75 @@ export async function handleAuthRequest(
   url: URL,
 ): Promise<Response> {
   void url;
-  const body: unknown = await request.json().catch(() => null);
-  const parsed = authRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return apiError(
-      400,
-      "That is not a shape the stones recognise. Give a proper email address.",
-      "Invalid email address.",
-    );
-  }
-
   const devMode = env.AUTH_DEV_MODE === "true";
-  const email = normalizeEmail(parsed.data.email);
   const owner = env.OWNER_EMAIL ? normalizeEmail(env.OWNER_EMAIL) : "";
-
-  // In production we always report success so the endpoint cannot be used to
-  // probe who owns this demiplane. In dev mode any address works.
-  if (!owner || email !== owner) {
-    if (!devMode) {
-      return ok({ sent: true, message: FLAVOUR.codeSent });
-    }
-    console.warn(
-      `[Demiplane] dev mode: "${email}" is not OWNER_EMAIL ("${owner || "unset"}"). ` +
-        `Issuing a stone anyway — set OWNER_EMAIL in .dev.vars to silence this.`,
+  if (!owner) {
+    return apiError(
+      500,
+      "The demiplane has no keeper's address.",
+      "OWNER_EMAIL is not configured.",
     );
   }
 
   const now = nowSeconds();
-  const recent = await env.DB.prepare(
-    "SELECT COUNT(*) AS count FROM login_codes WHERE email = ?1 AND created_at > ?2",
-  )
-    .bind(email, now - RATE_WINDOW_SECONDS)
-    .first<{ count: number }>();
+  const ip = request.headers.get("cf-connecting-ip") ?? "local";
+  const ipHash = await sha256Hex(`${owner}:${ip}`);
 
-  if ((recent?.count ?? 0) >= MAX_REQUESTS_PER_WINDOW) {
+  const global = await env.DB.prepare(
+    `SELECT COUNT(*) AS count, COALESCE(MAX(created_at), 0) AS last
+     FROM login_codes WHERE email = ?1 AND created_at > ?2`,
+  )
+    .bind(owner, now - RATE_WINDOW_SECONDS)
+    .first<{ count: number; last: number }>();
+
+  if ((global?.count ?? 0) >= MAX_REQUESTS_PER_WINDOW) {
     return apiError(
       429,
       FLAVOUR.authRateLimited,
-      "Too many login code requests. Try again later.",
+      "Too many login code requests.",
+      { "retry-after": "900" },
+    );
+  }
+  if (now - (global?.last ?? 0) < MIN_REQUEST_INTERVAL_SECONDS) {
+    return apiError(
+      429,
+      "One stone is already on its way. Give it a moment.",
+      "Login code requested too recently.",
+      { "retry-after": String(MIN_REQUEST_INTERVAL_SECONDS) },
+    );
+  }
+
+  const perIp = await env.DB.prepare(
+    `SELECT COUNT(*) AS count FROM login_codes
+     WHERE email = ?1 AND ip_hash = ?2 AND created_at > ?3`,
+  )
+    .bind(owner, ipHash, now - RATE_WINDOW_SECONDS)
+    .first<{ count: number }>();
+
+  if ((perIp?.count ?? 0) >= MAX_PER_IP_PER_WINDOW) {
+    return apiError(
+      429,
+      FLAVOUR.authRateLimited,
+      "Too many login code requests from this address.",
+      { "retry-after": "900" },
     );
   }
 
   const code = randomCode(CODE_DIGITS);
-  const hash = await codeHash(email, code);
+  const hash = await codeHash(owner, code);
 
-  await env.DB.prepare(
-    "INSERT INTO login_codes (token_hash, email, created_at, expires_at, used_at) VALUES (?1, ?2, ?3, ?4, NULL)",
-  )
-    .bind(hash, email, now, now + CODE_TTL_SECONDS)
-    .run();
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO login_codes (
+         token_hash, email, created_at, expires_at, used_at, ip_hash
+       ) VALUES (?1, ?2, ?3, ?4, NULL, ?5)`,
+    ).bind(hash, owner, now, now + CODE_TTL_SECONDS, ipHash),
+    env.DB.prepare(
+      "DELETE FROM login_codes WHERE created_at <= ?1",
+    ).bind(now - 24 * 60 * 60),
+  ]);
 
-  const result = await sendLoginCode(env, email, code);
+  const result = await sendLoginCode(env, owner, code);
 
   return ok({
     sent: true,
@@ -107,19 +127,27 @@ export async function handleAuthVerify(
     return apiError(
       400,
       FLAVOUR.codeInvalid,
-      "A six-digit code and email are required.",
+      "A six-digit code is required.",
     );
   }
 
-  const email = normalizeEmail(parsed.data.email);
+  const owner = env.OWNER_EMAIL ? normalizeEmail(env.OWNER_EMAIL) : "";
+  if (!owner) {
+    return apiError(
+      500,
+      "The demiplane has no keeper's address.",
+      "OWNER_EMAIL is not configured.",
+    );
+  }
+
   const remember = parsed.data.remember;
   const now = nowSeconds();
 
-  if (await isLocked(env, email, now)) {
+  if (await isLocked(env, owner, now)) {
     return apiError(429, FLAVOUR.codeLocked, "Too many failed attempts.");
   }
 
-  const hash = await codeHash(email, parsed.data.code);
+  const hash = await codeHash(owner, parsed.data.code);
   const row = await env.DB.prepare(
     "SELECT email, expires_at, used_at FROM login_codes WHERE token_hash = ?1",
   )
@@ -128,12 +156,12 @@ export async function handleAuthVerify(
 
   const valid =
     row !== null &&
-    normalizeEmail(row.email) === email &&
+    normalizeEmail(row.email) === owner &&
     row.used_at === null &&
     row.expires_at > now;
 
   if (!valid) {
-    const locked = await registerFailedAttempt(env, email, now);
+    const locked = await registerFailedAttempt(env, owner, now);
     return apiError(
       locked ? 429 : 401,
       locked ? FLAVOUR.codeLocked : FLAVOUR.codeInvalid,
@@ -144,13 +172,13 @@ export async function handleAuthVerify(
   await env.DB.batch([
     env.DB.prepare(
       "UPDATE login_codes SET used_at = ?1 WHERE email = ?2 AND used_at IS NULL",
-    ).bind(now, email),
-    env.DB.prepare("DELETE FROM login_attempts WHERE email = ?1").bind(email),
+    ).bind(now, owner),
+    env.DB.prepare("DELETE FROM login_attempts WHERE email = ?1").bind(owner),
   ]);
 
   const session = await createSession(
     env,
-    email,
+    owner,
     remember ? SESSION_TTL_SECONDS : SHORT_SESSION_TTL_SECONDS,
   );
   const headers = new Headers();
@@ -164,7 +192,7 @@ export async function handleAuthVerify(
   );
 
   return ok(
-    { email, remembered: remember, message: FLAVOUR.loginConfirmed },
+    { email: owner, remembered: remember, message: FLAVOUR.loginConfirmed },
     { headers },
   );
 }

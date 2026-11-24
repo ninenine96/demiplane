@@ -3,19 +3,14 @@ import { FLAVOUR, PLAIN } from "../../shared/messages";
 import { Button, StatusLine } from "./ui";
 
 interface AuthScreenProps {
-  requestCode: (email: string) => Promise<{ devCode?: string }>;
-  verifyCode: (
-    email: string,
-    code: string,
-    remember: boolean,
-  ) => Promise<void>;
+  requestCode: () => Promise<{ devCode?: string }>;
+  verifyCode: (code: string, remember: boolean) => Promise<void>;
 }
 
-type Step = "email" | "code";
+type Step = "request" | "code";
 
 export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<Step>("request");
   const [code, setCode] = useState("");
   const [remember, setRemember] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -28,12 +23,12 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
     setErrorPlain(cause instanceof Error ? cause.message : PLAIN.authError);
   }
 
-  async function handleRequestEmail(event: FormEvent) {
-    event.preventDefault();
+  async function handleRequest(event?: FormEvent) {
+    event?.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const result = await requestCode(email.trim());
+      const result = await requestCode();
       setDevCode(result.devCode ?? null);
       if (result.devCode) setCode(result.devCode);
       setStep("code");
@@ -49,7 +44,7 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
     setBusy(true);
     setError(null);
     try {
-      await verifyCode(email.trim(), code.trim(), remember);
+      await verifyCode(code.trim(), remember);
     } catch (cause) {
       fail(cause, FLAVOUR.codeInvalid);
     } finally {
@@ -61,7 +56,7 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
     setBusy(true);
     setError(null);
     try {
-      const result = await requestCode(email.trim());
+      const result = await requestCode();
       setDevCode(result.devCode ?? null);
       if (result.devCode) setCode(result.devCode);
     } catch (cause) {
@@ -84,26 +79,15 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
           Demiplane
         </p>
 
-        {step === "email" ? (
+        {step === "request" ? (
           <>
             <h1 className="text-xl font-semibold text-parchment-100 sm:text-2xl">
               {FLAVOUR.loginPrompt}
             </h1>
-            <form onSubmit={handleRequestEmail} className="mt-6 space-y-4">
-              <label className="block text-sm text-parchment-300" htmlFor="email">
-                Keeper&apos;s email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                className="h-12 w-full rounded-[var(--radius-control)] border border-[var(--color-void-600)] bg-void-950/70 px-3 text-base text-parchment-100 outline-none transition-colors focus:border-gold-500/60"
-              />
+            <p className="mt-2 text-sm text-parchment-500">
+              {FLAVOUR.loginRequestHint}
+            </p>
+            <form onSubmit={handleRequest} className="mt-6">
               <Button
                 type="submit"
                 disabled={busy}
@@ -175,21 +159,10 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
               </div>
             ) : null}
 
-            <div className="mt-4 flex items-center justify-between text-xs">
+            <div className="mt-4 flex items-center justify-end text-xs">
               <button
                 type="button"
-                onClick={() => {
-                  setStep("email");
-                  setCode("");
-                  setError(null);
-                }}
-                className="text-parchment-500 transition-colors hover:text-parchment-100"
-              >
-                Use a different address
-              </button>
-              <button
-                type="button"
-                onClick={handleResend}
+                onClick={() => void handleResend()}
                 disabled={busy}
                 className="text-parchment-500 transition-colors hover:text-gold-300 disabled:opacity-50"
               >

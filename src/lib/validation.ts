@@ -2,12 +2,7 @@ import { z } from "zod";
 
 const MAX_NOTE_BYTES = 1_000_000;
 
-export const authRequestSchema = z.object({
-  email: z.email().max(320),
-});
-
 export const authVerifySchema = z.object({
-  email: z.email().max(320),
   code: z
     .string()
     .trim()
@@ -39,6 +34,5 @@ export const syncPushSchema = z.object({
   notes: z.array(syncPushItemSchema).max(200),
 });
 
-export type AuthRequestInput = z.infer<typeof authRequestSchema>;
 export type NoteInputParsed = z.infer<typeof noteInputSchema>;
 export type SyncPushItemParsed = z.infer<typeof syncPushItemSchema>;

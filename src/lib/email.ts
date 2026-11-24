@@ -1,3 +1,4 @@
+import { sendResendEmail } from "@demiplane/common";
 import { FLAVOUR } from "../../shared/messages";
 
 export interface SendResult {
@@ -22,26 +23,19 @@ export async function sendLoginCode(
   }
 
   const html = loginCodeEmail(code);
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${env.RESEND_API_KEY}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Demiplane <onboarding@resend.dev>",
-      to: [to],
-      subject: `Your sigil: ${code}`,
-      text: `${FLAVOUR.codeSent}\n\n${code}\n\nEnter this sigil to unseal the portal. It crumbles to dust in 10 minutes.`,
-      html,
-    }),
+  const result = await sendResendEmail(env.RESEND_API_KEY, {
+    from: "Demiplane <onboarding@resend.dev>",
+    to,
+    subject: `Your sigil: ${code}`,
+    text: `${FLAVOUR.codeSent}\n\n${code}\n\nEnter this sigil to unseal the portal. It crumbles to dust in 10 minutes.`,
+    html,
   });
 
-  if (!response.ok) {
+  if (!result.ok) {
     console.error(
       "[Demiplane] Resend rejected the sending stone",
-      response.status,
-      await response.text(),
+      result.status,
+      result.detail,
     );
     return { delivered: false };
   }

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "description": "Your notes, in a pocket dimension.",
   "scripts": {
     "dev": "vite",

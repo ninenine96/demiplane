@@ -68,16 +68,21 @@ npm run dev                      # http://localhost:5173
 
 With `AUTH_DEV_MODE=true` (the default in the example file) the six-digit sign-in
 code is returned as `devCode` in the response, so you can sign in without
-configuring email: enter the sigil and press **Seal the portal**.
+configuring email. Login has no email field: press **Send a sending stone**, then
+enter the sigil.
+
+Brutus is a separate app in its own repository (`/var/home/prohan/brutus`) with
+its own Worker, D1, queues and deploy. Live: **https://brutus.prohan.workers.dev**.
+Nothing in this repository builds or deploys it.
 
 ## Commands
 
 ```bash
-npm run dev                # Vite + Wrangler local dev (local D1 + R2)
-npm run build              # type-check + production build
-npm run deploy             # build + wrangler deploy
-npm test                   # Vitest
-npm run typecheck          # tsc --noEmit
+npm run dev                # Demiplane: Vite + Wrangler local dev
+npm run build              # Demiplane: type-check + production build
+npm run deploy             # Demiplane: build + wrangler deploy
+npm test                   # Demiplane Vitest
+npm run typecheck          # Demiplane tsc --noEmit
 npm run db:migrate:local   # apply D1 migrations locally
 npm run db:migrate:remote  # apply D1 migrations to the deployed database
 ```

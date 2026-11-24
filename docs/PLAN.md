@@ -33,7 +33,7 @@ string carries the flavour) and repo conventions.
             ▼
  Cloudflare Worker (single deploy)
  ├─ Static assets      → built React app
- ├─ /api/auth/*        → magic-link login, session cookies
+ ├─ /api/auth/*        → emailed sigil login, session cookies
  ├─ /api/notes/*       → CRUD
  ├─ /api/sync/*        → push/pull delta sync
  ├─ /api/attachments/* → uploads/downloads
@@ -110,26 +110,27 @@ CREATE TABLE attachments (
 Optional later: D1 FTS5 table for server-side search (D1 supports the FTS5
 module). Client-side search over Dexie is the core because it works offline.
 
-## Auth — self-hosted magic link
+## Auth — emailed sigil, no email field
 
 All traffic stays on the app's own origin, so corporate firewalls that block
 unrelated domains do not break login.
 
-1. `POST /api/auth/request` with email. Reject unless it matches the single
-   allowed `OWNER_EMAIL`. Generate a 32-byte token, store only its SHA-256 hash
-   in `magic_tokens` (10-minute TTL, single-use), email the link via Resend.
-2. **Scanner-safe:** the emailed link opens `/?login=<token>`, which renders a
-   **Confirm** button that POSTs to `/api/auth/verify`. Corporate mail scanners
-   that auto-GET links cannot consume the token.
-3. `POST /api/auth/verify` validates + marks used, creates a session row, sets
-   `Set-Cookie: demiplane_session=<token>; HttpOnly; Secure; SameSite=Lax;
-   Path=/; Max-Age=7776000` (90 days, sliding).
+1. `POST /api/auth/request` takes no body. It sends a six-digit sigil to the
+   single `OWNER_EMAIL`. There is no email field to fill in and no
+   enumeration surface.
+2. Rate limits: 5 requests per 15 minutes per keeper, 3 per IP, a 30-second
+   cooldown between sends, and a `Retry-After` on 429. Codes are stored only as
+   SHA-256 hashes (10-minute TTL, single-use).
+3. `POST /api/auth/verify` takes `{code, remember}`; a valid sigil marks every
+   unused code for the keeper used, creates a session row, and sets
+   `demiplane_session` (HttpOnly, Secure, SameSite=Lax, Path=/). Ten wrong
+   attempts in 15 minutes locks verification.
 4. Middleware validates the session on every `/api/*` call.
    `POST /api/auth/logout` revokes it.
-5. Rate-limit auth requests (D1 counter keyed by IP/email).
+5. Local dev: with `AUTH_DEV_MODE=true`, the sigil is logged and returned in the
+   response instead of emailed.
 
-Local dev: with `AUTH_DEV_MODE=true`, the magic link is logged to the Worker
-console instead of emailed.
+No links are followed, so mail scanners cannot consume the code.
 
 Resend note: without a custom domain, the shared `onboarding@resend.dev` sender
 can only email the account-owner address. That is acceptable for a single-user
@@ -168,6 +169,9 @@ POST   /api/attachments/:noteId GET  /api/attachments/:id    DELETE /api/attachm
 GET    /api/export              POST /api/import
 ```
 
+Brutus has a separate API and database under its own Worker; see the Brutus
+section below. Demiplane does not expose task or notification routes.
+
 ## Frontend
 
 - Layout: sidebar (folders + tags + note list) / editor / live preview toggle.
@@ -179,6 +183,68 @@ GET    /api/export              POST /api/import
   `/api/attachments/:id`; blobs cached for offline.
 - Settings: sync status / last-synced, export/import, logout.
 - All strings follow the Flavour Charter in `AGENTS.md`.
+
+## Brutus — a separate app (in `brutus/`)
+
+Magic Mode and public blog publishing are parked. Brutus is now its own
+full-stack Cloudflare app, not a feature of Demiplane.
+
+**Separation.** `brutus/` has its own Worker (`brutus/worker`), D1 (`brutus-db`),
+migrations, SPA (`brutus/src`), harness (`brutus/harness`), wrangler config and
+deploy. It does not share Demiplane's Worker, D1, R2, sessions, tables or build.
+Demiplane is notes only again: no task API, ledger UI, chips, bell, cron or
+notification code.
+
+**Auth.** The browser asks for a six-digit unseal code, emailed to
+`OWNER_EMAIL`; the code is stored hashed, expires in ten minutes, is single-use,
+and locks after ten wrong attempts. Requests are limited to 5 per 15 minutes with
+a 30-second cooldown. The verified code becomes an HttpOnly `brutus_session`
+cookie. `BRUTUS_KEY` remains the bearer token for the harness only. In local dev,
+`AUTH_DEV_MODE=true` returns the code to the app instead of sending mail.
+
+**Workspace.** The repo is an npm workspace: root Demiplane, `brutus/`, and
+`packages/common`. Shared server primitives (crypto, JSON responses, cookie and
+bearer reading) live once in `packages/common`; both Workers import
+`@demiplane/common`. Domain types, UI and flavour stay per app.
+
+**D1 (`brutus/migrations/0001_init.sql`).** `tasks` (claim/lease/status/stage/
+progress/revision), `task_events` (append-only, idempotent), `task_artifacts`
+(reports), `task_revisions` (wording snapshots), `notifications`, `settings`,
+`sessions`, `crawl_state`.
+
+**API.** `GET/POST /api/tasks`, `GET /api/tasks/:id`, claim, heartbeat, start,
+progress, report, deliver, done, ask, update, hold, release, `GET
+/api/tasks/events`, `GET/POST /api/crawl`, `GET/POST /api/settings`,
+notifications and notification settings. Claims are atomic leases; keeper
+actions use the browser session, harness actions use the bearer key.
+
+**Harness (`brutus/harness/brutus.py`).** Python stdlib only. Each hand is a
+continuous worker: claims the next task, heartbeats, loops DeepSeek with
+`web_search` and `fetch_page`, enforces `--budget-usd`, `--max-steps`,
+`--max-minutes`, then submits and either delivers or releases as blocked.
+Claims carry names such as `Brutus · hand 2`; `--hands N` runs N workers that
+refill as they finish. No purchases, bookings, sign-ins, sends or submissions.
+
+**UI.** `brutus/src` is a standalone Vite/React control room: key login, a live
+board (named hands abroad, awaiting-you, queue, struck), a 2-second task poll, a
+`seq`-cursor activity rail, a task sheet (report, source links, Your move,
+earlier workings, timeline, keeper actions), summons, add-task composer,
+standing orders and crawl pause.
+
+**Notifications.** Delivered, low-confidence needs-you, and blocked create
+summons. Email via Resend; quiet hours default 21:00–08:00 Asia/Kolkata; the
+15-minute cron flushes held mail. In-app bell and inbox.
+
+**Deploy.** Create `brutus-db`, put its id in `brutus/wrangler.jsonc`, set
+`BRUTUS_KEY`, `OWNER_EMAIL`, `RESEND_API_KEY` and `BRUTUS_URL`, then run
+`npm run brutus:db:migrate:remote` and `npm run brutus:deploy`.
+
+**Deployed.** Brutus runs at https://brutus.prohan.workers.dev on its own D1
+(`brutus-db`, APAC), with `0001`/`0002` applied, secrets set and the cron active.
+The six local tasks and reports were seeded once.
+
+**Still to do:** per-task budget overrides; optional cross-app links; broader
+tests.
 
 ## Free tier budget
 
@@ -195,7 +261,7 @@ Realistically **$0/month**. A custom domain later is ~$10/yr and a config change
 
 - **`*.workers.dev` blocked/mistrusted by some corporate networks** — origin is
   kept configurable so a custom domain can be added later with minimal change.
-- **Email scanners consuming magic links** — confirm-button POST flow.
+- **Email scanners** — no links are sent; only a six-digit sigil.
 - **iOS PWA storage eviction / no Background Sync** — sync on focus, prominent
   manual sync, one-tap export/import backups.
 - **Resend test-sender limitation** — fine for single user; verify a domain to
@@ -228,7 +294,7 @@ filtering entirely.
 
 1. **Scaffold** — package/config files, Worker entry, D1 + R2 bindings,
    migrations, `AGENTS.md` + this plan. ✅ done
-2. **Auth** — magic link + sessions, dev-mode logging, then Resend. ✅ done
+2. **Auth** — emailed sigil + sessions, dev-mode logging, then Resend. ✅ done
 3. **Notes CRUD** — API + R2/D1 persistence, frontmatter read/write. ✅ done
 4. **UI** — note list, CodeMirror editor, preview, folders/tags. ✅ done
 5. **Offline + sync** — Dexie store, sync engine, PWA install, flavour states.
@@ -251,7 +317,7 @@ filtering entirely.
 
 - Apply local migrations once (and after adding new ones):
   `npm run db:migrate:local`.
-- `.dev.vars` drives local config. With `AUTH_DEV_MODE=true` the magic link is
+- `.dev.vars` drives local config. With `AUTH_DEV_MODE=true` the sigil is
   printed to the Worker console AND returned as `devLink` in the JSON response,
   so you can sign in without email. Tap the link, then press **Seal the portal**.
 - With no `RESEND_API_KEY` set, the app silently falls back to dev mode.
@@ -286,7 +352,7 @@ npm run deploy                          # build + wrangler deploy
 ```
 
 `AUTH_DEV_MODE` must remain `false` in `wrangler.jsonc` for production (it is).
-That guarantees the API never returns a magic link in the response.
+That guarantees the API never returns a sigil in the response.
 
 ### Local `.dev.vars` (gitignored)
 

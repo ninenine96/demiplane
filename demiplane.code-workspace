@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "name": "Demiplane",
+      "path": "."
+    },
+    {
+      "name": "Brutus",
+      "path": "../brutus"
+    },
+    {
+      "name": "Common",
+      "path": "packages/common"
+    }
+  ],
+  "settings": {
+    "typescript.tsdk": "node_modules/typescript/lib"
+  }
+}

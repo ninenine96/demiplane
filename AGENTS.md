@@ -27,7 +27,7 @@ The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 | Search | MiniSearch (client-side, offline) |
 | PWA | `vite-plugin-pwa` (Workbox) |
 | Storage | R2 (notes + attachments), D1 (metadata/session/sync) |
-| Email | Resend free tier (magic link) |
+| Email | Resend free tier (login code) |
 | Validation | Zod |
 | Tests | Vitest (`*.test.ts` beside source) |
 
@@ -46,8 +46,8 @@ bash scripts/provision.sh  # create deployed D1 + R2, wire database_id, migrate
 ```
 
 Local dev needs the migrations applied once (`npm run db:migrate:local`). With
-`AUTH_DEV_MODE=true` in `.dev.vars`, the magic link is logged and returned as
-`devLink`, so you can sign in without email.
+`AUTH_DEV_MODE=true` in `.dev.vars`, the sigil is logged and returned as
+`devCode`, so you can sign in without email.
 
 Local secrets go in `.dev.vars` (gitignored). Deployed secrets via
 `wrangler secret put`. Never commit secrets.
@@ -102,12 +102,33 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
 via `wrangler secret put`; `AUTH_DEV_MODE` is `"false"` in production so the API
-never returns a magic link in a response.
+never returns a sigil in a response. Login has no email field: the app asks for a
+stone and the code goes to `OWNER_EMAIL`. Requests are limited to 5 per 15
+minutes with a 30-second cooldown and 3 per IP; verification locks after 10
+wrong attempts; codes last 10 minutes and are single-use.
 
-Known follow-ups: D1 FTS as a server-side search fallback, a custom domain,
-and broader test coverage. Offline attachment caching and `preview_urls: false`
-are already in place.
+### Brutus — its own repository
 
+Brutus lives at `/var/home/prohan/brutus`: its own git repo, own history, own
+`packages/common` published locally as `@brutus/common`. It shares no
+deployment, database, auth or runtime with Demiplane.
+
+- Worker `brutus`, D1 `brutus-db`, queues, cron, its own SPA and harness
+- Deployed at https://brutus.prohan.workers.dev
+- Run from that repo: `npm run dev` (:5174), `build`, `deploy`, `typecheck`,
+  `db:migrate:local`, `db:migrate:remote`
+
+The shared server primitives (crypto, JSON responses, cookie and bearer
+reading, Resend email) were copied into `packages/common` when the repos split.
+The two copies can drift: a fix to auth, crypto or email in one app does not
+reach the other.
+
+Demiplane is the notebook: no task tables, task API, notification code, ledger
+UI, chips or bell. The two apps may link to each other, but neither reads the
+other's database.
+
+This repository is an npm workspace: root Demiplane plus `packages/common`
+(`@demiplane/common`). Domain types, UI and flavour stay per app.
 
 ## Flavour Charter — HARD REQUIREMENT
 
@@ -160,7 +181,8 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Empty folder | Nothing inscribed here yet. |
 | Empty Void (trash) | The Void is empty. For now. |
 | Unnamed note | An untitled page |
-| Login prompt | Speak the keeper's email to unseal the portal. |
+| Login prompt | Ask for a sending stone; its sigil goes to the keeper. |
+| Login hint | The sigil is sent to the keeper's address. Nothing to type but the code. |
 | Confirm login | Seal the portal |
 | Remember this location | Remember this location for a fortnight. |
 | Show preview | Reveal the page |

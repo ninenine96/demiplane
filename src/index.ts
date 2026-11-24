@@ -1,4 +1,7 @@
 import { FLAVOUR } from "../shared/messages";
+
+const CANONICAL_HOST = "demiplane.app";
+const LEGACY_HOST = "demiplane.prohan.workers.dev";
 import type { ZodType } from "zod";
 import {
   handleAuthLogout,
@@ -50,6 +53,16 @@ const ATTACHMENT_PATH = /^\/api\/attachments\/([A-Za-z0-9-]+)$/;
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // The workers.dev address is retired; keep old links and API clients
+    // working by sending them to the canonical host once the custom domain
+    // answers. Local development is on localhost, so it is untouched.
+    if (url.hostname === LEGACY_HOST) {
+      const target = new URL(request.url);
+      target.protocol = "https:";
+      target.host = CANONICAL_HOST;
+      return Response.redirect(target.toString(), 308);
+    }
 
     if (!url.pathname.startsWith("/api/")) {
       return env.ASSETS.fetch(request);

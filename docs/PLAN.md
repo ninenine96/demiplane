@@ -277,6 +277,18 @@ Realistically **$0/month**. A custom domain later is ~$10/yr and a config change
 - **Secrets set:** `SESSION_SECRET`, `OWNER_EMAIL`. **TODO:** `RESEND_API_KEY`.
 - **Production vars:** `AUTH_DEV_MODE="false"` (so no devLink is ever returned).
 
+### Pipeline
+
+`scripts/deploy.sh` is the single definition of a deploy: preflight (token or
+`wrangler login`), `typecheck`, `test`, `build`, then `wrangler deploy`.
+`--migrate` applies remote D1 migrations first; `--dry-run` stops before the
+upload. `.github/workflows/deploy.yml` runs the same script on pushes to `main`
+(and on manual dispatch), with `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` as repository secrets. Migrations are manual-dispatch
+only, so a schema change never reaches production without a human. Brutus has a
+copy of the same script, differing only in the `--config` argument it passes to
+Wrangler.
+
 ### Note: brief `*.workers.dev` TLS failures after first setup
 
 Immediately after registering the `prohan` subdomain, TLS handshakes to

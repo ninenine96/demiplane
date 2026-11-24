@@ -36,7 +36,8 @@ The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 ```bash
 npm run dev        # Vite + Wrangler local dev (local D1 + R2)
 npm run build      # type-check + production build
-npm run deploy     # build + wrangler deploy
+bash scripts/deploy.sh     # typecheck + tests + build + deploy (local and CI)
+npm run deploy     # build + wrangler deploy, checks skipped
 npm test           # vitest
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint

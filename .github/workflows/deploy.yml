@@ -15,9 +15,12 @@ permissions:
 
 jobs:
   deploy:
-    # One definition of the gate, in ninenine96/armory. Scheduled deploys,
-    # checks and migration policy live there, not here.
-    uses: ninenine96/armory/.github/workflows/deploy-worker.yml@v0.1.1
-    secrets: inherit
+    # One definition of the gate, in ninenine96/armory. Checks, migration
+    # policy and the Wrangler invocation live there, not here.
+    uses: ninenine96/armory/.github/workflows/deploy-worker.yml@main
     with:
       migrate: ${{ inputs.migrate || false }}
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

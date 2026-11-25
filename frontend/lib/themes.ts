@@ -59,6 +59,27 @@ export interface Theme {
 
 export const DEFAULT_THEME_ID = "demiplane";
 export const THEME_STORAGE_KEY = "demiplane.theme";
+export const CONTRAST_STORAGE_KEY = "demiplane.contrast";
+
+/**
+ * How much of the seeded ink the letters keep. 1 is the palette as designed;
+ * lowering it mixes the letters toward the ground, so a bright theme can be
+ * worn softly. The floor keeps body text readable on every palette.
+ */
+export const MIN_CONTRAST = 0.65;
+export const MAX_CONTRAST = 1;
+
+/**
+ * The tokens that carry letters, with how much of the softening each takes.
+ * The ground and the accents stay as seeded — softening those would muddy the
+ * palette rather than calm it — and muted letters soften least, so footers and
+ * placeholders stay legible at the dimmest setting.
+ */
+const LETTER_TOKENS = [
+  ["--color-parchment-100", 1],
+  ["--color-parchment-300", 0.75],
+  ["--color-parchment-500", 0.5],
+] as const;
 
 const ORIGINAL_TOKENS: Record<ThemeToken, string> = {
   "--color-void-950": "#131110",
@@ -282,15 +303,70 @@ function derived(t: Theme): Record<ThemeToken, string> {
 }
 
 /** The full set of custom properties a theme writes onto the root. */
-export function themeToVars(theme: Theme): Record<string, string> {
-  const base: Record<string, string> = {
+export function themeToVars(
+  theme: Theme,
+  contrast: number = MAX_CONTRAST,
+): Record<string, string> {
+  const vars: Record<string, string> = {
     ...derived(theme),
     "--gild": mix(theme.main, 50, "transparent"),
     "--gild-faint": mix(theme.main, 16, "transparent"),
     "--glow-arcane": mix(theme.secondary, 16, "transparent"),
     "--glow-gold": mix(theme.main, 9, "transparent"),
+    ...(theme.tokens ?? {}),
   };
-  return { ...base, ...(theme.tokens ?? {}) };
+  const kept = clampContrast(contrast);
+  if (kept < MAX_CONTRAST) {
+    for (const [token, weight] of LETTER_TOKENS) {
+      const value = vars[token];
+      if (!value) continue;
+      // Muted letters move a fraction of the way, so the dimmest setting still
+      // leaves footers and placeholders readable.
+      const share = 1 - (1 - kept) * weight;
+      vars[token] = softened(value, theme.bg, share);
+    }
+  }
+  return vars;
+}
+
+export function clampContrast(value: number): number {
+  if (!Number.isFinite(value)) return MAX_CONTRAST;
+  return Math.min(MAX_CONTRAST, Math.max(MIN_CONTRAST, value));
+}
+
+function softened(value: string, bg: string, contrast: number): string {
+  return `color-mix(in srgb, ${value} ${Math.round(contrast * 100)}%, ${bg})`;
+}
+
+/** Contrasts remembered per theme; a palette without an entry is full ink. */
+export function readContrasts(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(CONTRAST_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Record<string, number> = {};
+    const values = parsed as Record<string, unknown>;
+    for (const [id, value] of Object.entries(values)) {
+      if (typeof value === "number") out[id] = clampContrast(value);
+    }
+    return out;
+  } catch {
+    // Unreadable or unavailable storage: the plane simply keeps full ink.
+    return {};
+  }
+}
+
+export function writeContrasts(contrasts: Record<string, number>): void {
+  try {
+    window.localStorage.setItem(
+      CONTRAST_STORAGE_KEY,
+      JSON.stringify(contrasts),
+    );
+  } catch {
+    // Storage unavailable: the choice holds for this visit only.
+  }
 }
 
 export function getTheme(id: string): Theme {
@@ -316,10 +392,14 @@ export function randomThemeId(exclude?: string): string {
   return (pick ?? THEMES[0]!).id;
 }
 
-export function applyTheme(id: string, doc: Document = document): void {
+export function applyTheme(
+  id: string,
+  contrast: number = MAX_CONTRAST,
+  doc: Document = document,
+): void {
   const theme = getTheme(id);
   const root = doc.documentElement;
-  for (const [key, value] of Object.entries(themeToVars(theme))) {
+  for (const [key, value] of Object.entries(themeToVars(theme, contrast))) {
     root.style.setProperty(key, value);
   }
   root.dataset.theme = theme.id;

@@ -54,6 +54,8 @@ interface SidebarProps {
   onZoomReset: () => void;
   themeId: string;
   onThemeChange: (id: string) => void;
+  contrast: number;
+  onContrastChange: (value: number) => void;
 }
 
 export function Sidebar({
@@ -76,6 +78,8 @@ export function Sidebar({
   onZoomReset,
   themeId,
   onThemeChange,
+  contrast,
+  onContrastChange,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [showTrash, setShowTrash] = useState(false);
@@ -484,7 +488,12 @@ export function Sidebar({
 
         {themeOpen ? (
           <div className="animate-pop-in absolute bottom-full left-3 right-3 z-50 mb-2 max-h-[70dvh] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--color-void-700)] bg-void-800 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
-            <ThemeList activeId={themeId} onSelect={onThemeChange} />
+            <ThemeList
+              activeId={themeId}
+              onSelect={onThemeChange}
+              contrast={contrast}
+              onContrastChange={onContrastChange}
+            />
           </div>
         ) : null}
       </footer>

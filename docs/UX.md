@@ -122,6 +122,27 @@ It sets `--ui-scale` on the root, which feeds `html { font-size }`; every
 dimension is written in `rem`, so spacing, type and the editor scale together.
 Range 85–135% in 5% steps, remembered per device.
 
+## The weight of the ink (letter contrast)
+
+Under the palette gallery in the same footer popover sits **The weight of the
+ink**: a slider that softens a palette's letters toward its ground, and a
+**Full ink** reset once you move off 100%. Range 65–100% in 5% steps,
+remembered **per palette** — one plane can be worn bright and another softly.
+It sets the parchment tokens' mix toward `theme.bg` (`themeToVars(theme,
+contrast)`); muted letters move only half as far, so footers and placeholders
+stay readable and body text holds at least ~4.4:1 even at the floor. The
+ground, the accents and the glows never move.
+
+## Type size
+
+Every UI letter sits a touch under its nominal size (`--font-scale: 0.94`),
+set once on `:root`. The type scale is declared with `@theme inline`, so each
+`text-*` utility carries `calc(<size> * var(--font-scale))` and the multiplier
+resolves where the class is used. Controls, icons, paddings and gutters are
+untouched — only letters move. The **writing surface** (`.writing-surface`: the
+page title, the CodeMirror canvas and the preview) resets `--font-scale` to 1,
+so a page is always written at full measure.
+
 ## Motion
 
 A little arcana, never in the way of writing. All of it collapses to nothing
@@ -276,8 +297,8 @@ is the wordmark.
 | Wordmark only | **Cinzel** | Just "Demiplane" — the one deliberate exception. |
 | Code | `ui-monospace` | Inline code and code blocks. |
 
-Self-hosted via `@fontsource` (offline, no CDN). Everything scales from
-`--ui-scale`.
+Self-hosted via `@fontsource` (offline, no CDN). Dimensions scale from
+`--ui-scale`; letters additionally take `--font-scale` (see *Type size*).
 
 ### Signature details
 

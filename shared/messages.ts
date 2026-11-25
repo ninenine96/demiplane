@@ -155,6 +155,10 @@ export const FLAVOUR = {
   themeHint: "Each palette keeps its old name in the parentheses.",
   themeRandom: "Let fate recolour the plane",
   themeGroup: "Palettes",
+  lettersTitle: "The weight of the ink",
+  lettersHint:
+    "Soften the letters toward the ground. Some palettes ask for a lighter hand.",
+  lettersDefault: "Full ink",
 
   // --- Keys ---------------------------------------------------------------
   shortcutsTitle: "Grimoire of keys",

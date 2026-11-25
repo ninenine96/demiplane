@@ -32,10 +32,52 @@
   --radius-card: 14px;
 }
 
+/*
+ * The type scale, moved by `--font-scale` (see `:root`). `inline` keeps the
+ * multiplier in the generated utilities rather than baking it into a root
+ * custom property, so a subtree can reset `--font-scale` (the writing surface
+ * does) and every size class there resolves against the reset value.
+ */
+@theme inline {
+  --text-xs: calc(0.75rem * var(--font-scale));
+  --text-sm: calc(0.875rem * var(--font-scale));
+  --text-base: calc(1rem * var(--font-scale));
+  --text-lg: calc(1.125rem * var(--font-scale));
+  --text-xl: calc(1.25rem * var(--font-scale));
+  --text-2xl: calc(1.5rem * var(--font-scale));
+  --text-3xl: calc(1.875rem * var(--font-scale));
+}
+
+/*
+ * The handful of arbitrary sizes written by hand across the UI take the same
+ * multiplier. None of them is used with a responsive variant, so a plain
+ * later rule is enough.
+ */
+@layer utilities {
+  .text-\[0\.625rem\] {
+    font-size: calc(0.625rem * var(--font-scale));
+  }
+  .text-\[0\.6875rem\] {
+    font-size: calc(0.6875rem * var(--font-scale));
+  }
+  .text-\[0\.8125rem\] {
+    font-size: calc(0.8125rem * var(--font-scale));
+  }
+  .text-\[0\.9375rem\] {
+    font-size: calc(0.9375rem * var(--font-scale));
+  }
+}
+
 :root {
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /*
+   * Letters sit a touch inside their nominal size. Chrome, spacing and icons
+   * keep their dimensions; only type moves. The writing surface resets this
+   * to 1 so a page is always written at full measure.
+   */
+  --font-scale: 0.94;
   --gild: color-mix(in srgb, var(--color-gold-400) 50%, transparent);
   --gild-faint: color-mix(in srgb, var(--color-gold-400) 16%, transparent);
   --glow-arcane: color-mix(in srgb, var(--color-arcane-500) 16%, transparent);
@@ -69,7 +111,7 @@ body {
     var(--color-void-950);
   color: var(--color-parchment-100);
   font-family: var(--font-sans);
-  font-size: 0.9375rem;
+  font-size: calc(0.9375rem * var(--font-scale));
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -131,6 +173,13 @@ body {
 /* Faint gilded hairline for structural dividers — an etched edge. */
 .gild-rule {
   border-color: var(--gild-faint) !important;
+}
+
+/* The writing surface keeps the full measure of the type: title, editor and
+   preview are written, not read off a control. */
+.writing-surface {
+  --font-scale: 1;
+  font-size: calc(0.9375rem * var(--font-scale));
 }
 
 /* Manuscript preview — consistent Inter, readable measure. */

@@ -698,7 +698,10 @@ export function EditorPane({
         </div>
       ) : null}
 
-      <div key={note.id} className="animate-page-in flex min-h-0 flex-1 flex-col">
+      <div
+        key={note.id}
+        className="writing-surface animate-page-in flex min-h-0 flex-1 flex-col"
+      >
         <div className="mx-auto w-full max-w-[44rem] px-3 pt-3 sm:px-6 sm:pt-6">
           <textarea
             ref={titleRef}

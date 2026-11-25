@@ -52,12 +52,16 @@ import {
 } from "./lib/editor/format";
 import { withEditor } from "./lib/editor/bridge";
 import {
+  MAX_CONTRAST,
   THEMES,
   THEME_STORAGE_KEY,
   applyTheme,
+  clampContrast,
   initialThemeId,
   randomThemeId,
+  readContrasts,
   themeLabel,
+  writeContrasts,
 } from "./lib/themes";
 import { useDemiplane } from "./useDemiplane";
 
@@ -101,6 +105,9 @@ export function App() {
   const [sidebarWidth, setSidebarWidth] = useState(initialSidebarWidth);
   const [scale, setScale] = useState(initialScale);
   const [themeId, setThemeId] = useState(initialThemeId);
+  const [contrasts, setContrasts] = useState<Record<string, number>>(
+    readContrasts,
+  );
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showAgentKeys, setShowAgentKeys] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
@@ -127,9 +134,18 @@ export function App() {
   }, [scale]);
 
   useEffect(() => {
-    applyTheme(themeId);
+    applyTheme(themeId, contrasts[themeId] ?? MAX_CONTRAST);
     window.localStorage.setItem(THEME_STORAGE_KEY, themeId);
-  }, [themeId]);
+  }, [themeId, contrasts]);
+
+  const changeContrast = useCallback(
+    (value: number) => {
+      const next = { ...contrasts, [themeId]: clampContrast(value) };
+      setContrasts(next);
+      writeContrasts(next);
+    },
+    [contrasts, themeId],
+  );
 
   const focusScry = useCallback(() => {
     setSidebarOpen(true);
@@ -479,6 +495,8 @@ export function App() {
           onZoomReset={() => setScale(1)}
           themeId={themeId}
           onThemeChange={setThemeId}
+          contrast={contrasts[themeId] ?? MAX_CONTRAST}
+          onContrastChange={changeContrast}
         />
         <div
           role="separator"

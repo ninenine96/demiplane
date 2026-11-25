@@ -1,6 +1,11 @@
-import { Check } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
 import { FLAVOUR } from "../../shared/messages";
-import { THEMES, type Theme } from "../lib/themes";
+import {
+  MAX_CONTRAST,
+  MIN_CONTRAST,
+  THEMES,
+  type Theme,
+} from "../lib/themes";
 import { cx } from "./ui";
 
 /** Three bands — ground, accent, secondary — of a theme's palette. */
@@ -30,9 +35,13 @@ export function ThemeSwatch({
 export function ThemeList({
   activeId,
   onSelect,
+  contrast,
+  onContrastChange,
 }: {
   activeId: string;
   onSelect: (id: string) => void;
+  contrast: number;
+  onContrastChange: (value: number) => void;
 }) {
   return (
     <div>
@@ -77,6 +86,45 @@ export function ThemeList({
           );
         })}
       </ul>
+
+      <div className="mt-2 border-t border-[var(--color-void-700)] px-1 pb-1 pt-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-[0.625rem] uppercase tracking-[0.18em] text-parchment-500">
+            {FLAVOUR.lettersTitle}
+          </p>
+          <span className="text-[0.6875rem] tabular-nums text-parchment-500">
+            {Math.round(contrast * 100)}%
+          </span>
+        </div>
+        <input
+          type="range"
+          min={Math.round(MIN_CONTRAST * 100)}
+          max={Math.round(MAX_CONTRAST * 100)}
+          step={5}
+          value={Math.round(contrast * 100)}
+          onChange={(event) =>
+            onContrastChange(Number(event.target.value) / 100)
+          }
+          aria-label={FLAVOUR.lettersTitle}
+          aria-valuetext={`${Math.round(contrast * 100)}%`}
+          className="mt-2 h-1 w-full cursor-pointer accent-[var(--color-gold-400)]"
+        />
+        <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-parchment-500/80">
+          {FLAVOUR.lettersHint}
+        </p>
+        {contrast < MAX_CONTRAST ? (
+          <div className="mt-1.5 flex justify-end">
+            <button
+              type="button"
+              onClick={() => onContrastChange(MAX_CONTRAST)}
+              className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.6875rem] text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-gold-300"
+            >
+              <RotateCcw size={12} aria-hidden="true" />
+              {FLAVOUR.lettersDefault}
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

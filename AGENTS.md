@@ -119,7 +119,11 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
   word count and reading time sit at the foot of the page, and UI scale
   (*Enlarge / Reduce*) is tucked into a sidebar-footer popover. Dynamic
   theming (Monkeytype style) offers a gallery of arcane-named palettes, worn
-  live from the sidebar footer or the command palette.
+  live from the sidebar footer or the command palette; each palette can be
+  worn softer, with **The weight of the ink** dimming its letters toward the
+  ground per palette. UI letters sit a touch under their nominal size
+  (`--font-scale`) while controls keep their dimensions; the writing surface
+  keeps full measure.
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
 subdomain. Secrets (`OWNER_EMAIL`, `ALLOWED_EMAILS`, `SESSION_SECRET`,
@@ -275,6 +279,9 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Palette command group | Palettes |
 | Theme name format | `Arcane name (Monkeytype name)` |
 | Theme hint | Each palette keeps its old name in the parentheses. |
+| Letter contrast heading | The weight of the ink |
+| Letter contrast hint | Soften the letters toward the ground. Some palettes ask for a lighter hand. |
+| Letter contrast reset | Full ink |
 
 Extend this table as new moments appear; keep it in one place so the voice
 stays consistent. If a string needs to be plain for safety, add it here with a

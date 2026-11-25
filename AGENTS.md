@@ -2,13 +2,16 @@
 
 > Your notes, in a pocket dimension.
 
-Demiplane is a single-user, offline-first notes app. This file is the canonical
-project memory for agents working in this repo. Read it before doing anything.
-The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
+Demiplane is a keeper's private, offline-first notes app, with room for a few
+invited addresses (UAT) that never see the keeper's pages. This file is the
+canonical project memory for agents working in this repo. Read it before doing
+anything. The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## What this is
 
-- **Audience:** one person (me) across work + personal devices, including phones.
+- **Audience:** one keeper (me) across work + personal devices, including
+  phones, plus an allowlist of invited addresses (UAT testers) with their own
+  private pages.
 - **Promise:** take a note from anywhere with internet, never fight a corporate
   network, never pay a third-party notes subscription, never get locked in.
 - **Data:** markdown files in R2 are the source of truth. D1 is a rebuildable
@@ -54,6 +57,22 @@ shared packages come from GitHub Packages (see `.npmrc`).
 
 Local secrets go in `.dev.vars` (gitignored). Deployed secrets via
 `wrangler secret put`. Never commit secrets.
+
+### Deploying
+
+Push to `main`, or dispatch the workflow. The gate is `@ninenine96/deploy`
+(`npm run deploy` runs it), the same package Brutus uses; the full runbook —
+secrets, verification, failure modes — is
+[`armory/docs/deploy.md`](https://github.com/ninenine96/armory/blob/main/docs/deploy.md).
+
+- Worker `demiplane`, custom domain `demiplane.app`; `demiplane.prohan.workers.dev`
+  308s to it, which is expected.
+- `gh workflow run deploy.yml -R ninenine96/demiplane` deploys `main` without a
+  new commit; add `-f migrate=true` to apply remote D1 migrations first.
+- Migrations are never automatic. Do not wire them into a push.
+- CI secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NPM_TOKEN`.
+- Verify by reading the run: `Current Version ID` must appear, then
+  `curl -s https://demiplane.app/api/health` must answer 200.
 
 ## Layout
 
@@ -103,12 +122,30 @@ Built and deployed (see the deployment log in `docs/PLAN.md`):
   live from the sidebar footer or the command palette.
 
 Deployed at https://demiplane.prohan.workers.dev on the `prohan` workers.dev
-subdomain. Secrets (`OWNER_EMAIL`, `SESSION_SECRET`, `RESEND_API_KEY`) are set
-via `wrangler secret put`; `AUTH_DEV_MODE` is `"false"` in production so the API
-never returns a sigil in a response. Login has no email field: the app asks for a
-stone and the code goes to `OWNER_EMAIL`. Requests are limited to 5 per 15
-minutes with a 30-second cooldown and 3 per IP; verification locks after 10
-wrong attempts; codes last 10 minutes and are single-use.
+subdomain. Secrets (`OWNER_EMAIL`, `ALLOWED_EMAILS`, `SESSION_SECRET`,
+`RESEND_API_KEY`) are set via `wrangler secret put`; `AUTH_DEV_MODE` is `"false"`
+in production so the API never returns a sigil in a response. Login asks for an
+address and sends the code to it; only `OWNER_EMAIL` and the comma-separated
+`ALLOWED_EMAILS` may sign in, and any other address gets the same "stone is on
+its way" answer with nothing sent. Requests are limited to 5 per 15 minutes with
+a 30-second cooldown and 3 per IP; verification locks after 10 wrong attempts;
+codes last 10 minutes and are single-use.
+
+Ownership: every note, attachment and change-log row carries `owner` (the
+signed-in address, taken only from the session). Keys are `(owner, id)`, every
+query is filtered by owner, and each address gets its own local store
+(`demiplane` for the keeper, `demiplane:<address>` for everyone else). Rows
+written before 0005 are claimed by `OWNER_EMAIL` once, via `src/lib/owners.ts`.
+
+Sending sigils: the `send_email` binding (`EMAIL`) sends from
+`sigil@unseal.demiplane.app`, the Cloudflare Email Sending subdomain onboarded
+for this zone; `EMAIL_FROM_ADDRESS`/`EMAIL_FROM_NAME` override it. If that send
+is refused — the domain is not onboarded, or the plan allows only verified
+destination addresses — `src/lib/email.ts` falls back to Resend's shared
+`onboarding@resend.dev`, which only reaches the Resend account's own address.
+That fallback exists so a fresh deployment cannot lock the keeper out; delete
+`RESEND_API_KEY` once `unseal` verifies. The sigil is always one unbroken run of
+digits so Gmail's "Copy code" chip works and a copy pastes cleanly.
 
 ### Brutus — its own repository
 
@@ -159,6 +196,9 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Sync failed | The portal flickered — retrying. |
 | Offline | You've stepped outside the ley lines. Changes are safe here until the portal returns. |
 | Magic link sent | A sending stone is on its way — it bears a sigil. |
+| Login email heading | A sending stone has arrived. |
+| Login email copy hint | Press and hold the sigil to copy it — or let your mail app offer it. |
+| Login email expiry | The stone crumbles to dust in ten minutes, and the sigil works only once. |
 | Login code prompt | Enter the sigil inscribed on the sending stone. |
 | Invalid code | That sigil is not recognised. Read the stone again. |
 | Too many wrong codes | Too many wrong sigils. Request a fresh sending stone. |
@@ -184,8 +224,10 @@ flavour.** No bare `Error`, `Loading...`, or `Save` ever ships.
 | Empty folder | Nothing inscribed here yet. |
 | Empty Void (trash) | The Void is empty. For now. |
 | Unnamed note | An untitled page |
-| Login prompt | Ask for a sending stone; its sigil goes to the keeper. |
-| Login hint | The sigil is sent to the keeper's address. Nothing to type but the code. |
+| Login prompt | Ask for a sending stone. |
+| Login hint | Name the address that keeps a demiplane. If it is known here, a sigil goes to it. |
+| Login address label | The address the stone should find |
+| Login address missing | Name the address that keeps this demiplane. |
 | Confirm login | Seal the portal |
 | Remember this location | Remember this location for a fortnight. |
 | Show preview | Reveal the page |

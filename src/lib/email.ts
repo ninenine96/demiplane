@@ -1,4 +1,4 @@
-import { sendResendEmail } from "@demiplane/common";
+import { sendResendEmail } from "@ninenine96/worker";
 import { FLAVOUR } from "../../shared/messages";
 
 export interface SendResult {

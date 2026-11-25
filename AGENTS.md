@@ -36,8 +36,7 @@ The full build plan lives in [`docs/PLAN.md`](docs/PLAN.md).
 ```bash
 npm run dev        # Vite + Wrangler local dev (local D1 + R2)
 npm run build      # type-check + production build
-bash scripts/deploy.sh     # typecheck + tests + build + deploy (local and CI)
-npm run deploy     # build + wrangler deploy, checks skipped
+npm run deploy     # armory-deploy: checks, build, wrangler deploy
 npm test           # vitest
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
@@ -49,6 +48,9 @@ bash scripts/provision.sh  # create deployed D1 + R2, wire database_id, migrate
 Local dev needs the migrations applied once (`npm run db:migrate:local`). With
 `AUTH_DEV_MODE=true` in `.dev.vars`, the sigil is logged and returned as
 `devCode`, so you can sign in without email.
+
+`npm install` needs `NODE_AUTH_TOKEN` set to a token with `read:packages`: the
+shared packages come from GitHub Packages (see `.npmrc`).
 
 Local secrets go in `.dev.vars` (gitignored). Deployed secrets via
 `wrangler secret put`. Never commit secrets.
@@ -111,25 +113,25 @@ wrong attempts; codes last 10 minutes and are single-use.
 ### Brutus — its own repository
 
 Brutus lives at `/var/home/prohan/brutus`: its own git repo, own history, own
-`packages/common` published locally as `@brutus/common`. It shares no
-deployment, database, auth or runtime with Demiplane.
+deployment. It shares no deployment, database, auth or runtime with Demiplane.
 
 - Worker `brutus`, D1 `brutus-db`, queues, cron, its own SPA and harness
 - Deployed at https://brutus.prohan.workers.dev
 - Run from that repo: `npm run dev` (:5174), `build`, `deploy`, `typecheck`,
   `db:migrate:local`, `db:migrate:remote`
 
-The shared server primitives (crypto, JSON responses, cookie and bearer
-reading, Resend email) were copied into `packages/common` when the repos split.
-The two copies can drift: a fix to auth, crypto or email in one app does not
-reach the other.
+Shared code lives in [`ninenine96/armory`](https://github.com/ninenine96/armory)
+and is consumed from GitHub Packages: `@ninenine96/worker` (crypto, JSON
+responses, cookie/bearer reading, Resend), `@ninenine96/deploy` (the deploy
+gate) and the reusable deploy workflow. A fix there reaches both apps on the
+next version bump; nothing is copied between the repos any more. Design rules
+live in that repo's `docs/design/`, and the agent skills in its `skills/`.
 
 Demiplane is the notebook: no task tables, task API, notification code, ledger
 UI, chips or bell. The two apps may link to each other, but neither reads the
 other's database.
 
-This repository is an npm workspace: root Demiplane plus `packages/common`
-(`@demiplane/common`). Domain types, UI and flavour stay per app.
+Domain types, UI and flavour stay per app.
 
 ## Flavour Charter — HARD REQUIREMENT
 

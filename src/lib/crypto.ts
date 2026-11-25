@@ -3,4 +3,4 @@ export {
   randomCode,
   randomToken,
   sha256Hex,
-} from "@demiplane/common";
+} from "@ninenine96/worker";

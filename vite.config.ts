@@ -5,14 +5,6 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@demiplane/common": new URL(
-        "./packages/common/src/index.ts",
-        import.meta.url,
-      ).pathname,
-    },
-  },
   plugins: [
     cloudflare(),
     react(),

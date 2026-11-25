@@ -4,7 +4,7 @@ import {
   readBearer,
   readCookie,
   sha256Hex,
-} from "@demiplane/common";
+} from "@ninenine96/worker";
 
 const COOKIE_NAME = "demiplane_session";
 

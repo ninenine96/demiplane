@@ -202,10 +202,11 @@ a 30-second cooldown. The verified code becomes an HttpOnly `brutus_session`
 cookie. `BRUTUS_KEY` remains the bearer token for the harness only. In local dev,
 `AUTH_DEV_MODE=true` returns the code to the app instead of sending mail.
 
-**Workspace.** The repo is an npm workspace: root Demiplane, `brutus/`, and
-`packages/common`. Shared server primitives (crypto, JSON responses, cookie and
-bearer reading) live once in `packages/common`; both Workers import
-`@demiplane/common`. Domain types, UI and flavour stay per app.
+**Shared code.** Server primitives (crypto, JSON responses, cookie and bearer
+reading, Resend email) live in
+[`ninenine96/armory`](https://github.com/ninenine96/armory) as
+`@ninenine96/worker`, installed from GitHub Packages. Domain types, UI and
+flavour stay per app.
 
 **D1 (`brutus/migrations/0001_init.sql`).** `tasks` (claim/lease/status/stage/
 progress/revision), `task_events` (append-only, idempotent), `task_artifacts`
@@ -279,15 +280,16 @@ Realistically **$0/month**. A custom domain later is ~$10/yr and a config change
 
 ### Pipeline
 
-`scripts/deploy.sh` is the single definition of a deploy: preflight (token or
-`wrangler login`), `typecheck`, `test`, `build`, then `wrangler deploy`.
-`--migrate` applies remote D1 migrations first; `--dry-run` stops before the
-upload. `.github/workflows/deploy.yml` runs the same script on pushes to `main`
-(and on manual dispatch), with `CLOUDFLARE_API_TOKEN` and
-`CLOUDFLARE_ACCOUNT_ID` as repository secrets. Migrations are manual-dispatch
-only, so a schema change never reaches production without a human. Brutus has a
-copy of the same script, differing only in the `--config` argument it passes to
-Wrangler.
+Deploys run through [`ninenine96/armory`](https://github.com/ninenine96/armory):
+`@ninenine96/deploy` is the gate (preflight, `typecheck`, `test`, `build`,
+`wrangler deploy`), and `.github/workflows/deploy.yml` here is a ten-line
+caller of that repo's reusable workflow. `--migrate` applies remote D1
+migrations first; `--dry-run` stops before the upload. The workflow needs
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `NPM_TOKEN` as repository
+secrets (passed with `secrets: inherit`). Migrations are manual-dispatch only,
+so a schema change never reaches production without a human. Per-app variance
+lives in `deploy.json`; Demiplane needs none because plain `wrangler deploy` is
+correct here.
 
 ### Note: brief `*.workers.dev` TLS failures after first setup
 
@@ -360,7 +362,7 @@ npx wrangler secret put OWNER_EMAIL     # the only email allowed to sign in
 npx wrangler secret put SESSION_SECRET  # openssl rand -base64 32
 npx wrangler secret put RESEND_API_KEY  # https://resend.com/api-keys
 
-npm run deploy                          # build + wrangler deploy
+npm run deploy                          # armory-deploy: checks, build, deploy
 ```
 
 `AUTH_DEV_MODE` must remain `false` in `wrangler.jsonc` for production (it is).

@@ -1,8 +1,5 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@demiplane/common": ["./packages/common/src/index.ts"]
-    },
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",

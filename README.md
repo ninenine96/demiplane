@@ -80,7 +80,7 @@ Nothing in this repository builds or deploys it.
 ```bash
 npm run dev                # Demiplane: Vite + Wrangler local dev
 npm run build              # Demiplane: type-check + production build
-npm run deploy             # Demiplane: build + wrangler deploy
+npm run deploy             # Demiplane: checks, build, wrangler deploy
 npm test                   # Demiplane Vitest
 npm run typecheck          # Demiplane tsc --noEmit
 npm run db:migrate:local   # apply D1 migrations locally
@@ -159,15 +159,19 @@ npx wrangler secret put OWNER_EMAIL       # the one email allowed to sign in
 npx wrangler secret put SESSION_SECRET    # openssl rand -base64 32
 npx wrangler secret put RESEND_API_KEY    # https://resend.com/api-keys
 
-bash scripts/deploy.sh            # typecheck, tests, build, wrangler deploy
-bash scripts/deploy.sh --migrate  # the same, applying remote D1 migrations first
-bash scripts/deploy.sh --dry-run  # everything up to the upload, then stop
+npm run deploy                    # checks, build, wrangler deploy
+npx armory-deploy --migrate       # the same, applying remote D1 migrations first
+npx armory-deploy --dry-run       # everything up to the upload, then stop
 ```
 
-CI (`.github/workflows/deploy.yml`) runs the same script on every push to
-`main`, so it needs two repository secrets: `CLOUDFLARE_API_TOKEN` (Workers
-Scripts:Edit, D1:Edit, R2:Edit) and `CLOUDFLARE_ACCOUNT_ID`. Production
-migrations never run unattended — use *Run workflow* and tick `migrate`.
+The gate and the CI workflow come from
+[`ninenine96/armory`](https://github.com/ninenine96/armory), so this repo no
+longer carries its own copy. CI on every push to `main` needs three repository
+secrets: `CLOUDFLARE_API_TOKEN` (Workers Scripts:Edit, D1:Edit, Workers
+Routes:Edit), `CLOUDFLARE_ACCOUNT_ID`, and `NPM_TOKEN` (a token with
+`read:packages` for the shared packages; locally the same value goes in
+`NODE_AUTH_TOKEN`). Production migrations never run unattended — use *Run
+workflow* and tick `migrate`.
 
 R2 requires a one-time subscription checkout (a card on file) even though usage
 inside the free tier is $0. Full walkthrough and account requirements live in

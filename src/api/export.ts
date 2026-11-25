@@ -18,10 +18,12 @@ interface AttachmentExportRow {
 }
 
 /** Builds a portable zip: markdown files plus their trinkets. */
-export async function handleExport(env: Env): Promise<Response> {
+export async function handleExport(env: Env, owner: string): Promise<Response> {
   const { results: notes } = await env.DB.prepare(
-    "SELECT id, r2_key FROM notes WHERE deleted = 0",
-  ).all<ExportRow>();
+    "SELECT id, r2_key FROM notes WHERE owner = ?1 AND deleted = 0",
+  )
+    .bind(owner)
+    .all<ExportRow>();
 
   const files: Record<string, Uint8Array> = {};
   const manifest: Array<{ id: string; title: string }> = [];
@@ -32,9 +34,10 @@ export async function handleExport(env: Env): Promise<Response> {
     files[`notes/${note.id}.md`] = new Uint8Array(await object.arrayBuffer());
 
     const { results: attachments } = await env.DB.prepare(
-      "SELECT id, r2_key, filename, content_type FROM attachments WHERE note_id = ?1",
+      `SELECT id, r2_key, filename, content_type FROM attachments
+       WHERE owner = ?1 AND note_id = ?2`,
     )
-      .bind(note.id)
+      .bind(owner, note.id)
       .all<AttachmentExportRow>();
 
     for (const attachment of attachments ?? []) {
@@ -83,6 +86,7 @@ function contentTypeFor(filename: string): string {
 export async function handleImport(
   request: Request,
   env: Env,
+  owner: string,
 ): Promise<Response> {
   let entries: Record<string, Uint8Array>;
   try {
@@ -106,8 +110,10 @@ export async function handleImport(
 
     const fallbackId = path.replace(/^notes\//, "").replace(/\.md$/, "");
     const parsed = parseNote(fallbackId, decoder.decode(data));
-    const existing = await env.DB.prepare("SELECT id FROM notes WHERE id = ?1")
-      .bind(parsed.id)
+    const existing = await env.DB.prepare(
+      "SELECT id FROM notes WHERE owner = ?1 AND id = ?2",
+    )
+      .bind(owner, parsed.id)
       .first<{ id: string }>();
 
     if (existing) conflicts += 1;
@@ -123,11 +129,11 @@ export async function handleImport(
       deleted: false,
       version: 1,
     };
-    await persistNote(env, note);
+    await persistNote(env, owner, note);
     imported += 1;
   }
 
-  const importedAttachments = await importAttachments(env, entries, idMap);
+  const importedAttachments = await importAttachments(env, owner, entries, idMap);
 
   return json({
     data: {
@@ -141,6 +147,7 @@ export async function handleImport(
 
 async function importAttachments(
   env: Env,
+  owner: string,
   entries: Record<string, Uint8Array>,
   idMap: Map<string, string>,
 ): Promise<number> {
@@ -153,15 +160,24 @@ async function importAttachments(
 
     const noteId = idMap.get(originalNoteId) ?? originalNoteId;
     const id = newNoteId();
-    const key = `attachments/${noteId}/${id}-${filename}`;
+    const key = `attachments/${owner}/${noteId}/${id}-${filename}`;
     const contentType = contentTypeFor(filename);
 
     await env.BUCKET.put(key, data, { httpMetadata: { contentType } });
     await env.DB.prepare(
-      `INSERT INTO attachments (id, note_id, r2_key, filename, content_type, size, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+      `INSERT INTO attachments (owner, id, note_id, r2_key, filename, content_type, size, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`,
     )
-      .bind(id, noteId, key, filename, contentType, data.byteLength, Date.now())
+      .bind(
+        owner,
+        id,
+        noteId,
+        key,
+        filename,
+        contentType,
+        data.byteLength,
+        Date.now(),
+      )
       .run();
     count += 1;
   }

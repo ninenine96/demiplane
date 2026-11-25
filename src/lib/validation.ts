@@ -2,7 +2,15 @@ import { z } from "zod";
 
 const MAX_NOTE_BYTES = 1_000_000;
 
-export const authVerifySchema = z.object({
+export const authRequestSchema = z.object({
+  /**
+   * The address the stone should find. Format is not validated: the allowlist is
+   * the gate, and a malformed address simply matches nobody.
+   */
+  email: z.string().trim().min(1).max(320),
+});
+
+export const authVerifySchema = authRequestSchema.extend({
   code: z
     .string()
     .trim()

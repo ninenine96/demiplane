@@ -1,5 +1,5 @@
 import { sendResendEmail } from "@ninenine96/worker";
-import { FLAVOUR } from "../../shared/messages";
+import { loginCodeMessage } from "./login-email";
 
 export interface SendResult {
   delivered: boolean;
@@ -8,58 +8,89 @@ export interface SendResult {
 }
 
 /**
- * Sends the one-time login code (the sigil on a sending stone). Without a
- * configured Resend key (or with AUTH_DEV_MODE=true) the code is logged to the
- * console instead, so local development needs no email provider at all.
+ * The app's own sending subdomain. Onboarding it in Cloudflare (Email Sending)
+ * adds the bounce MX, SPF, DKIM and DMARC records for us.
+ */
+const DEFAULT_FROM_ADDRESS = "sigil@unseal.demiplane.app";
+const DEFAULT_FROM_NAME = "Demiplane";
+
+/**
+ * Resend's shared sender only reaches the address the Resend account was signed
+ * up with. It stays as a fallback so a deployment without the sending domain
+ * onboarded still lets the keeper in, and can be dropped once `unseal` verifies.
+ */
+const RESEND_FALLBACK_FROM = "Demiplane <onboarding@resend.dev>";
+
+/**
+ * Sends the one-time login code (the sigil on a sending stone).
+ *
+ * Prefers Cloudflare Email Sending from the app's own subdomain; falls through
+ * to the shared Resend sender when that is unavailable, so a fresh deployment
+ * can never lock the keeper out. Without any provider the code is logged.
  */
 export async function sendLoginCode(
   env: Env,
   to: string,
   code: string,
 ): Promise<SendResult> {
-  if (env.AUTH_DEV_MODE === "true" || !env.RESEND_API_KEY) {
+  const message = loginCodeMessage(code);
+
+  if (env.AUTH_DEV_MODE === "true") {
     console.log(`[Demiplane] sigil for ${to}: ${code}`);
     return { delivered: false, devCode: code };
   }
 
-  const html = loginCodeEmail(code);
-  const result = await sendResendEmail(env.RESEND_API_KEY, {
-    from: "Demiplane <onboarding@resend.dev>",
-    to,
-    subject: `Your sigil: ${code}`,
-    text: `${FLAVOUR.codeSent}\n\n${code}\n\nEnter this sigil to unseal the portal. It crumbles to dust in 10 minutes.`,
-    html,
-  });
-
-  if (!result.ok) {
-    console.error(
-      "[Demiplane] Resend rejected the sending stone",
-      result.status,
-      result.detail,
-    );
-    return { delivered: false };
+  if (env.EMAIL) {
+    try {
+      await env.EMAIL.send({
+        to,
+        from: {
+          email: env.EMAIL_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS,
+          name: env.EMAIL_FROM_NAME ?? DEFAULT_FROM_NAME,
+        },
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      });
+      return { delivered: true };
+    } catch (error) {
+      console.error(
+        "[Demiplane] Email Service refused the sending stone",
+        describeSendError(error),
+      );
+    }
   }
-  return { delivered: true };
+
+  if (env.RESEND_API_KEY) {
+    const result = await sendResendEmail(env.RESEND_API_KEY, {
+      from: RESEND_FALLBACK_FROM,
+      to,
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+    });
+
+    if (!result.ok) {
+      console.error(
+        "[Demiplane] Resend rejected the sending stone",
+        result.status,
+        result.detail,
+      );
+      return { delivered: false };
+    }
+    return { delivered: true };
+  }
+
+  console.error(
+    "[Demiplane] no sending stone provider is configured; the sigil is only in this log",
+  );
+  return { delivered: false };
 }
 
-function loginCodeEmail(code: string): string {
-  const spaced = code.split("").join(" ");
-  return `<!doctype html>
-<html>
-  <body style="margin:0;background:#131110;font-family:ui-sans-serif,system-ui,sans-serif;color:#f1e9da;">
-    <div style="max-width:480px;margin:0 auto;padding:40px 24px;">
-      <p style="letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:#c3a15c;margin:0 0 10px;">Demiplane</p>
-      <h1 style="font-size:22px;margin:0 0 16px;color:#f1e9da;">A sending stone has arrived.</h1>
-      <p style="font-size:15px;line-height:1.6;color:#cbbfad;margin:0 0 20px;">
-        Enter this sigil to unseal the portal:
-      </p>
-      <p style="font-family:ui-monospace,monospace;font-size:30px;letter-spacing:.32em;color:#d9c08a;margin:0 0 22px;padding:14px 18px;border:1px solid #2e2823;border-radius:10px;background:#1a1714;">
-        ${spaced}
-      </p>
-      <p style="font-size:12px;line-height:1.5;color:#a4998a;margin:24px 0 0;">
-        The stone crumbles to dust in ten minutes, and the sigil works only once.
-      </p>
-    </div>
-  </body>
-</html>`;
+function describeSendError(error: unknown): string {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const { code, message } = error as { code?: unknown; message?: unknown };
+    return `${String(code)}: ${String(message)}`;
+  }
+  return error instanceof Error ? error.message : "unknown error";
 }

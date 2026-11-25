@@ -3,7 +3,7 @@ import { FLAVOUR, PLAIN } from "../../shared/messages";
 import { Button, StatusLine } from "./ui";
 
 interface AuthScreenProps {
-  requestCode: () => Promise<{ devCode?: string }>;
+  requestCode: (email: string) => Promise<{ devCode?: string }>;
   verifyCode: (code: string, remember: boolean) => Promise<void>;
 }
 
@@ -11,6 +11,7 @@ type Step = "request" | "code";
 
 export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
   const [step, setStep] = useState<Step>("request");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [remember, setRemember] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -28,7 +29,7 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
     setBusy(true);
     setError(null);
     try {
-      const result = await requestCode();
+      const result = await requestCode(email);
       setDevCode(result.devCode ?? null);
       if (result.devCode) setCode(result.devCode);
       setStep("code");
@@ -56,7 +57,7 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
     setBusy(true);
     setError(null);
     try {
-      const result = await requestCode();
+      const result = await requestCode(email);
       setDevCode(result.devCode ?? null);
       if (result.devCode) setCode(result.devCode);
     } catch (cause) {
@@ -87,10 +88,29 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
             <p className="mt-2 text-sm text-parchment-500">
               {FLAVOUR.loginRequestHint}
             </p>
-            <form onSubmit={handleRequest} className="mt-6">
+            <form onSubmit={handleRequest} className="mt-6 space-y-4">
+              <label
+                className="block text-sm text-parchment-300"
+                htmlFor="email"
+              >
+                {FLAVOUR.loginEmailLabel}
+              </label>
+              <input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                spellCheck={false}
+                required
+                autoFocus
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={FLAVOUR.loginEmailPlaceholder}
+                className="h-12 w-full rounded-[var(--radius-control)] border border-[var(--color-void-600)] bg-void-950/70 px-3 text-parchment-100 outline-none transition-colors focus:border-gold-500/60"
+              />
               <Button
                 type="submit"
-                disabled={busy}
+                disabled={busy || email.trim().length === 0}
                 className="btn-bloom w-full"
               >
                 {busy ? FLAVOUR.loading : FLAVOUR.loginButton}
@@ -104,6 +124,9 @@ export function AuthScreen({ requestCode, verifyCode }: AuthScreenProps) {
             </h1>
             <p className="mt-2 text-sm text-parchment-500">
               {FLAVOUR.codeSent}{" "}
+              <span className="font-mono text-xs text-parchment-300">
+                {email.trim().toLowerCase()}
+              </span>
               <span className="sr-only">{FLAVOUR.codeSentPlain}</span>
             </p>
 

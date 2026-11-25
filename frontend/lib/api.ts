@@ -67,28 +67,29 @@ function safeJson(text: string): unknown {
 }
 
 export const api = {
-  async me(): Promise<{ email: string; appName: string }> {
-    const body = await request<{ data: { email: string; appName: string } }>(
-      "/api/me",
-    );
+  async me(): Promise<{ email: string; appName: string; primary: boolean }> {
+    const body = await request<{
+      data: { email: string; appName: string; primary: boolean };
+    }>("/api/me");
     return body.data;
   },
 
-  async requestMagicCode(): Promise<{ devCode?: string }> {
+  async requestMagicCode(email: string): Promise<{ devCode?: string }> {
     const body = await request<{ data: { devCode?: string } }>(
       "/api/auth/request",
-      { method: "POST", body: JSON.stringify({}) },
+      { method: "POST", body: JSON.stringify({ email }) },
     );
     return body.data;
   },
 
   async verifyMagicCode(
+    email: string,
     code: string,
     remember: boolean,
-  ): Promise<{ email: string }> {
-    const body = await request<{ data: { email: string } }>(
+  ): Promise<{ email: string; primary: boolean }> {
+    const body = await request<{ data: { email: string; primary: boolean } }>(
       "/api/auth/verify",
-      { method: "POST", body: JSON.stringify({ code, remember }) },
+      { method: "POST", body: JSON.stringify({ email, code, remember }) },
     );
     return body.data;
   },

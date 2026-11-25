@@ -31,8 +31,13 @@
       "bucket_name": "demiplane-files"
     }
   ],
+  "send_email": [{ "name": "EMAIL" }],
   "vars": {
     "APP_NAME": "Demiplane",
-    "AUTH_DEV_MODE": "false"
+    "AUTH_DEV_MODE": "false",
+    // Sending subdomain, onboarded in Cloudflare Email Sending. The fallback
+    // sender in src/lib/email.ts covers a deployment where it is not verified.
+    "EMAIL_FROM_ADDRESS": "sigil@unseal.demiplane.app",
+    "EMAIL_FROM_NAME": "Demiplane"
   }
 }

@@ -112,14 +112,22 @@ export const FLAVOUR = {
   // --- Auth ---------------------------------------------------------------
   codeSent: "A sending stone is on its way — it bears a sigil.",
   codeSentPlain: "If that address is the keeper of this demiplane, a login code has been sent.",
+  emailHeading: "A sending stone has arrived.",
+  emailCopyHint:
+    "Press and hold the sigil to copy it — or let your mail app offer it.",
+  emailExpiry:
+    "The stone crumbles to dust in ten minutes, and the sigil works only once.",
   codePrompt: "Enter the sigil inscribed on the sending stone.",
   resendCode: "Request another stone",
   codeInvalid: "That sigil is not recognised. Read the stone again.",
   codeLocked: "Too many wrong sigils. Request a fresh sending stone.",
   loginConfirmed: "The portal recognises you.",
-  loginPrompt: "Ask for a sending stone; its sigil goes to the keeper.",
+  loginPrompt: "Ask for a sending stone.",
   loginRequestHint:
-    "The sigil is sent to the keeper's address. Nothing to type but the code.",
+    "Name the address that keeps a demiplane. If it is known here, a sigil goes to it.",
+  loginEmailLabel: "The address the stone should find",
+  loginEmailPlaceholder: "keeper@example.com",
+  loginAddressNeeded: "Name the address that keeps this demiplane.",
   loginButton: "Send a sending stone",
   confirmLogin: "Unseal the portal",
   rememberLocation: "Remember this location for a fortnight.",

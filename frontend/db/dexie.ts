@@ -26,8 +26,8 @@ class DemiplaneDB extends Dexie {
   notes!: Table<LocalNote, string>;
   meta!: Table<MetaRow, string>;
 
-  constructor() {
-    super("demiplane");
+  constructor(name: string) {
+    super(name);
     this.version(1).stores({
       notes: "id, folder, updatedAt, dirty",
       meta: "key",
@@ -35,7 +35,32 @@ class DemiplaneDB extends Dexie {
   }
 }
 
-export const db = new DemiplaneDB();
+/**
+ * The keeper's own store keeps its original name, so their cache and cursor
+ * survive this change untouched. Every other address gets a store of its own:
+ * two accounts sharing a browser never see each other's pages, even offline.
+ */
+const KEEPER_DB_NAME = "demiplane";
+
+function dbNameFor(email: string): string {
+  return `${KEEPER_DB_NAME}:${email.trim().toLowerCase()}`;
+}
+
+export let db = new DemiplaneDB(KEEPER_DB_NAME);
+
+let boundTo: string | null = null;
+
+/**
+ * Points the local store at the signed-in address. Called before anything reads
+ * or writes pages; switching accounts closes the old store rather than mixing.
+ */
+export function bindStore(email: string, primary: boolean): void {
+  const name = primary ? KEEPER_DB_NAME : dbNameFor(email);
+  if (boundTo === name) return;
+  db.close();
+  db = new DemiplaneDB(name);
+  boundTo = name;
+}
 
 /** All local pages, newest first. */
 export async function reloadNotes(): Promise<LocalNote[]> {

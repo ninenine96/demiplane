@@ -15,17 +15,18 @@ const MAX_PULL_NOTES = 200;
  */
 export async function handleSyncPull(
   env: Env,
+  owner: string,
   since: number,
 ): Promise<Response> {
   const { results } = await env.DB.prepare(
     `SELECT note_id, MAX(seq) AS seq
      FROM change_log
-     WHERE seq > ?1
+     WHERE owner = ?1 AND seq > ?2
      GROUP BY note_id
      ORDER BY seq ASC
-     LIMIT ?2`,
+     LIMIT ?3`,
   )
-    .bind(since, MAX_PULL_NOTES)
+    .bind(owner, since, MAX_PULL_NOTES)
     .all<{ note_id: string; seq: number }>();
 
   const rows = results ?? [];
@@ -33,7 +34,7 @@ export async function handleSyncPull(
   let cursor = since;
 
   for (const row of rows) {
-    const note = await getNoteById(env, row.note_id);
+    const note = await getNoteById(env, owner, row.note_id);
     if (note) {
       changes.push({
         seq: row.seq,
@@ -54,16 +55,19 @@ export async function handleSyncPull(
 
 export async function handleSyncPush(
   env: Env,
+  owner: string,
   items: SyncPushItem[],
 ): Promise<Response> {
   const results: SyncPushResult[] = [];
   for (const item of items) {
-    results.push(await applySyncItem(env, item));
+    results.push(await applySyncItem(env, owner, item));
   }
 
   const cursorRow = await env.DB.prepare(
-    "SELECT COALESCE(MAX(seq), 0) AS cursor FROM change_log",
-  ).first<{ cursor: number }>();
+    "SELECT COALESCE(MAX(seq), 0) AS cursor FROM change_log WHERE owner = ?1",
+  )
+    .bind(owner)
+    .first<{ cursor: number }>();
 
   const payload: SyncPushResponse = {
     results,

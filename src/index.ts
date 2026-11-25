@@ -31,6 +31,7 @@ import {
   revokeApiToken,
 } from "./api/tokens";
 import { apiError, ok, withCookie } from "./lib/responses";
+import { settleLegacyOwnership } from "./lib/owners";
 import {
   isSecureRequest,
   readSession,
@@ -119,6 +120,11 @@ async function handleApi(
     return apiError(401, FLAVOUR.unauthorized, "Unauthorized.");
   }
 
+  // Rows written before ownership existed are claimed by the keeper once.
+  await settleLegacyOwnership(env);
+
+  const owner = session.email;
+
   if (pathname === "/api/me" && method === "GET") {
     return handleMe(session.email, env);
   }
@@ -154,14 +160,15 @@ async function handleApi(
 
   if (pathname === "/api/notes") {
     if (method === "GET") {
-      return ok(await listNotes(env));
+      return ok(await listNotes(env, owner));
     }
     if (method === "POST") {
       const parsed = await parseBody(request, noteInputSchema);
       if (!parsed.ok) return parsed.response;
-      return ok(await createNote(env, withTokenFolder(parsed.data, session)), {
-        status: 201,
-      });
+      return ok(
+        await createNote(env, owner, withTokenFolder(parsed.data, session)),
+        { status: 201 },
+      );
     }
   }
 
@@ -171,7 +178,7 @@ async function handleApi(
     if (!id) return apiError(404, FLAVOUR.notFound, "Not found.");
 
     if (method === "GET") {
-      const note = await getNoteById(env, id);
+      const note = await getNoteById(env, owner, id);
       return note
         ? ok(note)
         : apiError(404, FLAVOUR.notFound, "Note not found.");
@@ -179,13 +186,18 @@ async function handleApi(
     if (method === "PUT") {
       const parsed = await parseBody(request, noteInputSchema);
       if (!parsed.ok) return parsed.response;
-      const note = await updateNote(env, id, withTokenFolder(parsed.data, session));
+      const note = await updateNote(
+        env,
+        owner,
+        id,
+        withTokenFolder(parsed.data, session),
+      );
       return note
         ? ok(note)
         : apiError(404, FLAVOUR.notFound, "Note not found.");
     }
     if (method === "DELETE") {
-      const note = await softDeleteNote(env, id);
+      const note = await softDeleteNote(env, owner, id);
       return note
         ? ok(note)
         : apiError(404, FLAVOUR.notFound, "Note not found.");
@@ -196,7 +208,7 @@ async function handleApi(
   if (undeleteMatch && method === "POST") {
     const id = undeleteMatch[1];
     if (!id) return apiError(404, FLAVOUR.notFound, "Not found.");
-    const note = await undeleteNote(env, id);
+    const note = await undeleteNote(env, owner, id);
     return note
       ? ok(note)
       : apiError(404, FLAVOUR.emptyTrash, "Note not found in the Void.");
@@ -206,7 +218,9 @@ async function handleApi(
   if (attachmentsMatch) {
     const noteId = attachmentsMatch[1];
     if (!noteId) return apiError(404, FLAVOUR.notFound, "Not found.");
-    if (method === "POST") return handleAttachmentUpload(request, env, noteId);
+    if (method === "POST") {
+      return handleAttachmentUpload(request, env, owner, noteId);
+    }
   }
 
   if (pathname === "/api/attachments" && method === "GET") {
@@ -214,32 +228,36 @@ async function handleApi(
     if (!noteId) {
       return apiError(400, FLAVOUR.notFound, "Missing noteId query parameter.");
     }
-    return handleAttachmentList(env, noteId);
+    return handleAttachmentList(env, owner, noteId);
   }
 
   const attachmentMatch = ATTACHMENT_PATH.exec(pathname);
   if (attachmentMatch) {
     const id = attachmentMatch[1];
     if (!id) return apiError(404, FLAVOUR.notFound, "Not found.");
-    if (method === "GET") return handleAttachmentGet(env, id);
-    if (method === "DELETE") return handleAttachmentDelete(env, id);
+    if (method === "GET") return handleAttachmentGet(env, owner, id);
+    if (method === "DELETE") return handleAttachmentDelete(env, owner, id);
   }
 
   if (pathname === "/api/export" && method === "GET") {
-    return handleExport(env);
+    return handleExport(env, owner);
   }
   if (pathname === "/api/import" && method === "POST") {
-    return handleImport(request, env);
+    return handleImport(request, env, owner);
   }
 
   if (pathname === "/api/sync/pull" && method === "GET") {
     const since = Number(url.searchParams.get("since") ?? "0");
-    return handleSyncPull(env, Number.isFinite(since) && since > 0 ? since : 0);
+    return handleSyncPull(
+      env,
+      owner,
+      Number.isFinite(since) && since > 0 ? since : 0,
+    );
   }
   if (pathname === "/api/sync/push" && method === "POST") {
     const parsed = await parseBody(request, syncPushSchema);
     if (!parsed.ok) return parsed.response;
-    return handleSyncPush(env, parsed.data.notes);
+    return handleSyncPush(env, owner, parsed.data.notes);
   }
 
   return apiError(404, FLAVOUR.notFound, "API route not found.");

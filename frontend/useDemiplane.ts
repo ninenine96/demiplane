@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  bindStore,
   createDraftLocal,
   db,
   discardLocal,
@@ -9,6 +10,7 @@ import {
   type LocalNote,
 } from "./db/dexie";
 import { api, DemiplaneError } from "./lib/api";
+import { FLAVOUR, PLAIN } from "../shared/messages";
 import {
   installSyncTriggers,
   onSyncStatus,
@@ -36,7 +38,7 @@ export interface DemiplaneStore {
   undeleteNote: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
-  requestLoginCode: () => Promise<{ devCode?: string }>;
+  requestLoginCode: (email: string) => Promise<{ devCode?: string }>;
   verifyLoginCode: (code: string, remember: boolean) => Promise<void>;
   clearConflicts: () => void;
   exportGrimoire: () => Promise<void>;
@@ -101,17 +103,26 @@ export function useDemiplane(): DemiplaneStore {
   const goBack = useCallback(() => selectNote(null), [selectNote]);
 
   const bootstrap = useCallback(async () => {
-    await purgeDrafts();
-    await reload();
+    let me: { email: string; appName: string; primary: boolean };
     try {
-      const me = await api.me();
-      setEmail(me.email);
-      setAuth("authenticated");
-      await afterSync();
+      me = await api.me();
     } catch (error) {
+      setNotes([]);
+      setActiveId(null);
       setAuth("unauthenticated");
       if (!(error instanceof DemiplaneError)) console.error(error);
+      return;
     }
+
+    // The local store follows the address, so a second keeper on this browser
+    // starts empty instead of inheriting the first keeper's cache.
+    bindStore(me.email, me.primary);
+    setEmail(me.email);
+    setAuth("authenticated");
+
+    await purgeDrafts();
+    await reload();
+    await afterSync();
   }, [afterSync, reload]);
 
   useEffect(() => {
@@ -163,22 +174,35 @@ export function useDemiplane(): DemiplaneStore {
     await afterSync();
   }, [afterSync]);
 
-  const requestLoginCode = useCallback(async () => {
-    return api.requestMagicCode();
+  const pendingEmail = useRef("");
+
+  const requestLoginCode = useCallback(async (email: string) => {
+    pendingEmail.current = email.trim().toLowerCase();
+    return api.requestMagicCode(pendingEmail.current);
   }, []);
 
   const verifyLoginCode = useCallback(
     async (code: string, remember: boolean) => {
-      const result = await api.verifyMagicCode(code, remember);
+      const email = pendingEmail.current;
+      if (!email) {
+        throw new DemiplaneError(400, FLAVOUR.loginAddressNeeded, PLAIN.authError);
+      }
+      const result = await api.verifyMagicCode(email, code, remember);
+      bindStore(result.email, result.primary);
       setEmail(result.email);
       setAuth("authenticated");
+      await purgeDrafts();
+      await reload();
       await afterSync();
     },
-    [afterSync],
+    [afterSync, reload],
   );
 
   const logout = useCallback(async () => {
     await api.logout();
+    pendingEmail.current = "";
+    setNotes([]);
+    setActiveId(null);
     setAuth("unauthenticated");
   }, []);
 

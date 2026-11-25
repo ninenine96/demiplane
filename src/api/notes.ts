@@ -21,12 +21,17 @@ interface NoteRow {
   content_hash: string | null;
 }
 
-function noteKey(id: string): string {
-  return `notes/${id}.md`;
+/**
+ * Object keys are per-owner. A note id arrives from the client on sync push, so
+ * two keepers can legitimately land on the same id — and they must never share
+ * the same object.
+ */
+function noteKey(owner: string, id: string): string {
+  return `notes/${owner}/${id}.md`;
 }
 
-function trashKey(id: string): string {
-  return `trash/notes/${id}.md`;
+function trashKeyFor(objectKey: string): string {
+  return `trash/${objectKey}`;
 }
 
 function rowToMeta(row: NoteRow): NoteMeta {
@@ -59,20 +64,25 @@ export function newNoteId(): string {
 }
 
 /** Writes one note to R2 and updates the D1 index + change log atomically. */
-export async function persistNote(env: Env, note: Note): Promise<void> {
+export async function persistNote(
+  env: Env,
+  owner: string,
+  note: Note,
+): Promise<void> {
   const markdown = serializeNote(note);
   const contentHash = await sha256Hex(markdown);
+  const r2Key = noteKey(owner, note.id);
 
-  await env.BUCKET.put(noteKey(note.id), markdown, {
+  await env.BUCKET.put(r2Key, markdown, {
     httpMetadata: { contentType: "text/markdown; charset=utf-8" },
     customMetadata: { noteId: note.id, version: String(note.version) },
   });
 
   await env.DB.batch([
     env.DB.prepare(
-      `INSERT INTO notes (id, title, folder, tags, r2_key, created_at, updated_at, deleted, version, content_hash)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
-       ON CONFLICT(id) DO UPDATE SET
+      `INSERT INTO notes (owner, id, title, folder, tags, r2_key, created_at, updated_at, deleted, version, content_hash)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+       ON CONFLICT(owner, id) DO UPDATE SET
          title = excluded.title,
          folder = excluded.folder,
          tags = excluded.tags,
@@ -82,11 +92,12 @@ export async function persistNote(env: Env, note: Note): Promise<void> {
          version = excluded.version,
          content_hash = excluded.content_hash`,
     ).bind(
+      owner,
       note.id,
       note.title,
       note.folder,
       JSON.stringify(note.tags),
-      noteKey(note.id),
+      r2Key,
       note.createdAt,
       note.updatedAt,
       note.deleted ? 1 : 0,
@@ -94,32 +105,52 @@ export async function persistNote(env: Env, note: Note): Promise<void> {
       contentHash,
     ),
     env.DB.prepare(
-      "INSERT INTO change_log (note_id, op, version, updated_at) VALUES (?1, ?2, ?3, ?4)",
-    ).bind(note.id, note.deleted ? "delete" : "upsert", note.version, note.updatedAt),
+      `INSERT INTO change_log (owner, note_id, op, version, updated_at)
+       VALUES (?1, ?2, ?3, ?4, ?5)`,
+    ).bind(
+      owner,
+      note.id,
+      note.deleted ? "delete" : "upsert",
+      note.version,
+      note.updatedAt,
+    ),
   ]);
 }
 
-export async function listNotes(env: Env): Promise<NoteMeta[]> {
+export async function listNotes(env: Env, owner: string): Promise<NoteMeta[]> {
   const { results } = await env.DB.prepare(
     `SELECT id, title, folder, tags, r2_key, created_at, updated_at, deleted, version, content_hash
-     FROM notes WHERE deleted = 0 ORDER BY updated_at DESC`,
-  ).all<NoteRow>();
+     FROM notes WHERE owner = ?1 AND deleted = 0 ORDER BY updated_at DESC`,
+  )
+    .bind(owner)
+    .all<NoteRow>();
   return (results ?? []).map(rowToMeta);
 }
 
 export async function getNoteById(
   env: Env,
+  owner: string,
   id: string,
 ): Promise<Note | null> {
-  const row = await env.DB.prepare(
+  const row = await getNoteRow(env, owner, id);
+  return row ? rowToNote(env, row) : null;
+}
+
+/** The index row alone — callers that need the object key use this. */
+async function getNoteRow(
+  env: Env,
+  owner: string,
+  id: string,
+): Promise<NoteRow | null> {
+  return env.DB.prepare(
     `SELECT id, title, folder, tags, r2_key, created_at, updated_at, deleted, version, content_hash
-     FROM notes WHERE id = ?1`,
+     FROM notes WHERE owner = ?1 AND id = ?2`,
   )
-    .bind(id)
+    .bind(owner, id)
     .first<NoteRow>();
+}
 
-  if (!row) return null;
-
+async function rowToNote(env: Env, row: NoteRow): Promise<Note> {
   const object = await env.BUCKET.get(row.r2_key);
   const body = object ? await object.text() : "";
   const parsed = parseNote(row.id, body);
@@ -138,6 +169,7 @@ export async function getNoteById(
 
 export async function createNote(
   env: Env,
+  owner: string,
   input: NoteInput,
 ): Promise<Note> {
   const now = Date.now();
@@ -152,16 +184,17 @@ export async function createNote(
     deleted: false,
     version: 1,
   };
-  await persistNote(env, note);
+  await persistNote(env, owner, note);
   return note;
 }
 
 export async function updateNote(
   env: Env,
+  owner: string,
   id: string,
   input: NoteInput,
 ): Promise<Note | null> {
-  const existing = await getNoteById(env, id);
+  const existing = await getNoteById(env, owner, id);
   if (!existing) return null;
 
   const updated: Note = {
@@ -171,18 +204,21 @@ export async function updateNote(
     version: existing.version + 1,
     deleted: false,
   };
-  await persistNote(env, updated);
+  await persistNote(env, owner, updated);
   return updated;
 }
 
 export async function softDeleteNote(
   env: Env,
+  owner: string,
   id: string,
 ): Promise<Note | null> {
-  const existing = await getNoteById(env, id);
-  if (!existing) return null;
+  const row = await getNoteRow(env, owner, id);
+  if (!row) return null;
 
-  await moveToTrash(env, id);
+  const existing = await rowToNote(env, row);
+
+  await moveToTrash(env, row.r2_key);
 
   const deleted: Note = {
     ...existing,
@@ -190,22 +226,23 @@ export async function softDeleteNote(
     updatedAt: Date.now(),
     version: existing.version + 1,
   };
-  await persistNote(env, deleted);
+  await persistNote(env, owner, deleted);
   return deleted;
 }
 
 export async function undeleteNote(
   env: Env,
+  owner: string,
   id: string,
 ): Promise<Note | null> {
   const row = await env.DB.prepare(
-    "SELECT id FROM notes WHERE id = ?1 AND deleted = 1",
+    `SELECT id, r2_key FROM notes WHERE owner = ?1 AND id = ?2 AND deleted = 1`,
   )
-    .bind(id)
-    .first<{ id: string }>();
+    .bind(owner, id)
+    .first<{ id: string; r2_key: string }>();
   if (!row) return null;
 
-  const existing = await restoreFromTrash(env, id);
+  const existing = await restoreFromTrash(env, row.r2_key, id);
   if (!existing) return null;
 
   const restored: Note = {
@@ -214,22 +251,25 @@ export async function undeleteNote(
     updatedAt: Date.now(),
     version: existing.version + 1,
   };
-  await persistNote(env, restored);
+  await persistNote(env, owner, restored);
   return restored;
 }
 
-async function moveToTrash(env: Env, id: string): Promise<void> {
-  const key = noteKey(id);
-  const object = await env.BUCKET.get(key);
+async function moveToTrash(env: Env, objectKey: string): Promise<void> {
+  const object = await env.BUCKET.get(objectKey);
   if (!object) return;
-  await env.BUCKET.put(trashKey(id), object.body, {
+  await env.BUCKET.put(trashKeyFor(objectKey), object.body, {
     httpMetadata: { contentType: "text/markdown; charset=utf-8" },
   });
-  await env.BUCKET.delete(key);
+  await env.BUCKET.delete(objectKey);
 }
 
-async function restoreFromTrash(env: Env, id: string): Promise<Note | null> {
-  const object = await env.BUCKET.get(trashKey(id));
+async function restoreFromTrash(
+  env: Env,
+  objectKey: string,
+  id: string,
+): Promise<Note | null> {
+  const object = await env.BUCKET.get(trashKeyFor(objectKey));
   if (!object) return null;
   const text = await object.text();
   const parsed = parseNote(id, text);
@@ -243,14 +283,16 @@ async function restoreFromTrash(env: Env, id: string): Promise<Note | null> {
  */
 export async function applySyncItem(
   env: Env,
+  owner: string,
   item: SyncPushItem,
 ): Promise<SyncPushResult> {
   const now = Date.now();
-  const existing = await getNoteById(env, item.id);
+  const existingRow = await getNoteRow(env, owner, item.id);
+  const existing = existingRow ? await rowToNote(env, existingRow) : null;
 
   let conflictId: string | undefined;
   if (existing && existing.version !== item.baseVersion) {
-    conflictId = await preserveConflictCopy(env, existing, now);
+    conflictId = await preserveConflictCopy(env, owner, existing, now);
   }
 
   const nextVersion = existing ? existing.version + 1 : 1;
@@ -266,10 +308,10 @@ export async function applySyncItem(
     version: nextVersion,
   };
 
-  if (item.deleted) {
-    await moveToTrash(env, item.id);
+  if (item.deleted && existingRow) {
+    await moveToTrash(env, existingRow.r2_key);
   }
-  await persistNote(env, note);
+  await persistNote(env, owner, note);
 
   return {
     id: note.id,
@@ -282,6 +324,7 @@ export async function applySyncItem(
 
 async function preserveConflictCopy(
   env: Env,
+  owner: string,
   existing: Note,
   now: number,
 ): Promise<string> {
@@ -298,6 +341,6 @@ async function preserveConflictCopy(
     deleted: false,
     version: 1,
   };
-  await persistNote(env, copy);
+  await persistNote(env, owner, copy);
   return copy.id;
 }

@@ -23,8 +23,13 @@ interface AttachmentRow {
   created_at: number;
 }
 
-function attachmentKey(noteId: string, id: string, filename: string): string {
-  return `attachments/${noteId}/${id}-${filename}`;
+function attachmentKey(
+  owner: string,
+  noteId: string,
+  id: string,
+  filename: string,
+): string {
+  return `attachments/${owner}/${noteId}/${id}-${filename}`;
 }
 
 function sanitizeFilename(raw: string): string {
@@ -48,10 +53,13 @@ function rowToAttachment(row: AttachmentRow): Attachment {
 export async function handleAttachmentUpload(
   request: Request,
   env: Env,
+  owner: string,
   noteId: string,
 ): Promise<Response> {
-  const note = await env.DB.prepare("SELECT id FROM notes WHERE id = ?1")
-    .bind(noteId)
+  const note = await env.DB.prepare(
+    "SELECT id FROM notes WHERE owner = ?1 AND id = ?2",
+  )
+    .bind(owner, noteId)
     .first<{ id: string }>();
   if (!note) {
     return apiError(404, FLAVOUR.notFound, "Note not found.");
@@ -91,7 +99,7 @@ export async function handleAttachmentUpload(
 
   const id = crypto.randomUUID();
   const filename = sanitizeFilename(file.name);
-  const key = attachmentKey(noteId, id, filename);
+  const key = attachmentKey(owner, noteId, id, filename);
   const createdAt = Date.now();
 
   const bytes = await file.arrayBuffer();
@@ -101,10 +109,10 @@ export async function handleAttachmentUpload(
   });
 
   await env.DB.prepare(
-    `INSERT INTO attachments (id, note_id, r2_key, filename, content_type, size, created_at)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+    `INSERT INTO attachments (owner, id, note_id, r2_key, filename, content_type, size, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`,
   )
-    .bind(id, noteId, key, filename, contentType, file.size, createdAt)
+    .bind(owner, id, noteId, key, filename, contentType, file.size, createdAt)
     .run();
 
   const attachment: Attachment = {
@@ -122,13 +130,14 @@ export async function handleAttachmentUpload(
 
 export async function handleAttachmentList(
   env: Env,
+  owner: string,
   noteId: string,
 ): Promise<Response> {
   const { results } = await env.DB.prepare(
     `SELECT id, note_id, r2_key, filename, content_type, size, created_at
-     FROM attachments WHERE note_id = ?1 ORDER BY created_at ASC`,
+     FROM attachments WHERE owner = ?1 AND note_id = ?2 ORDER BY created_at ASC`,
   )
-    .bind(noteId)
+    .bind(owner, noteId)
     .all<AttachmentRow>();
 
   return json({ data: (results ?? []).map(rowToAttachment) });
@@ -136,13 +145,14 @@ export async function handleAttachmentList(
 
 export async function handleAttachmentGet(
   env: Env,
+  owner: string,
   id: string,
 ): Promise<Response> {
   const row = await env.DB.prepare(
     `SELECT id, note_id, r2_key, filename, content_type, size, created_at
-     FROM attachments WHERE id = ?1`,
+     FROM attachments WHERE owner = ?1 AND id = ?2`,
   )
-    .bind(id)
+    .bind(owner, id)
     .first<AttachmentRow>();
 
   if (!row) {
@@ -168,12 +178,13 @@ export async function handleAttachmentGet(
 
 export async function handleAttachmentDelete(
   env: Env,
+  owner: string,
   id: string,
 ): Promise<Response> {
   const row = await env.DB.prepare(
-    "SELECT r2_key FROM attachments WHERE id = ?1",
+    "SELECT r2_key FROM attachments WHERE owner = ?1 AND id = ?2",
   )
-    .bind(id)
+    .bind(owner, id)
     .first<{ r2_key: string }>();
 
   if (!row) {
@@ -181,7 +192,9 @@ export async function handleAttachmentDelete(
   }
 
   await env.BUCKET.delete(row.r2_key);
-  await env.DB.prepare("DELETE FROM attachments WHERE id = ?1").bind(id).run();
+  await env.DB.prepare("DELETE FROM attachments WHERE owner = ?1 AND id = ?2")
+    .bind(owner, id)
+    .run();
 
   return json({ data: { id, message: "Returned to the Void." } });
 }
